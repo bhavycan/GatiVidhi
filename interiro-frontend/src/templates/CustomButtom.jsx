@@ -14,7 +14,7 @@ const CustomButtom = ({message}) => {
                 // initial={{opacity: 0, scaleY : 0}}
                 // animate={{opacity : 1, scaleY : 1, transformOrigin: "top"}}
                 // transition={{duration : 1, ease : [0.34, 1.56, 0.64, 1]}}
-                className="lines w-[40%] h-[65%] relative border-l-2 border-r-2 border-black">
+                className="lines w-[40%] h-[75%] relative border-l-2 border-r-2 border-black">
                     <div className="circle w-[3vw] h-[3vw] rounded-full absolute -bottom-[3%] -left-[5%] border-2 border-black bg-white"></div>
                     <div className="circle w-[3vw] h-[3vw] rounded-full absolute -bottom-[3%] -right-[5%] border-2 border-black  bg-white"></div>
                 </motion.div>
@@ -22,8 +22,8 @@ const CustomButtom = ({message}) => {
                 //  initial={{opacity: 0, rotateX : -180 , transformOrigin : "top"}}
                 // animate={{opacity : 1, rotateX  :0 }}
                 // transition={{duration : 1, delay: 1, ease : [0.87, 0, 0.13, 1]}}
-                className="rectangle w-[75%] h-[100%] flex items-end justify-center border-2 border-black bg-white absolute -z-10 top-[24%] pb-1 ">
-                   <h2 className='text-xl w-full h-[80%] pt-[2%]   flex items-center justify-center  font-bold text-[#883bbc]'>{message}</h2>
+                className="rectangle w-[75%] max-h-[100%] min-h-[70%] flex items-end justify-center border-2 border-black bg-white absolute -z-10 top-[35%] pb-[3%]  ">
+                   <h2 className='text-xl w-full h-[80%] pt-[2%]   flex items-center justify-center mt-[5%]  font-bold text-[#883bbc]'>{message}</h2>
                 </motion.button>
                 <motion.div
                 // initial={{opacity : 0}}

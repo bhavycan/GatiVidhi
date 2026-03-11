@@ -13,6 +13,8 @@ import Ticket from './components/client/Ticket'
 import Task from './components/admin/Task'
 import AdminLogin from './components/admin/AdminLogin'
 import Chatbot from './components/client/Chatbot'
+import AdminUpdate from './components/admin/AdminUpdate'
+import AdminTickets from './components/admin/AdminTickets'
 
 const App = () => {
   return (
@@ -30,6 +32,8 @@ const App = () => {
             <Route path='/admin/task' element={<Task />} />
             <Route path='/admin/login' element={<AdminLogin />} />
             <Route path='/user/chat' element={<Chatbot />} />
+            <Route path='/admin/updates' element={<AdminUpdate />} />
+            <Route path='/admin/tickets' element={<AdminTickets />} />
       </Routes>
      
 

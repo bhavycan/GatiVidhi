@@ -29,6 +29,7 @@ const { showPopcard, popcard } = usePopcard();
     const [lastreport, setLastReport] = useState(null)
     const [isopen, setOpen] = useState(false)
     const [isNotification,setNotification] = useState(false)
+    const [notifCount, setNotifCount] = useState(0)
     const startingDay = moment(projectinfo?.startDate).format("Do MMMM YYYY");
     const EndingDay = moment(projectinfo?.estimatedEndDate).format("Do MMMM YYYY");
 
@@ -45,9 +46,17 @@ const { showPopcard, popcard } = usePopcard();
             }
     }
 
+    const fetchNotifCount = async () => {
+      try {
+        const { data } = await axios.get('http://localhost:3000/project/notifications', { withCredentials: true });
+        setNotifCount(data?.notifications?.length || 0);
+      } catch (_) {}
+    };
+
     useEffect(()=>{
             fetchProfile()
-    },[])
+            fetchNotifCount()
+    },[notifCount])
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
     const parent = useRef(null)
@@ -111,11 +120,16 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
                 </div>
               </div>
               <div className="create pb-4 z-30 flex items-center justify-center">
-                <div onClick={()=>setNotification(true)} className='w-10 h-10 md:w-12 md:h-12 bg-[#883bbc] rounded-full flex items-center justify-center cursor-pointer'>
+                <div onClick={()=>setNotification(true)} className='relative w-10 h-10 md:w-12 md:h-12 bg-[#883bbc] rounded-full flex items-center justify-center cursor-pointer'>
                   <i className="ri-notification-3-fill text-2xl text-white opacity-90"></i>
+                  {notifCount > 0 && (
+                    <span className='absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center'>
+                      {notifCount > 9 ? '9+' : notifCount}
+                    </span>
+                  )}
                 </div>
                 <AnimatePresence mode='wait'>
-                  {isNotification && <Notification state={{isNotification,setNotification}} />}
+                  {isNotification && <Notification state={{isNotification,setNotification}} onClear={() => setNotifCount(0)} />}
                 </AnimatePresence>
               </div>
             </div>
@@ -135,12 +149,12 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
                     <i className="ri-calendar-2-line text-2xl text-white opacity-90"></i>
                   </div>
                   <div className="date leading-5 flex items-center justify-center h-full font-bold">
-                    <div className="date-tag text-lg md:text-xl flex flex-col items-center h-full">
+                    <div className="date-tag text-lg md:text-xl flex flex-col items-center  h-full">
                       <h3>StartedOn</h3>
                       <h3>Estimated</h3>
                     </div>
                   </div>
-                  <div className="date text-sm md:text-md flex flex-col h-full">
+                  <div className="date text-sm md:text-md flex flex-col justify-center leading-[7vw] h-full">
                     <h4>{startingDay}</h4>
                     <h4>{EndingDay}</h4>
                   </div>

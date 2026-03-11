@@ -1,21 +1,36 @@
 import { AnimatePresence, motion } from "motion/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label, LabelList } from 'recharts';
+import axios from 'axios';
 
+const TASK_COLORS = {
+  Layout: '#D8B4FE',
+  PopChannel: '#C084FC',
+  Electrification: '#A855F7',
+  Ceiling: '#9333EA',
+  Furniture: '#E879F9',
+  Laminate: '#F472B6',
+  Paint: '#EC4899',
+  Lights: '#DB2777',
+  Cleaning: '#BE185D',
+  HandOver: '#9D174D',
+};
 
 const UpdateTree = ({ setUpdateOpen }) => {
-const updateData = [
-  { name: 'Layout', update: 3, uv: 200, pv: 240, fill: '#D8B4FE' },    // light purple
-  { name: 'PopChannel', update: 7, uv: 400, pv: 460, fill: '#C084FC' }, // medium purple
-  { name: 'Electrification', update: 1, uv: 150, pv: 200, fill: '#A855F7' }, // purple
-  { name: 'Ceiling', update: 9, uv: 500, pv: 520, fill: '#9333EA' },    // deep purple
-  { name: 'Furniture', update: 0, uv: 50, pv: 90, fill: '#E879F9' },    // light pinkish purple
-  { name: 'Laminate', update: 5, uv: 300, pv: 350, fill: '#F472B6' },   // pink
-  { name: 'Paint', update: 4, uv: 250, pv: 270, fill: '#EC4899' },      // rose pink
-  { name: 'Lights', update: 8, uv: 450, pv: 480, fill: '#DB2777' },     // dark pink
-  { name: 'Cleaning', update: 2, uv: 100, pv: 120, fill: '#BE185D' },   // strong magenta
-  { name: 'HandOver', update: 6, uv: 350, pv: 390, fill: '#9D174D' },   // deep pink-purple
-];
+  const [updateData, setUpdateData] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:3000/update/task-counts', { withCredentials: true })
+      .then(({ data }) => {
+        const mapped = data.taskCounts.map(({ name, update }) => ({
+          name,
+          update,
+          fill: TASK_COLORS[name] || '#883bbc',
+        }));
+        setUpdateData(mapped);
+      })
+      .catch((err) => console.error('Failed to fetch task counts', err));
+  }, []);
 
 
 
