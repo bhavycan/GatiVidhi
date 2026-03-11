@@ -31,6 +31,10 @@ const updateSchema = new Schema({
     required: true,
     minlength: 3,
   },
+  task: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -55,6 +59,7 @@ const validateUpdate = (update) =>{
   workDone: Joi.string().max(1000).allow('', null),
   workLeft: Joi.string().max(1000).allow('', null),
   notes: Joi.string().min(3).required(),
+  task: Joi.string().allow('', null).optional(),
   createdAt: Joi.date().optional(),
 });
 

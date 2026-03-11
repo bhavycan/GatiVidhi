@@ -99,8 +99,8 @@ module.exports.projectGetAllController = async (req, res) => {
 module.exports.projectDeleteController = async (req,res)=>{
 const id = req.body.id;
   try {
-    
-  
+
+
   let project = await projectModel.findOne({_id : id});
   if(!project) return res.status(400).send("Project does not exist");
   project = await projectModel.deleteOne({_id: id});
@@ -114,4 +114,54 @@ const id = req.body.id;
 
 }
 
+module.exports.getNotificationsController = async (req, res) => {
+  try {
+    const user = await userModel.findOne({ email: req.user.email }).lean();
+    if (!user) return res.status(404).send("User not found");
 
+    const project = await projectModel.findOne({ clientId: user._id }, { notifications: 1 }).lean();
+    if (!project) return res.status(404).send("No project found");
+
+    const notifications = [...(project.notifications || [])].reverse();
+    res.status(200).json({ notifications });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.clearNotificationsController = async (req, res) => {
+  try {
+    const user = await userModel.findOne({ email: req.user.email }).lean();
+    if (!user) return res.status(404).send("User not found");
+
+    await projectModel.updateOne({ clientId: user._id }, { $set: { notifications: [] } });
+    res.status(200).send("Notifications cleared");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+
+module.exports.DeleteNotificationsController = async (req, res) => {
+  try {
+    const index = parseInt(req.params.index);
+
+    const user = await userModel.findOne({ email: req.user.email });
+    if (!user) return res.status(404).send("User not found");
+
+    const project = await projectModel.findOne({ clientId: user._id });
+    if (!project) return res.status(404).send("Project not found");
+
+    // remove notification at index
+    project.notifications.splice(index, 1);
+
+    await project.save();
+
+    res.status(200).send("Notification deleted");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};

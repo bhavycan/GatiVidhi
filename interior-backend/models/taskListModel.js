@@ -26,6 +26,10 @@ const taskListSchema = new Schema({
     type: Date,
     default: null,
   },
+  updateNumber: {
+    type: Number,
+    default: 0,
+  },
   Layout:         { type: taskSchema, default: () => ({}) },
   PopChannel:     { type: taskSchema, default: () => ({}) },
   Electrification:{ type: taskSchema, default: () => ({}) },

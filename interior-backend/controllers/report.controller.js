@@ -34,6 +34,10 @@ module.exports.reportCreateController = async (req, res) => {
       summary: reporttext,
       PublishedDate: new Date(),
     });
+    await projectModel.updateOne(
+      { _id: id },
+      { $push: { notifications: { type: 'report', message: 'A new project report has been published' } } }
+    );
     console.log("new report generated")
     res.status(200).send(report);
   } catch (error) {

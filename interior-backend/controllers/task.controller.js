@@ -1,4 +1,5 @@
 const { taskListModel } = require('../models/taskListModel');
+const { projectModel } = require('../models/projectModel');
 
 const VALID_TASKS = [
   'Layout', 'PopChannel', 'Electrification', 'Ceiling',
@@ -57,6 +58,13 @@ module.exports.taskUpdateController = async (req, res) => {
     taskList.lastUpdated = new Date();
 
     await taskList.save();
+    const msg = status === 'completed'
+      ? `Task "${task}" has been marked as completed`
+      : `Task "${task}" status updated to ${status}`;
+    await projectModel.updateOne(
+      { _id: projectId },
+      { $push: { notifications: { type: 'task', message: msg } } }
+    );
     res.status(200).json(taskList);
   } catch (error) {
     console.error(error);

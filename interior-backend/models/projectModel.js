@@ -11,6 +11,12 @@ const projectSchema = new Schema({
     status: { type: String, default: 'ongoing' },
     paymentRecords :{type : [mongoose.Schema.Types.ObjectId], ref: 'payments'},
     updates : {type: [mongoose.Schema.Types.ObjectId], ref: 'dailyupdate' },
+  notifications: [{
+    type: { type: String, enum: ['update', 'task', 'ticket', 'report'] },
+    message: { type: String },
+    createdAt: { type: Date, default: Date.now },
+    read: { type: Boolean, default: false }
+  }]
 })
 
 
