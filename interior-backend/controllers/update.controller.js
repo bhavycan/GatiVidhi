@@ -155,6 +155,30 @@ module.exports.updateDueTodayController = async (req, res) => {
   }
 }
 
+module.exports.updateGetAllAdminController = async (req, res) => {
+  try {
+    const updates = await updateModel
+      .find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const projectIds = [...new Set(updates.map(u => u.projectId.toString()))];
+    const projects = await projectModel.find({ _id: { $in: projectIds } }, { projectName: 1 }).lean();
+    const projectMap = {};
+    projects.forEach(p => { projectMap[p._id.toString()] = p.projectName; });
+
+    const result = updates.map(u => ({
+      ...u,
+      projectName: projectMap[u.projectId.toString()] || 'Unknown',
+    }));
+
+    res.status(200).json({ updates: result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
 module.exports.updateGetAllController = async (req, res) => {
   try {
     const user = await userModel.findOne({ email: req.user.email }).lean();
