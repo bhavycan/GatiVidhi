@@ -15,6 +15,7 @@ import AdminLogin from './components/admin/AdminLogin'
 import Chatbot from './components/client/Chatbot'
 import AdminUpdate from './components/admin/AdminUpdate'
 import AdminTickets from './components/admin/AdminTickets'
+import Gallery from './components/client/Gallery'
 
 const App = () => {
   return (
@@ -34,6 +35,7 @@ const App = () => {
             <Route path='/user/chat' element={<Chatbot />} />
             <Route path='/admin/updates' element={<AdminUpdate />} />
             <Route path='/admin/tickets' element={<AdminTickets />} />
+            <Route path='/user/gallery' element={<Gallery />} />
       </Routes>
      
 

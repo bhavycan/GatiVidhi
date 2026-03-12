@@ -133,7 +133,7 @@ const UpdateCard = ({ update }) => {
       {/* Actions */}
       <motion.div className='w-full mt-[4%] font-semibold text-lg'>
         <div className='w-full flex items-center gap-2 justify-center h-full'>
-          <Share />
+          <Share update={update} />
           <CommentBox isType={isType} isComOpen={isComOpen} setComOpen={setComOpen} setType={setType} />
         </div>
 
