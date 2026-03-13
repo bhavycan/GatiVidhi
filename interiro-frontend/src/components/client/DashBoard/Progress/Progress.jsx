@@ -4,8 +4,6 @@ import axios from "axios";
 import ProgressTree from "./ProgressTree";
 import ProfressCore from "./ProfressCore";
 
-const TASKS = ['Layout', 'PopChannel', 'Electrification', 'Ceiling', 'Furniture', 'Laminate', 'Paint', 'Lights', 'Cleaning', 'HandOver']
-
 const Progress = ({ showPopcard, projectId }) => {
   const [progressisOpen, setprogressOpen] = useState(false)
   const [taskData, setTaskData] = useState(null)
@@ -28,9 +26,8 @@ const Progress = ({ showPopcard, projectId }) => {
     showPopcard("Progress Card Opened", true, 2000)
   }, [progressisOpen])
 
-  const completedCount = taskData
-    ? TASKS.filter(t => taskData[t]?.status === 'completed').length
-    : 0
+  const tasks = taskData?.tasks || []
+  const completedCount = tasks.filter(t => t.status === 'completed').length
 
   return (
     <>
@@ -51,8 +48,8 @@ const Progress = ({ showPopcard, projectId }) => {
       >
         <AnimatePresence>
           {progressisOpen
-            ? <ProgressTree taskData={taskData} completedCount={completedCount} />
-            : <ProfressCore completedCount={completedCount} lastUpdated={taskData?.lastUpdated} />
+            ? <ProgressTree tasks={tasks} completedCount={completedCount} onBack={() => setprogressOpen(false)} />
+            : <ProfressCore completedCount={completedCount} totalCount={tasks.length} lastUpdated={taskData?.lastUpdated} />
           }
         </AnimatePresence>
       </motion.div>

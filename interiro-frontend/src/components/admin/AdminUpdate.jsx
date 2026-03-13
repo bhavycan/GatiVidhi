@@ -6,11 +6,6 @@ import Butterfly from '../../templates/Butterfly'
 import AdminNavbar from '../../templates/AdminNavbar'
 import axios from 'axios'
 
-const TASKS = [
-  'Layout', 'PopChannel', 'Electrification', 'Ceiling', 'Furniture',
-  'Laminate', 'Paint', 'Lights', 'Cleaning', 'HandOver'
-]
-
 const formatDate = (date) => {
   if (!date) return 'Never'
   return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -51,7 +46,7 @@ const Toast = ({ message, onClose }) => {
 }
 
 // Reusable animated dropdown
-const AnimatedDropdown = ({ label, options, selected, onSelect, renderOption, renderSelected }) => {
+const AnimatedDropdown = ({ label, options, selected, onSelect, renderOption, renderSelected, scrollable }) => {
   const [open, setOpen] = useState(false)
 
   const handleSelect = (item) => {
@@ -83,21 +78,23 @@ const AnimatedDropdown = ({ label, options, selected, onSelect, renderOption, re
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             className='w-full backdrop-blur-sm overflow-hidden rounded-b-lg border border-t-0 border-[#883bbc] bg-white/60'
           >
-            {options.length === 0 && (
-              <p className='px-4 py-2 text-sm opacity-60 font-semibold'>No options found</p>
-            )}
-            {options.map((item, i) => (
-              <motion.div
-                key={i}
-                onClick={() => handleSelect(item)}
-                className='w-full px-4 py-2 cursor-pointer hover:bg-white/40 border-b border-[#883bbc]/30 last:border-0'
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.06, duration: 0.2 }}
-              >
-                {renderOption ? renderOption(item) : <p className='font-semibold text-base'>{item}</p>}
-              </motion.div>
-            ))}
+            <div className={scrollable ? 'max-h-48 overflow-y-auto' : ''}>
+              {options.length === 0 && (
+                <p className='px-4 py-2 text-sm opacity-60 font-semibold'>No options found</p>
+              )}
+              {options.map((item, i) => (
+                <motion.div
+                  key={i}
+                  onClick={() => handleSelect(item)}
+                  className='w-full px-4 py-2 cursor-pointer hover:bg-white/40 border-b border-[#883bbc]/30 last:border-0'
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06, duration: 0.2 }}
+                >
+                  {renderOption ? renderOption(item) : <p className='font-semibold text-base'>{item}</p>}
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -206,6 +203,7 @@ const AdminUpdate = () => {
   const [selectedProject, setSelectedProject] = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [selectedTask, setSelectedTask] = useState(null)
+  const [projectTasks, setProjectTasks] = useState([])
   const [isFormOpen, setFormOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [dueProjects, setDueProjects] = useState([])
@@ -257,9 +255,12 @@ const AdminUpdate = () => {
 
   const handleProjectSelect = async (project) => {
     setSelectedProject(project)
+    setSelectedTask(null)
+    setProjectTasks([])
     try {
       const { data } = await axios.get(`http://localhost:3000/task/${project._id}`, { withCredentials: true })
       setLastUpdated(data.lastUpdated || null)
+      setProjectTasks((data.tasks || []).map(t => t.name))
     } catch (_) {
       setLastUpdated(null)
     }
@@ -318,6 +319,7 @@ const AdminUpdate = () => {
       setFormOpen(false)
       setSelectedProject(null)
       setSelectedTask(null)
+      setProjectTasks([])
       setImages([null, null, null])
       setWorkDone('')
       setWorkLeft('')
@@ -461,10 +463,11 @@ const AdminUpdate = () => {
                     >
                       <label className='block text-black font-medium mb-2'>Task</label>
                       <AnimatedDropdown
-                        label='Select a task'
-                        options={TASKS}
+                        label={selectedProject ? 'Select a task' : 'Select a project first'}
+                        options={projectTasks}
                         selected={selectedTask}
                         onSelect={setSelectedTask}
+                        scrollable
                         renderOption={(t) => (
                           <p className='font-semibold text-base'><i className='ri-arrow-right-s-line'></i>{t}</p>
                         )}

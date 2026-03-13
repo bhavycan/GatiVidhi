@@ -2,10 +2,13 @@ import moment from 'moment';
 import { motion } from 'motion/react';
 import React from 'react'
 
-const ProfressCore = ({ completedCount, lastUpdated }) => {
+const ProfressCore = ({ completedCount, totalCount, lastUpdated }) => {
   const lastUpdatedText = lastUpdated
     ? moment(lastUpdated).format('LL')
     : 'Not updated yet'
+
+  const total = totalCount || 0
+  const percentage = total > 0 ? Math.round((completedCount / total) * 100) : 0
 
   return (
     <motion.div
@@ -29,12 +32,16 @@ const ProfressCore = ({ completedCount, lastUpdated }) => {
         </motion.div>
 
         <div className="bar w-full mt-2 h-[5vh] px-2 py-2 border border-[#883bbc] flex gap-1">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <div
-              key={index}
-              className={`bar-inside w-[9%] h-full bg-[#883bbc] ${completedCount > index ? '' : 'opacity-20'}`}
-            ></div>
-          ))}
+          {total > 0
+            ? Array.from({ length: total }).map((_, index) => (
+                <div
+                  key={index}
+                  style={{ width: `${(1 / total) * 100}%` }}
+                  className={`bar-inside h-full bg-[#883bbc] ${completedCount > index ? '' : 'opacity-20'}`}
+                ></div>
+              ))
+            : <div className="w-full h-full bg-[#883bbc] opacity-10" />
+          }
         </div>
 
         <motion.article
@@ -42,7 +49,7 @@ const ProfressCore = ({ completedCount, lastUpdated }) => {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: .5, ease: [0.37, 0, 0.63, 1] }}
           className="mt-2">
-          <h2 className="text-lg font-bold">{completedCount * 10}% Work is Completed</h2>
+          <h2 className="text-lg font-bold">{percentage}% Work is Completed</h2>
           <h4 className="text-sm font-semibold opacity-70">Last updated: {lastUpdatedText}</h4>
         </motion.article>
       </motion.div>

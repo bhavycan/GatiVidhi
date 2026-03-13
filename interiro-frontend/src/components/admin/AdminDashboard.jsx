@@ -79,17 +79,17 @@ const AdminDashboard = () => {
               <h4>Welcome back to your Dashboard</h4>
             </div>
             <div className="date-create w-full flex items-center mt-[3%] justify-between">
-              <div className="date border-b-2 pb-4 border-white flex items-center w-[50%] gap-4">
+              <div className="date border-b-2 pb-4 border-white flex items-center w-[60%] gap-4">
                 <div className="icon w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#883bbc] items-center justify-center flex shrink-0">
                   <i className="ri-calendar-2-line text-2xl text-white opacity-90"></i>
                 </div>
-                <div className="date leading-5 font-bold">
+                <div className="date  leading-5 font-bold">
                   <h4>{date}</h4>
                   <h4>{day}</h4>
                 </div>
               </div>
               <div className="create flex items-center justify-center">
-                <button className='w-10 h-10 md:w-12 md:h-12 bg-[#883bbc] rounded-full flex items-center justify-center'>
+                <button onClick={() => navigate('/admin/client')} className='w-10 h-10 md:w-12 md:h-12 bg-[#883bbc] rounded-full flex items-center justify-center'>
                   <i className="ri-add-line text-2xl text-white opacity-90"></i>
                 </button>
               </div>

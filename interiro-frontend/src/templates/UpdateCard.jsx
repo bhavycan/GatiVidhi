@@ -95,7 +95,7 @@ const UpdateCard = ({ update }) => {
           </motion.figure>}
 
           <AnimatePresence mode='wait'>
-            {isTap && <ImagePortal tapNumber={tapNumber} setTap={setTap} />}
+            {isTap && <ImagePortal tapNumber={tapNumber} setTap={setTap} images={images} />}
           </AnimatePresence>
         </motion.div>
       </div>

@@ -61,7 +61,7 @@ const { showPopcard, popcard } = usePopcard();
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
     const parent = useRef(null)
 
-  return userinfo && projectinfo  && (
+  return userinfo && (
     <div className='w-screen h-screen relative overflow-hidden'>
 
       <AnimatePresence>
@@ -137,6 +137,13 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
           <section ref={parent} className='main-container w-full flex-1 relative z-10 overflow-y-auto overflow-x-hidden pb-6'>
             <section className='title w-full mt-[10%]'>
+              {!projectinfo && (
+                <div className='w-full py-6 px-4 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-center mb-6'>
+                  <i className='ri-building-2-line text-3xl text-[#883bbc] mb-2 block'></i>
+                  <h3 className='font-bold text-lg'>No project assigned yet</h3>
+                  <p className='text-sm opacity-70 mt-1'>Your project details will appear here once assigned by the team.</p>
+                </div>
+              )}
               <div className='w-full'>
                 <h1 className='text-3xl md:text-4xl w-full md:w-[70%] leading-9 uppercase font-bold'>{projectinfo?.projectName}</h1>
               </div>

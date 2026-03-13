@@ -3,8 +3,6 @@ import Login from './components/client/Login'
 import CustomButtom from './templates/CustomButtom'
 import AdminDashboard from './components/admin/AdminDashboard'
 import { Route, Routes } from 'react-router-dom'
-import OngoingProject from './components/admin/OngoingProject'
-import CompletedProject from './components/admin/CompletedProject'
 import ProjectView from './components/common/ProjectView'
 import ClientDashboard from './components/client/ClientDashboard'
 import Update from './components/client/Update'
@@ -16,6 +14,10 @@ import Chatbot from './components/client/Chatbot'
 import AdminUpdate from './components/admin/AdminUpdate'
 import AdminTickets from './components/admin/AdminTickets'
 import Gallery from './components/client/Gallery'
+import AdminClient from './components/admin/AdminClient'
+import AdminProject from './components/admin/AdminProject'
+import AdminNotes from './components/admin/AdminNotes'
+import AdminTemplates from './components/admin/AdminTemplates'
 
 const App = () => {
   return (
@@ -23,8 +25,6 @@ const App = () => {
       <Routes>
         <Route path="/user/login" element={<Login />} />
         <Route path='/admin/profile' element={<AdminDashboard />} />
-        <Route path='/admin/profile/ongoing' element={<OngoingProject />} />
-        <Route path='/admin/profile/completed' element={<CompletedProject />} />
         <Route path='/user/projectview' element={<ProjectView />} />
          <Route path='/user/profile' element={<ClientDashboard />} />
          <Route path='/user/update' element={<Update />} />
@@ -36,6 +36,10 @@ const App = () => {
             <Route path='/admin/updates' element={<AdminUpdate />} />
             <Route path='/admin/tickets' element={<AdminTickets />} />
             <Route path='/user/gallery' element={<Gallery />} />
+            <Route path='/admin/client' element={<AdminClient />} />
+            <Route path='/admin/project' element={<AdminProject />} />
+            <Route path='/admin/notes' element={<AdminNotes />} />
+            <Route path='/admin/templates' element={<AdminTemplates />} />
       </Routes>
      
 

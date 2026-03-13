@@ -32,7 +32,10 @@ const TaskBox = ({ showPopcard, projectId, startDate, endDate }) => {
   return (
     <motion.div className='first w-[30%] h-[100%] rounded-lg'>
       <div onClick={() => settaskOpen(true)} className="cursor-pointer flex items-center flex-col relative justify-center w-[100%] rounded-lg overflow-hidden h-[100%]">
-        <TaskCore />
+        <TaskCore
+          completedCount={taskData?.tasks?.filter(t => t.status === 'completed').length ?? null}
+          totalCount={taskData?.tasks?.length ?? null}
+        />
       </div>
 
       <AnimatePresence mode="wait">

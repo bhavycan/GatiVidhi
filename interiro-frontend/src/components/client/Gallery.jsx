@@ -13,7 +13,52 @@ import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
 import Counter from 'yet-another-react-lightbox/plugins/counter'
 import 'yet-another-react-lightbox/plugins/counter.css'
 
-const TASKS = ['All', 'Layout', 'PopChannel', 'Electrification', 'Ceiling', 'Furniture', 'Laminate', 'Paint', 'Lights', 'Cleaning', 'HandOver']
+const TaskFilterDropdown = ({ tasks, value, onChange }) => {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <motion.div layout className='w-full max-w-xs'>
+      <motion.div
+        layout
+        onClick={() => setOpen(!open)}
+        className='w-full text-base font-semibold bg-white/50 border border-[#883bbc] rounded-full px-4 py-2 flex items-center justify-between cursor-pointer'
+      >
+        <div className='flex items-center gap-2'>
+          <i className='ri-filter-3-line text-[#883bbc]'></i>
+          <span>{value}</span>
+        </div>
+        <motion.i animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} className='ri-arrow-down-s-line shrink-0' />
+      </motion.div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className='w-full backdrop-blur-sm overflow-hidden rounded-b-2xl border border-t-0 border-[#883bbc] bg-white/60 z-20 relative'
+          >
+            {tasks.map((task, i) => (
+              <motion.div
+                key={task}
+                onClick={() => { onChange(task); setOpen(false) }}
+                className={`w-full px-4 py-2 cursor-pointer font-semibold text-sm border-b border-[#883bbc]/30 last:border-0 flex items-center gap-2
+                  ${value === task ? 'bg-[#883bbc]/10 text-[#883bbc]' : 'hover:bg-white/40'}`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04, duration: 0.2 }}
+              >
+                {value === task && <i className='ri-check-line text-xs'></i>}
+                {task}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
 
 const Gallery = () => {
   const [isopen, setOpen] = useState(false)
@@ -38,6 +83,9 @@ const Gallery = () => {
   useEffect(() => {
     fetchUpdates()
   }, [])
+
+  // Derive task list from backend updates
+  const tasks = ['All', ...Array.from(new Set(updates.map(u => u.task).filter(Boolean)))]
 
   // Build flat list of { src, updateDate, task } filtered by activeTask
   const allPhotos = updates
@@ -102,22 +150,9 @@ const Gallery = () => {
           {/* Scrollable section */}
           <section ref={parent} className='main-container w-full flex-1 relative z-10 overflow-y-auto overflow-x-hidden pb-6'>
 
-            {/* Task filter chips */}
-            <div className='mt-[5%] flex gap-2 flex-wrap'>
-              {TASKS.map(task => (
-                <motion.button
-                  key={task}
-                  onClick={() => setActiveTask(task)}
-                  whileTap={{ scale: 0.93 }}
-                  className={`px-3 py-1 rounded-full text-sm font-semibold border transition-colors
-                    ${activeTask === task
-                      ? 'bg-[#883bbc] text-white border-[#883bbc]'
-                      : 'bg-white/50 border-[#883bbc]/40 text-black hover:border-[#883bbc]'
-                    }`}
-                >
-                  {task}
-                </motion.button>
-              ))}
+            {/* Task filter dropdown */}
+            <div className='mt-[5%]'>
+              <TaskFilterDropdown tasks={tasks} value={activeTask} onChange={setActiveTask} />
             </div>
 
             {/* Count */}

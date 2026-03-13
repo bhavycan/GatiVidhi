@@ -110,7 +110,10 @@ const Login = () => {
               </div>
             </div>
 
-            <CustomButtom text={"Login"} />
+             <div className='w-full h-[10vh] -mt-[9%] z-0 '>
+                        <CustomButtom text='Login' />
+            
+                        </div>
 
             {error && <p className="text-red-500">{error}</p>}
           </form>

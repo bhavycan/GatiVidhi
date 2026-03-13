@@ -20,7 +20,7 @@ const clampOffset = (x, y, scale, imgSize, containerSize = null) => {
   };
 };
 
-const ImagePortal = ({ tapNumber, setTap }) => {
+const ImagePortal = ({ tapNumber, setTap, images: imagesProp }) => {
   const [iscurr, setcurr] = useState(tapNumber);
   const [isMenu, setMenu] = useState(true);
   const [isZoomMode, setZoomMode] = useState(false);
@@ -206,7 +206,7 @@ const ImagePortal = ({ tapNumber, setTap }) => {
     }
   };
 
-  const images = [
+  const images = imagesProp?.length > 0 ? imagesProp : [
     "https://images.unsplash.com/photo-1629746958979-08060ed5bf0b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "https://images.unsplash.com/photo-1626367771676-96d7bf35953f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "https://images.unsplash.com/photo-1636071659185-5e2b6596a42c?q=80&w=1246&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",

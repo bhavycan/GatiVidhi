@@ -103,7 +103,12 @@ const AdminLogin = () => {
               </div>
             </div>
 
+
+            <div className='w-full h-[10vh] -mt-[9%]  '>
             <CustomButtom text='Login' />
+
+            </div>
+
 
             {error && <p className='text-red-500 font-semibold'>{error}</p>}
           </form>

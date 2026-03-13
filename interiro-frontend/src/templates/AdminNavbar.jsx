@@ -9,14 +9,16 @@ const AdminNavbar = ({ value }) => {
 
   const menuItems = [
     { label: "Dashboard",  icon: "ri-dashboard-line",       path: "/admin/profile" },
-    { label: "Ongoing",    icon: "ri-loader-line",           path: "/admin/profile/ongoing" },
-    { label: "Completed",  icon: "ri-checkbox-circle-line",  path: "/admin/profile/completed" },
   ];
 
   const actionItems = [
     { label: "Updates",  icon: "ri-refresh-line",         path: "/admin/updates" },
     { label: "Task",     icon: "ri-task-line",            path: "/admin/task" },
     { label: "Tickets",  icon: "ri-ticket-line",          path: "/admin/tickets" },
+    { label: "Client",   icon: "ri-user-add-line",        path: "/admin/client" },
+    { label: "Project",  icon: "ri-folder-add-line",      path: "/admin/project" },
+    { label: "Notes",    icon: "ri-sticky-note-line",     path: "/admin/notes" },
+    { label: "Templates", icon: "ri-layout-3-line",        path: "/admin/templates" },
   ];
 
   const handleNav = (path) => {
