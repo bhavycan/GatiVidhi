@@ -9,6 +9,9 @@ const { blacklistModel } = require("../models/blacklisttoken");
 const {projectModel} = require("../models/projectModel");
 const {reportModel} = require("../models/reportModel");
 const {updateModel} = require("../models/updateModel");
+const {taskListModel} = require("../models/taskListModel");
+const {commentModel} = require("../models/commentModel");
+const {designModel} = require("../models/designModel");
 
 module.exports.userCreateController = async (req, res) => {
   const { name, email, phone } = req.body;
@@ -77,9 +80,12 @@ module.exports.userLogInController = async(req,res)=>{
         let checkPassword = await bcrypt.compare(password,user.password);
         if(!checkPassword) return res.status(400).send("Wrong Password");
         const token = jwt.sign({email: email}, process.env.USER_JWT_SECRET);
-        res.cookie("token",token,{ httpOnly: true,
-    secure: true, 
-    sameSite: 'Strict',maxAge: 24 * 60 * 60 * 1000,});
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 24 * 60 * 60 * 1000,
+        });
         return res.status(200).send("Logged in Succesfully!!");
     } catch (error) {
         console.error(error);
@@ -118,6 +124,64 @@ module.exports.userLogOutController = async (req, res) => {
   }
 };
 
+
+module.exports.userUpdateController = async (req, res) => {
+  const { id, name, phone } = req.body;
+  if (!id || !name || !phone) return res.status(400).send('Incomplete entries');
+  try {
+    const user = await userModel.findById(id);
+    if (!user) return res.status(404).send('Client not found');
+    user.name = name;
+    user.phone = phone;
+    await user.save();
+    res.status(200).json({ message: 'Client updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+module.exports.userDeleteController = async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).send('Client ID is required');
+  try {
+    const user = await userModel.findById(id);
+    if (!user) return res.status(404).send('Client not found');
+
+    // Find the client's project
+    const project = await projectModel.findOne({ clientId: id });
+
+    if (project) {
+      const projectId = project._id;
+      // Delete all related data
+      await updateModel.deleteMany({ projectId });
+      await reportModel.deleteMany({ projectId });
+      await taskListModel.deleteMany({ projectId });
+      await commentModel.deleteMany({ projectId });
+      await designModel.deleteMany({ projectId });
+      await projectModel.deleteOne({ _id: projectId });
+    }
+
+    // Delete the user and their blacklisted tokens
+    await blacklistModel.deleteMany({});
+    await userModel.deleteOne({ _id: id });
+
+    res.status(200).send('Client and all related data deleted successfully');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+module.exports.userGetAllController = async (req, res) => {
+  try {
+    const users = await userModel.find({}).select('-password').sort({ _id: -1 }).lean();
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+};
 
 module.exports.userProfileController = async (req, res) => {
   try {

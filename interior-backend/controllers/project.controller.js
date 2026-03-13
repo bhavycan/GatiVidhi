@@ -39,8 +39,23 @@ module.exports.projectCreateController = async (req, res) => {
     const report = await reportModel.create({
       projectId : project._id,
       summary : "welcome report",
-
     })
+
+    const welcomeUpdate = await updateModel.create({
+      projectId: project._id,
+      workDone: "Welcome to Tanika Interior Design! Your project has been officially registered and our team is all set to begin. We have completed the initial site assessment and measurements, reviewed your design brief, and assigned a dedicated project manager who will oversee every stage of your transformation.",
+      workLeft: "Our design team is now preparing your personalised concept board, material palette, and 3D layout plan. Once approved, we will begin procurement and scheduling so work can commence at the earliest without any delays.",
+      notes: "This is your very first progress update — a small beginning to what will be a beautiful journey! You will receive detailed daily updates here as your project moves forward, complete with photos and task-wise breakdowns. We are excited to bring your vision to life. Welcome aboard!",
+      images: [
+        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&auto=format&fit=crop&q=80",
+      ],
+    })
+
+    project.updates.push(welcomeUpdate._id)
+    await project.save()
 
     const user = {
       name : client.name,
@@ -52,7 +67,7 @@ module.exports.projectCreateController = async (req, res) => {
 
 
 
-    res.status(200).send(project,report);
+    res.status(200).send(project);
   } catch (error) {
     console.error(error);
     res.status(500).send("Something went wrong!");
@@ -60,35 +75,37 @@ module.exports.projectCreateController = async (req, res) => {
 };
 
 module.exports.projectUpdateController = async (req, res) => {
-const { estimatedEndDate, projectName, description} = req.body;
+const { estimatedEndDate, projectName, description, status } = req.body;
   const id = req.body.id;
-  
+
   try {
     let project = await projectModel.findOne({ _id: id });
   if (!project) return res.status(400).send("Project does not exist");
+
+  const updateFields = {};
+  if (estimatedEndDate) updateFields.estimatedEndDate = estimatedEndDate;
+  if (projectName) updateFields.projectName = projectName;
+  if (description) updateFields.description = description;
+  if (status) updateFields.status = status;
+
   project = await projectModel.findOneAndUpdate(
     { _id: id },
-    {
-      estimatedEndDate: estimatedEndDate,
-      projectName,
-      description
-    },
+    updateFields,
     {new : true}
   );
 
-  await project.save();
-  res.status(200).send("Updated succesfully" + project)
+  res.status(200).json({ message: 'Updated successfully', project })
   } catch (error) {
     console.error(error)
     return res.status(500).send("Something went wrong")
   }
-  
+
 };
 
 
 module.exports.projectGetAllController = async (req, res) => {
   try {
-    const projects = await projectModel.find({}, { projectName: 1, status: 1 }).lean();
+    const projects = await projectModel.find({}).lean();
     res.status(200).json({ projects });
   } catch (error) {
     console.error(error);
@@ -117,10 +134,10 @@ const id = req.body.id;
 module.exports.getNotificationsController = async (req, res) => {
   try {
     const user = await userModel.findOne({ email: req.user.email }).lean();
-    if (!user) return res.status(404).send("User not found");
+    if (!user) return res.status(200).json({ notifications: [] });
 
     const project = await projectModel.findOne({ clientId: user._id }, { notifications: 1 }).lean();
-    if (!project) return res.status(404).send("No project found");
+    if (!project) return res.status(200).json({ notifications: [] });
 
     const notifications = [...(project.notifications || [])].reverse();
     res.status(200).json({ notifications });

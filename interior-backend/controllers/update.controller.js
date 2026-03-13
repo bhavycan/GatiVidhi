@@ -98,14 +98,15 @@ module.exports.updateTaskCountsController = async (req, res) => {
       { $group: { _id: "$task", count: { $sum: 1 } } }
     ]);
 
-    // Build a map from task name -> count
     const countMap = {};
     counts.forEach(({ _id, count }) => {
       if (_id) countMap[_id] = count;
     });
 
-    const TASKS = ['Layout', 'PopChannel', 'Electrification', 'Ceiling', 'Furniture', 'Laminate', 'Paint', 'Lights', 'Cleaning', 'HandOver'];
-    const taskCounts = TASKS.map(name => ({ name, update: countMap[name] || 0 }));
+    // Use task names from the project's task list (dynamic)
+    const taskList = await taskListModel.findOne({ projectId: project._id }).lean();
+    const taskNames = taskList?.tasks?.map(t => t.name) || [];
+    const taskCounts = taskNames.map(name => ({ name, update: countMap[name] || 0 }));
 
     res.status(200).json({ taskCounts });
   } catch (error) {
@@ -182,10 +183,10 @@ module.exports.updateGetAllAdminController = async (req, res) => {
 module.exports.updateGetAllController = async (req, res) => {
   try {
     const user = await userModel.findOne({ email: req.user.email }).lean();
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(200).json({ updates: [] });
 
     const project = await projectModel.findOne({ clientId: user._id }).lean();
-    if (!project) return res.status(404).json({ message: "No project found" });
+    if (!project) return res.status(200).json({ updates: [] });
 
     const updates = await updateModel
       .find({ projectId: project._id })
