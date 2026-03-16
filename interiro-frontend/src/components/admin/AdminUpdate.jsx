@@ -214,6 +214,33 @@ const AdminUpdate = () => {
   const [workLeft, setWorkLeft] = useState('')
   const [notes, setNotes] = useState('')
 
+  // Active rooms
+  const [activeRooms, setActiveRooms] = useState([])
+  const [roomInput, setRoomInput] = useState('')
+  const [editingRoomIdx, setEditingRoomIdx] = useState(null)
+  const [editingRoomVal, setEditingRoomVal] = useState('')
+
+  const addRoom = () => {
+    const val = roomInput.trim()
+    if (!val) return
+    setActiveRooms(prev => [...prev, val])
+    setRoomInput('')
+  }
+
+  const deleteRoom = (idx) => setActiveRooms(prev => prev.filter((_, i) => i !== idx))
+
+  const startEditRoom = (idx) => {
+    setEditingRoomIdx(idx)
+    setEditingRoomVal(activeRooms[idx])
+  }
+
+  const commitEditRoom = (idx) => {
+    const val = editingRoomVal.trim()
+    if (val) setActiveRooms(prev => prev.map((r, i) => i === idx ? val : r))
+    setEditingRoomIdx(null)
+    setEditingRoomVal('')
+  }
+
   // Unified toast
   const [toast, setToast] = useState(null)
   const showToast = (msg) => setToast(msg)
@@ -309,6 +336,7 @@ const AdminUpdate = () => {
       formData.append('workLeft', workLeft)
       formData.append('notes', notes)
       if (selectedTask) formData.append('task', selectedTask)
+      formData.append('activeRooms', JSON.stringify(activeRooms))
       uploadedImages.forEach(img => formData.append('images', img))
 
       await axios.post('http://localhost:3000/update/create', formData, {
@@ -324,6 +352,8 @@ const AdminUpdate = () => {
       setWorkDone('')
       setWorkLeft('')
       setNotes('')
+      setActiveRooms([])
+      setRoomInput('')
       setLastUpdated(null)
       showToast('update has been submitted')
     } catch (error) {
@@ -546,6 +576,87 @@ const AdminUpdate = () => {
                         placeholder='Any additional notes...'
                         className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-lg px-4 py-2 text-sm font-semibold placeholder:opacity-50 resize-none focus:outline-none focus:ring-1 focus:ring-[#883bbc]'
                       />
+                    </motion.div>
+
+                    {/* Active Rooms */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.68 }}
+                    >
+                      <label className='block text-black font-medium mb-2'>Active Rooms</label>
+
+                      {/* Add room input */}
+                      <div className='flex gap-2'>
+                        <div className='flex-1 bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
+                          <i className='ri-home-4-line text-[#883bbc]'></i>
+                          <input
+                            type='text'
+                            value={roomInput}
+                            onChange={e => setRoomInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addRoom())}
+                            placeholder='e.g. Bedroom, Hall...'
+                            className='flex-1 bg-transparent outline-none font-semibold text-sm placeholder:opacity-50'
+                          />
+                        </div>
+                        <motion.button
+                          type='button'
+                          onClick={addRoom}
+                          whileTap={{ scale: 0.9 }}
+                          className='w-10 h-10 rounded-full bg-[#883bbc] text-white flex items-center justify-center shrink-0'
+                        >
+                          <i className='ri-add-line text-lg'></i>
+                        </motion.button>
+                      </div>
+
+                      {/* Room list */}
+                      <AnimatePresence>
+                        {activeRooms.length > 0 && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            className='mt-3 space-y-2 overflow-hidden'
+                          >
+                            {activeRooms.map((room, idx) => (
+                              <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className='flex items-center gap-2 bg-white/50 border border-[#883bbc]/30 rounded-full px-4 py-2'
+                              >
+                                <div className='w-2 h-2 rounded-full bg-green-500 shrink-0'></div>
+
+                                {editingRoomIdx === idx ? (
+                                  <input
+                                    autoFocus
+                                    value={editingRoomVal}
+                                    onChange={e => setEditingRoomVal(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') commitEditRoom(idx)
+                                      if (e.key === 'Escape') setEditingRoomIdx(null)
+                                    }}
+                                    onBlur={() => commitEditRoom(idx)}
+                                    className='flex-1 bg-transparent outline-none font-semibold text-sm'
+                                  />
+                                ) : (
+                                  <span className='flex-1 font-semibold text-sm'>{room}</span>
+                                )}
+
+                                <button type='button' onClick={() => startEditRoom(idx)} className='w-6 h-6 rounded-full bg-[#883bbc]/10 flex items-center justify-center'>
+                                  <i className='ri-edit-line text-[#883bbc] text-xs'></i>
+                                </button>
+                                <button type='button' onClick={() => deleteRoom(idx)} className='w-6 h-6 rounded-full bg-red-50 border border-red-200 flex items-center justify-center'>
+                                  <i className='ri-delete-bin-line text-red-400 text-xs'></i>
+                                </button>
+                              </motion.div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </motion.div>
 
                     {/* Buttons */}

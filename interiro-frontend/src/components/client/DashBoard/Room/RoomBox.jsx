@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import RoomCore from "./RoomCore";
 import RoomTree from "./RoomTree";
 
-const RoomBox = ({ showPopcard }) => {
+const RoomBox = ({ showPopcard, activeRooms = [] }) => {
   const [roomIsOpen, setroomOpen] = useState(false);
 
   useEffect(() => {
@@ -16,17 +16,14 @@ const RoomBox = ({ showPopcard }) => {
 
   return (
     <motion.div
-      
-      className={` 
-       first   w-[30%] h-[100%] rounded-lg  `}
+      className={`first w-[30%] h-[100%] rounded-lg`}
     >
-      
-      <div onClick={() => setroomOpen(true)} className="cursor-pointer flex items-center  flex-col relative justify-center  w-[100%] rounded-lg  overflow-hidden  h-[100%] ">
-        <RoomCore />
+      <div onClick={() => setroomOpen(true)} className="cursor-pointer flex items-center flex-col relative justify-center w-[100%] rounded-lg overflow-hidden h-[100%]">
+        <RoomCore count={activeRooms.length} />
       </div>
-    
+
       <AnimatePresence mode="wait">
-        {roomIsOpen && <RoomTree setroomOpen={setroomOpen} />}
+        {roomIsOpen && <RoomTree setroomOpen={setroomOpen} rooms={activeRooms} />}
       </AnimatePresence>
     </motion.div>
   );

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import Butterfly from '../../templates/Butterfly'
 import AdminNavbar from '../../templates/AdminNavbar'
 import CustomButtom from '../../templates/CustomButtom'
+import Dropdown from '../../templates/Dropdown'
 import { usePopcard } from '../../context/PopCardContext'
 import axios from 'axios'
 
@@ -129,6 +130,30 @@ const AdminProject = () => {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(false)
   const [dataLoading, setDataLoading] = useState(true)
+
+  // Additional info state
+  const [isInfoOpen, setInfoOpen] = useState(false)
+  const [infoForm, setInfoForm] = useState({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null })
+
+  const handleInfoSubmit = async (e) => {
+    e.preventDefault()
+    const { projectId, squareFeet, totalRooms, designPdf } = infoForm
+    if (!projectId || !squareFeet || !totalRooms || !designPdf) return showPopcard('All fields required.', false, 2500)
+    try {
+      const formData = new FormData()
+      formData.append('projectId', projectId)
+      formData.append('squareFeet', squareFeet)
+      formData.append('totalRooms', totalRooms)
+      formData.append('designPdf', designPdf)
+      await axios.post('http://localhost:3000/project/additional-info', formData, { withCredentials: true })
+      showPopcard('Information saved!', true, 1500)
+      setInfoOpen(false)
+      setInfoForm({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null })
+    } catch (error) {
+      const msg = error.response?.data || 'Something went wrong.'
+      showPopcard(typeof msg === 'string' ? msg : 'Something went wrong.', false, 2500)
+    }
+  }
 
   // Update state
   const [editingId, setEditingId] = useState(null)
@@ -353,6 +378,140 @@ const AdminProject = () => {
                       </motion.button>
                     </motion.div>
 
+                  </motion.form>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+
+          {/* Additional Information */}
+          <section className='w-full relative z-10 pb-10'>
+            <h1 className='text-xl font-bold mt-[2%]'>Additional Information :</h1>
+
+            <AnimatePresence mode='wait'>
+              {!isInfoOpen && (
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height: 'auto' }}
+                  exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}
+                >
+                  <div className='px-2 py-2 rounded-lg bg-gradient-to-br mt-[2%] from-[#F7D6F3] to-transparent'>
+                    <p>Add project specs — area, rooms and generate a project brief.</p>
+                    <motion.div
+                      onClick={() => setInfoOpen(true)}
+                      className='create-button w-[50%] mt-[5%] rounded-lg flex items-center justify-center text-3xl px-1 py-2 text-white bg-[#883bbc] cursor-pointer'
+                    >
+                      <i className='ri-file-text-line'></i>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence mode='wait'>
+              {isInfoOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}
+                  transition={{ duration: 0.4, ease: 'easeInOut' }}
+                  className='border border-[#883bbc] w-full mt-[5%] backdrop-blur-sm rounded-lg'
+                >
+                  <motion.form
+                    onSubmit={handleInfoSubmit}
+                    className='px-3 py-4 space-y-4'
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {/* Project select */}
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }}>
+                      <label className='block text-black font-medium mb-2'>Select Project</label>
+                      <Dropdown
+                        option={projects.map(p => p.projectName)}
+                        placeholder='— choose a project —'
+                        onSelect={name => {
+                          const found = projects.find(p => p.projectName === name)
+                          setInfoForm(prev => ({ ...prev, projectId: found?._id || '' }))
+                        }}
+                      />
+                    </motion.div>
+
+                    {/* Square feet */}
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.42 }}>
+                      <label className='block text-black font-medium mb-2'>Total Square Feet</label>
+                      <div className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
+                        <i className='ri-ruler-2-line text-[#883bbc]'></i>
+                        <input
+                          type='number'
+                          min='0'
+                          value={infoForm.squareFeet}
+                          onChange={e => setInfoForm(p => ({ ...p, squareFeet: e.target.value }))}
+                          placeholder='e.g. 1200'
+                          className='flex-1 bg-transparent outline-none font-semibold text-base placeholder:opacity-50'
+                        />
+                        <span className='text-sm opacity-50 font-semibold shrink-0'>sq ft</span>
+                      </div>
+                    </motion.div>
+
+                    {/* Total rooms */}
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.49 }}>
+                      <label className='block text-black font-medium mb-2'>Total Rooms</label>
+                      <div className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
+                        <i className='ri-home-3-line text-[#883bbc]'></i>
+                        <input
+                          type='number'
+                          min='0'
+                          value={infoForm.totalRooms}
+                          onChange={e => setInfoForm(p => ({ ...p, totalRooms: e.target.value }))}
+                          placeholder='e.g. 4'
+                          className='flex-1 bg-transparent outline-none font-semibold text-base placeholder:opacity-50'
+                        />
+                        <span className='text-sm opacity-50 font-semibold shrink-0'>rooms</span>
+                      </div>
+                    </motion.div>
+
+                    {/* PDF upload */}
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.56 }}>
+                      <label className='block text-black font-medium mb-2'>Upload Design PDF</label>
+                      <label className='w-full flex items-center gap-3 bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-2xl px-4 py-4 cursor-pointer'>
+                        <i className='ri-file-pdf-2-line text-2xl text-[#883bbc] shrink-0'></i>
+                        <div className='flex-1 min-w-0'>
+                          {infoForm.designPdf
+                            ? <p className='font-semibold text-sm truncate'>{infoForm.designPdf.name}</p>
+                            : <p className='font-semibold text-sm opacity-50'>Tap to choose a PDF file</p>
+                          }
+                          {infoForm.designPdf && (
+                            <p className='text-xs opacity-40 mt-0.5'>{(infoForm.designPdf.size / 1024).toFixed(0)} KB</p>
+                          )}
+                        </div>
+                        {infoForm.designPdf
+                          ? <i className='ri-checkbox-circle-fill text-green-500 text-xl shrink-0'></i>
+                          : <i className='ri-upload-2-line text-[#883bbc] text-xl shrink-0'></i>
+                        }
+                        <input
+                          type='file'
+                          accept='application/pdf'
+                          className='hidden'
+                          onChange={e => setInfoForm(p => ({ ...p, designPdf: e.target.files[0] || null }))}
+                        />
+                      </label>
+                    </motion.div>
+
+                    <motion.div className='flex gap-4 pt-2' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.63 }}>
+                      <button
+                        type='button'
+                        onClick={() => { setInfoOpen(false); setInfoForm({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null }) }}
+                        className='flex-1 bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-md px-4 py-3 font-medium'
+                      >Cancel</button>
+                      <motion.button
+                        type='submit'
+                        className='flex-1 rounded-md px-4 py-3 bg-[#883bbc] text-white font-medium flex items-center justify-center gap-2'
+                        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      >
+                        <i className='ri-save-line'></i><span>Save</span>
+                      </motion.button>
+                    </motion.div>
                   </motion.form>
                 </motion.div>
               )}

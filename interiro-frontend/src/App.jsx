@@ -18,6 +18,10 @@ import AdminClient from './components/admin/AdminClient'
 import AdminProject from './components/admin/AdminProject'
 import AdminNotes from './components/admin/AdminNotes'
 import AdminTemplates from './components/admin/AdminTemplates'
+import AdminMaterial from './components/admin/AdminMaterial'
+import WorkerLogin from './worker/WorkerLogin'
+import WorkerDashboard from './worker/WorkerDashboard'
+import AdminWorker from './components/admin/AdminWorker'
 
 const App = () => {
   return (
@@ -40,6 +44,10 @@ const App = () => {
             <Route path='/admin/project' element={<AdminProject />} />
             <Route path='/admin/notes' element={<AdminNotes />} />
             <Route path='/admin/templates' element={<AdminTemplates />} />
+            <Route path='/admin/material' element={<AdminMaterial />} />
+            <Route path='/worker/login' element={<WorkerLogin />} />
+            <Route path='/worker/profile' element={<WorkerDashboard />} />
+            <Route path='/admin/worker' element={<AdminWorker />} />
       </Routes>
      
 

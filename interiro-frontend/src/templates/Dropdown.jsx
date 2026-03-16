@@ -1,20 +1,20 @@
 import { AnimatePresence, motion } from 'motion/react'
 import React, { useEffect, useState } from 'react'
 
-const Dropdown = ({option}) => {
-    
+const Dropdown = ({option, onSelect, placeholder}) => {
+
 const [isclick, setclick] = useState(false)
-      const [text,settext] = useState("Short By")
-     
+      const [text,settext] = useState(placeholder || "Short By")
+
   return (
          <motion.div className="dropdown mt-[2%] relative z-50">
                 <div onClick={() => setclick(!isclick)} className="w-full text-lg font-semibold bg-gradient-to-tl from-[#F7D6F3] to-transparent border-1 border-[#883bbc] rounded-full px-4  py-2 items-center flex justify-between "><h1>{text}</h1>
                 {isclick? <i class="ri-arrow-up-s-line"></i>: <i class="ri-arrow-down-s-line"></i>}
                 </div>
-                
+
                 <AnimatePresence>
                 {isclick && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
@@ -25,7 +25,7 @@ const [isclick, setclick] = useState(false)
                             return(
                                 <motion.h1
                                     key={item}
-                                    onClick={() => {settext(item); setclick(false)}}
+                                    onClick={() => {settext(item); setclick(false); onSelect && onSelect(item)}}
                                     className='w-full text-lg font-semibold opacity-70 px-2 py-1 border-b-1 border-l-1 border-r-1 border-[#883bbc] cursor-pointer hover:bg-white/10'
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}

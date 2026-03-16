@@ -3,21 +3,27 @@ import { div } from 'motion/react-client'
 import React, { useState } from 'react'
 import CallMessage from '../Portals/CallMessage'
 import { usePopcard } from '../context/PopCardContext'
+import axios from 'axios'
 
-const CommentBox = ({isComOpen,setComOpen, isType, setType}) => {
+const CommentBox = ({isComOpen, setComOpen, isType, setType, commentText, setCommentText}) => {
  const { showPopcard, popcard } = usePopcard();
   const [isMessageOpen, setMessageOpen] = useState(false)
- 
+
   const textmessage = "Thank You for your valuable feedback! Highly appreciate it."
 
-  const handleSentMessage = () => {
+  const handleSentMessage = async () => {
     if(isType){
-      setComOpen(false)
-      setMessageOpen(true)
-      showPopcard( "Sent!", true)
-      setType(false)
-    } 
-   
+      try {
+        await axios.post('http://localhost:3000/comment/create', { note: commentText, priorityLevel: 'normal' }, { withCredentials: true })
+        setComOpen(false)
+        setMessageOpen(true)
+        showPopcard("Sent!", true)
+        setType(false)
+        setCommentText('')
+      } catch {
+        showPopcard("Something went wrong.", false)
+      }
+    }
   }
 
 

@@ -19,6 +19,8 @@ const AdminNavbar = ({ value }) => {
     { label: "Project",  icon: "ri-folder-add-line",      path: "/admin/project" },
     { label: "Notes",    icon: "ri-sticky-note-line",     path: "/admin/notes" },
     { label: "Templates", icon: "ri-layout-3-line",        path: "/admin/templates" },
+    { label: "Material",  icon: "ri-hammer-line",           path: "/admin/material" },
+    { label: "Workers",   icon: "ri-user-settings-line",    path: "/admin/worker" },
   ];
 
   const handleNav = (path) => {

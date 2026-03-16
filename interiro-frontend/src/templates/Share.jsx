@@ -2,9 +2,8 @@ import { AnimatePresence, motion } from 'motion/react';
 import React, { useEffect, useState } from 'react'
 import { usePopcard } from '../context/PopCardContext';
 
-const Share = ({ update }) => {
+const Share = ({ update, isShareOpen, setShareOpen }) => {
   const { showPopcard } = usePopcard();
-  const [isShareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const media = [
@@ -66,21 +65,19 @@ const Share = ({ update }) => {
   useEffect(() => {
     if (isShareOpen) {
       showPopcard("Share");
+      document.body.style.overflow = 'hidden';
     } else {
       showPopcard("", false);
+      document.body.style.overflow = '';
     }
     return () => {
       showPopcard("", false);
+      document.body.style.overflow = '';
     };
   }, [isShareOpen]);
 
   return (
-    <>
-      <button onClick={() => setShareOpen(true)} className='w-[50%] px-2 py-2 bg-[#883bbc] text-white rounded-md h-full'>
-        <i className="ri-share-fill text-2xl"></i>
-      </button>
-
-      <AnimatePresence>
+    <AnimatePresence>
         {isShareOpen && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -88,7 +85,7 @@ const Share = ({ update }) => {
             exit={{ opacity: 0 }}
             onClick={() => setShareOpen(false)}
             transition={{ duration: .2, ease: "easeInOut" }}
-            className='fixed inset-0 z-10 px-4 bg-gradient-to-tr from-[#F7D6F3] to-transparent flex justify-center items-end bg-opacity-90'>
+            className='fixed inset-0 z-50 px-4 bg-gradient-to-tr from-[#F7D6F3] to-transparent flex justify-center items-end bg-opacity-90'>
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
@@ -130,8 +127,7 @@ const Share = ({ update }) => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
-    </>
+    </AnimatePresence>
   );
 };
 

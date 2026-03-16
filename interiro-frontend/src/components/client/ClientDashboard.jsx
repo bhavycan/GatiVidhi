@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { useEffect, useRef, useState } from 'react'
 import UpdateCard from '../../templates/UpdateCard';
+import Share from '../../templates/Share';
 import IssueWindow from '../../templates/IssueWindow';
 import ReportSummary from '../../templates/ReportSummary';
 import Navbar from '../../templates/Navbar';
@@ -28,6 +29,7 @@ const { showPopcard, popcard } = usePopcard();
     const [lastupdate, setlastUpdate] = useState(null)
     const [lastreport, setLastReport] = useState(null)
     const [isopen, setOpen] = useState(false)
+    const [isShareOpen, setShareOpen] = useState(false)
     const [isNotification,setNotification] = useState(false)
     const [notifCount, setNotifCount] = useState(0)
     const startingDay = moment(projectinfo?.startDate).format("Do MMMM YYYY");
@@ -63,6 +65,7 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
   return userinfo && (
     <div className='w-screen h-screen relative overflow-hidden'>
+      <Share update={lastupdate} isShareOpen={isShareOpen} setShareOpen={setShareOpen} />
 
       <AnimatePresence>
         {popcard.visible && <motion.div
@@ -173,7 +176,7 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
               <div className="sub-stat mt-4 w-full h-24 md:h-28 flex items-center justify-between gap-2">
                 <UpdateBox showPopcard={showPopcard} />
                 <TaskBox showPopcard={showPopcard} projectId={projectinfo?._id} startDate={projectinfo?.startDate} endDate={projectinfo?.estimatedEndDate} />
-                <RoomBox showPopcard={showPopcard} />
+                <RoomBox showPopcard={showPopcard} activeRooms={lastupdate?.activeRooms || []} />
               </div>
             </section>
 
@@ -184,7 +187,7 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
               <h2 className='w-full flex items-center justify-start text-lg font-bold'>Recent Update</h2>
             </div>
             <div className="card w-full mt-[2%]">
-              <UpdateCard update={lastupdate} />
+              <UpdateCard update={lastupdate} setShareOpen={setShareOpen} />
             </div>
 
             <div className='w-full mt-[2%] bg-white rounded-lg border border-neutral-300 font-semibold opacity-70 text-lg px-2 py-2 flex items-center justify-center'>

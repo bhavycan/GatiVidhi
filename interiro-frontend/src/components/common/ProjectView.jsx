@@ -1,25 +1,21 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Butterfly from "../../templates/Butterfly";
 import PdfViewer from "../../templates/PdfViewer";
 import Material from "./Material";
 import Navbar from "../../templates/Navbar";
 import { AnimatePresence, motion } from "motion/react";
+import axios from "axios";
 
 const ProjectView = () => {
-  const images = [
-    "https://images.unsplash.com/photo-1629746958979-08060ed5bf0b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1626367771676-96d7bf35953f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1636071659185-5e2b6596a42c?q=80&w=1246&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  ];
-
-  const [isclick, setclick] = useState(0);
   const [isopen, setOpen] = useState(false);
-  const src =
-    "https://drive.google.com/file/d/1itead-F4Sv2P-h-JvpUHsFLbZz_GWzTg/view";
+  const [project, setProject] = useState(null);
   const parent = useRef(null);
-  const handleClick = () => {
-    setclick((prev) => (prev + 1) % images.length);
-  };
+
+  useEffect(() => {
+    axios.get("http://localhost:3000/user/profile", { withCredentials: true })
+      .then(({ data }) => setProject(data?.project))
+      .catch(console.error);
+  }, []);
 
   return (
     <div ref={parent} className="w-screen min-h-screen relative overflow-hidden">
@@ -60,24 +56,19 @@ const ProjectView = () => {
             <section className="title w-full mt-[10%]">
               <div className="w-full">
                 <h1 className="text-3xl md:text-4xl w-full leading-9 uppercase font-bold">
-                  Malabar Exotica
+                  {project?.projectName || '—'}
                 </h1>
-              </div>
-              <div className="sub-text opacity-80 mt-[2%] text-sm">
-                <h4 className="leading-5">
-                  B203 Akash Residency near Dev city, Opp Nirman Tower. Ahmedabd, Gujarat, India
-                </h4>
               </div>
             </section>
 
             <div className="stat w-full mt-[2%] rounded-lg">
               <div className="stat-1 w-full py-2 bg-gradient-to-tr from-[#F7D6F3] to-transparent px-2 flex rounded-lg backdrop-blur-lg items-center justify-between">
                 <h1 className="text-md font-bold opacity-60">Total Carpet Area:</h1>
-                <h2 className="text-lg font-semibold opacity-80">1200sq</h2>
+                <h2 className="text-lg font-semibold opacity-80">{project?.squareFeet ? `${project.squareFeet} sq ft` : '—'}</h2>
               </div>
               <div className="stat-1 w-full py-2 bg-gradient-to-bl from-[#F7D6F3] to-transparent px-2 flex rounded-lg backdrop-blur-lg items-center justify-between mt-[1%]">
-                <h1 className="text-md font-bold opacity-60">Total BHK:</h1>
-                <h2 className="text-lg font-semibold opacity-80">3.5</h2>
+                <h1 className="text-md font-bold opacity-60">Total Rooms:</h1>
+                <h2 className="text-lg font-semibold opacity-80">{project?.totalRooms ?? '—'}</h2>
               </div>
             </div>
 
@@ -90,12 +81,25 @@ const ProjectView = () => {
                   Design
                 </h2>
               </div>
-              <div className="pdg-viewer w-full min-h-[60vh] mt-[2%] bg-red-500">
-                <PdfViewer pdfUrl={src} />
-              </div>
-              <div className="download-button w-full px-2 py-2 mt-[2%] bg-[#883bbc] rounded-lg flex items-center justify-center font-semibold text-white text-lg">
-                Download
-              </div>
+              {project?.designPdfUrl ? (
+                <>
+                  <div className="pdg-viewer w-full min-h-[60vh] mt-[2%]">
+                    <PdfViewer pdfUrl={project.designPdfUrl} />
+                  </div>
+                  <a
+                    href={project.designPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="download-button w-full px-2 py-2 mt-[2%] bg-[#883bbc] rounded-lg flex items-center justify-center font-semibold text-white text-lg"
+                  >
+                    Download
+                  </a>
+                </>
+              ) : (
+                <div className="w-full min-h-[20vh] mt-[2%] rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent flex items-center justify-center">
+                  <p className="text-sm font-semibold opacity-50">No design PDF uploaded yet.</p>
+                </div>
+              )}
             </section>
 
             <section className="w-full mt-[10%]">
