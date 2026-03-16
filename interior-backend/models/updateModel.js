@@ -35,6 +35,10 @@ const updateSchema = new Schema({
     type: String,
     default: null,
   },
+  activeRooms: {
+    type: [String],
+    default: [],
+  },
   createdAt: {
     type: Date,
     default: Date.now,

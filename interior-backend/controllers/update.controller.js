@@ -6,7 +6,7 @@ const uploadImage = require('../utils/cloudinary.multer');
 
 
 module.exports.updateCreateController = async(req,res)=>{
-    const {projectName , workDone, workLeft, notes, task} = req.body;
+    const {projectName , workDone, workLeft, notes, task, activeRooms} = req.body;
     if(!projectName || !workDone || !workLeft || !notes) {return res.status(400).send("Invalid Entry")}
     const images = req.files
     if(!images) return res.status(400).send("Image Does not exist")
@@ -32,7 +32,8 @@ try {
         workLeft,
         notes,
         task: task || null,
-        images : imageUrls
+        images : imageUrls,
+        activeRooms: Array.isArray(activeRooms) ? activeRooms : (activeRooms ? JSON.parse(activeRooms) : [])
     })
 
     project.updates.push(update._id);

@@ -1,4 +1,5 @@
 const path = require('path')
+const cloudinary = require('cloudinary').v2;
 const { projectModel } = require("../models/projectModel");
 const {reportModel} = require("../models/reportModel");
 const { updateModel } = require("../models/updateModel");
@@ -160,6 +161,36 @@ module.exports.clearNotificationsController = async (req, res) => {
   }
 };
 
+
+module.exports.projectAdditionalInfoController = async (req, res) => {
+  const { projectId, squareFeet, totalRooms } = req.body;
+  if (!projectId || !squareFeet || !totalRooms) return res.status(400).send('Incomplete entries');
+
+  try {
+    const project = await projectModel.findById(projectId);
+    if (!project) return res.status(404).send('Project not found');
+
+    let designPdfUrl;
+    if (req.file) {
+      const b64 = Buffer.from(req.file.buffer).toString('base64');
+      const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+      const result = await cloudinary.uploader.upload(dataURI, {
+        public_id: `design_${projectId}`,
+        resource_type: 'raw',
+      });
+      designPdfUrl = result.secure_url;
+    }
+
+    const updateFields = { squareFeet: Number(squareFeet), totalRooms: Number(totalRooms) };
+    if (designPdfUrl) updateFields.designPdfUrl = designPdfUrl;
+
+    await projectModel.findByIdAndUpdate(projectId, updateFields);
+    res.status(200).send('Additional info saved');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Something went wrong');
+  }
+};
 
 module.exports.DeleteNotificationsController = async (req, res) => {
   try {

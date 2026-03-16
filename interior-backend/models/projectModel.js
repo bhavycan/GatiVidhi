@@ -16,7 +16,10 @@ const projectSchema = new Schema({
     message: { type: String },
     createdAt: { type: Date, default: Date.now },
     read: { type: Boolean, default: false }
-  }]
+  }],
+  squareFeet: { type: Number },
+  totalRooms: { type: Number },
+  designPdfUrl: { type: String },
 })
 
 

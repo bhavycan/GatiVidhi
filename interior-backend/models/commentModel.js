@@ -9,8 +9,8 @@ const commentSchema = new Schema({
   },
   priorityLevel: {
     type: String,
-    enum: ['low', 'medium', 'high'],
-    default: 'medium',
+    enum: ['low', 'normal', 'medium', 'high'],
+    default: 'normal',
   },
   receivedDate: {
     type: Date,

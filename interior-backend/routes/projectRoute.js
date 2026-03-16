@@ -1,7 +1,8 @@
 const express = require("express");
 const adminAuthentification = require("../middlewares/adminAuthentification");
 const userAuthentification = require("../middlewares/userAuthentification");
-const { projectCreateController, projectUpdateController, projectDeleteController, DeleteNotificationsController, projectGetAllController, getNotificationsController, clearNotificationsController } = require("../controllers/project.controller");
+const upload = require('../config/multer');
+const { projectCreateController, projectUpdateController, projectDeleteController, DeleteNotificationsController, projectGetAllController, getNotificationsController, clearNotificationsController, projectAdditionalInfoController } = require("../controllers/project.controller");
 
 const route = express.Router();
 
@@ -16,4 +17,5 @@ route.get('/all', adminAuthentification, projectGetAllController)
 route.get('/notifications', userAuthentification, getNotificationsController);
 route.post('/notifications/clear', userAuthentification, clearNotificationsController);
 route.get('/notifications/delete/:index', userAuthentification, DeleteNotificationsController);
+route.post('/additional-info', adminAuthentification, upload.single('designPdf'), projectAdditionalInfoController);
 module.exports = route;
