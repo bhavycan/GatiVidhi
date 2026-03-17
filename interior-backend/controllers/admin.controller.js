@@ -1,4 +1,8 @@
 const { adminModel } = require("../models/adminModel");
+const { taskListModel } = require("../models/taskListModel");
+const { projectModel } = require("../models/projectModel");
+const { updateModel } = require("../models/updateModel");
+const { commentModel } = require("../models/commentModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -40,3 +44,74 @@ module.exports.adminLogOutController = async(req,res)=>{
             res.status(500).send("Something wend wrong!")
         }
 }
+
+module.exports.adminNotificationsController = async (req, res) => {
+  try {
+    const now = new Date();
+    const twoDaysAgo = new Date(now - 2 * 24 * 60 * 60 * 1000);
+    const notifications = [];
+
+    // 1. Overdue tasks — date is set, date <= now, status !== 'completed'
+    const taskLists = await taskListModel
+      .find()
+      .populate('projectId', 'projectName status');
+
+    taskLists.forEach(list => {
+      if (!list.projectId || list.projectId.status !== 'ongoing') return;
+      list.tasks.forEach(task => {
+        if (task.date && new Date(task.date) <= now && task.status !== 'completed') {
+          notifications.push({
+            type: 'task',
+            message: `"${task.name}" is overdue`,
+            projectName: list.projectId.projectName,
+            projectId: list.projectId._id,
+            date: task.date,
+          });
+        }
+      });
+    });
+
+    // 2. Ongoing projects with no update in the last 2 days
+    const ongoingProjects = await projectModel
+      .find({ status: 'ongoing' })
+      .select('_id projectName');
+
+    for (const project of ongoingProjects) {
+      const recentUpdate = await updateModel.findOne({
+        projectId: project._id,
+        createdAt: { $gte: twoDaysAgo },
+      });
+      if (!recentUpdate) {
+        notifications.push({
+          type: 'update',
+          message: 'No update posted in the last 2 days',
+          projectName: project.projectName,
+          projectId: project._id,
+        });
+      }
+    }
+
+    // 3. Unresolved tickets
+    const openTickets = await commentModel
+      .find({ resolved: false })
+      .populate('projectId', 'projectName')
+      .sort({ receivedDate: -1 });
+
+    openTickets.forEach(t => {
+      notifications.push({
+        type: 'ticket',
+        message: t.note.length > 60 ? t.note.slice(0, 60) + '…' : t.note,
+        projectName: t.projectId?.projectName || 'Unknown',
+        projectId: t.projectId?._id,
+        ticketId: t._id,
+        priority: t.priorityLevel,
+        date: t.receivedDate,
+      });
+    });
+
+    return res.status(200).json({ notifications, count: notifications.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};

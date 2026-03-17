@@ -6,25 +6,31 @@ const uploadImage = require('../utils/cloudinary.multer');
 
 
 module.exports.updateCreateController = async(req,res)=>{
-    const {projectName , workDone, workLeft, notes, task, activeRooms} = req.body;
+    const {projectName , workDone, workLeft, notes, task, activeRooms, existingImages} = req.body;
     if(!projectName || !workDone || !workLeft || !notes) {return res.status(400).send("Invalid Entry")}
-    const images = req.files
-    if(!images) return res.status(400).send("Image Does not exist")
-
 
 try {
     let project = await projectModel.findOne({projectName : projectName});
     if(!project) return res.status(400).send("The Project does Not exist");
     const projectId = project._id;
 
-    const imageUrls = await Promise.all(
-        req.files.map(async(file)=>{
+    // Upload any new files
+    const uploadedUrls = await Promise.all(
+        (req.files || []).map(async(file)=>{
             const b64 = Buffer.from(file.buffer).toString("base64");
           let dataURI = "data:" + file.mimetype + ";base64," + b64;
            const { secure_url } = await uploadImage(dataURI, projectName);
         return secure_url;
         })
     )
+
+    // Merge with any pre-existing URLs (from worker updates)
+    const existingUrls = existingImages
+      ? (Array.isArray(existingImages) ? existingImages : [existingImages])
+      : [];
+    const imageUrls = [...existingUrls, ...uploadedUrls];
+
+    if (imageUrls.length < 1) return res.status(400).send("At least one image is required");
 
     const update = await updateModel.create({
         projectId : projectId,

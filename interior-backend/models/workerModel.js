@@ -12,6 +12,11 @@ const workerSchema = new Schema({
   updateImages: { type: [String], default: [] },
   date: { type: Date, default: Date.now },
   notes: { type: String },
+  notifications: [{
+    message: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    read: { type: Boolean, default: false },
+  }],
 });
 
 const validateWorker = (worker) => {

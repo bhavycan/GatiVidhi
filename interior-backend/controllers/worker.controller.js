@@ -2,7 +2,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const { workerModel } = require('../models/workerModel');
+const { workerUpdateModel } = require('../models/workerUpdateModel');
 const { projectModel } = require('../models/projectModel');
+const uploadImage = require('../utils/cloudinary.multer');
 const generatePassword = require('../utils/passwordGenerator');
 const sendEmail = require('../utils/emailNotification');
 
@@ -123,6 +125,150 @@ module.exports.workerProfileController = async (req, res) => {
     const projects = worker.assignedProjectId ? [worker.assignedProjectId] : [];
 
     res.status(200).send({ worker, projects });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+// Worker submits an update (images + notes) for a project
+module.exports.workerSubmitUpdateController = async (req, res) => {
+  const { projectId, notes } = req.body;
+  if (!projectId) return res.status(400).send('projectId is required');
+
+  try {
+    const worker = await workerModel.findOne({ email: req.worker.email });
+    if (!worker) return res.status(404).send('Worker not found');
+
+    const imageUrls = await Promise.all(
+      (req.files || []).map(async (file) => {
+        const b64 = Buffer.from(file.buffer).toString('base64');
+        const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
+        const { secure_url } = await uploadImage(dataURI, `worker_${worker._id}_${Date.now()}`);
+        return secure_url;
+      })
+    );
+
+    const update = await workerUpdateModel.create({
+      workerId: worker._id,
+      projectId,
+      notes: notes || '',
+      updateImages: imageUrls,
+    });
+
+    res.status(201).json({ update });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+// Worker fetches today's update for a project
+module.exports.workerTodayUpdateController = async (req, res) => {
+  const { projectId } = req.params;
+  try {
+    const worker = await workerModel.findOne({ email: req.worker.email });
+    if (!worker) return res.status(404).send('Worker not found');
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const update = await workerUpdateModel.findOne({
+      workerId: worker._id,
+      projectId,
+      date: { $gte: start, $lte: end },
+    }).sort({ date: -1 });
+
+    res.status(200).json({ update: update || null });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+// Admin fetches all worker updates for a project from the last 24 hours
+module.exports.getWorkerUpdatesForProjectController = async (req, res) => {
+  const { projectId } = req.params;
+  try {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const updates = await workerUpdateModel
+      .find({ projectId, date: { $gte: since } })
+      .populate('workerId', 'name email')
+      .sort({ date: -1 });
+
+    res.status(200).json({ updates });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+// Admin marks a worker update as "used"
+module.exports.useWorkerUpdateController = async (req, res) => {
+  const { updateId } = req.params;
+  try {
+    const update = await workerUpdateModel.findByIdAndUpdate(
+      updateId,
+      { status: 'used' },
+      { new: true }
+    );
+    if (!update) return res.status(404).send('Update not found');
+    res.status(200).json({ update });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+// Admin requests a retake — marks update and notifies worker
+module.exports.retakeWorkerUpdateController = async (req, res) => {
+  const { updateId } = req.params;
+  try {
+    const update = await workerUpdateModel.findByIdAndUpdate(
+      updateId,
+      { status: 'retake' },
+      { new: true }
+    ).populate('workerId');
+
+    if (!update) return res.status(404).send('Update not found');
+
+    await workerModel.findByIdAndUpdate(update.workerId._id, {
+      $push: {
+        notifications: {
+          message: 'Admin has requested a retake for your latest update. Please re-upload the photos.',
+        },
+      },
+    });
+
+    res.status(200).json({ update });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+// Worker fetches their notifications
+module.exports.workerNotificationsController = async (req, res) => {
+  try {
+    const worker = await workerModel.findOne({ email: req.worker.email }).select('notifications');
+    if (!worker) return res.status(404).send('Worker not found');
+    res.status(200).json({ notifications: worker.notifications });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+// Worker marks all notifications as read
+module.exports.markWorkerNotificationsReadController = async (req, res) => {
+  try {
+    await workerModel.updateOne(
+      { email: req.worker.email },
+      { $set: { 'notifications.$[].read': true } }
+    );
+    res.status(200).send('Marked as read');
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
