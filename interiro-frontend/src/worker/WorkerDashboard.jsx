@@ -20,6 +20,8 @@ const WorkerDashboard = () => {
   const [previews, setPreviews] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [lightbox, setLightbox] = useState(null);
 
   const fetchProfile = async () => {
     try {
@@ -31,8 +33,23 @@ const WorkerDashboard = () => {
     }
   };
 
+  const fetchNotifications = async () => {
+    try {
+      const { data } = await axios.get('http://localhost:3000/worker/notifications', { withCredentials: true });
+      setNotifications((data?.notifications || []).filter(n => !n.read));
+    } catch (_) {}
+  };
+
+  const dismissNotifications = async () => {
+    try {
+      await axios.post('http://localhost:3000/worker/notifications/read', {}, { withCredentials: true });
+      setNotifications([]);
+    } catch (_) {}
+  };
+
   useEffect(() => {
     fetchProfile();
+    fetchNotifications();
   }, []);
 
   const handleProjectSelect = async (projectName) => {
@@ -55,13 +72,34 @@ const WorkerDashboard = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
-    setPreviews(files.map(f => URL.createObjectURL(f)));
+    setImages(prev => [...prev, ...files]);
+    setPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
+    e.target.value = '';
+  };
+
+  const deletePhoto = (index) => {
+    URL.revokeObjectURL(previews[index]);
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const replacePhoto = (index, file) => {
+    URL.revokeObjectURL(previews[index]);
+    const newPreviews = [...previews];
+    const newImages = [...images];
+    newPreviews[index] = URL.createObjectURL(file);
+    newImages[index] = file;
+    setPreviews(newPreviews);
+    setImages(newImages);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedProject) return;
+    if (images.length < 3) {
+      setError('Please upload at least 3 site photos.');
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {
@@ -91,6 +129,36 @@ const WorkerDashboard = () => {
 
   return (
     <div className='w-screen h-screen relative overflow-hidden'>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightbox(null)}
+            className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4'
+          >
+            <motion.img
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              src={lightbox}
+              alt='preview'
+              onClick={e => e.stopPropagation()}
+              className='max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl'
+            />
+            <button
+              onClick={() => setLightbox(null)}
+              className='absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl'
+            >
+              <i className='ri-close-line'></i>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Background */}
       <section className='overflow-hidden -z-10'>
@@ -127,6 +195,35 @@ const WorkerDashboard = () => {
 
           {/* Scrollable content */}
           <section ref={parent} className='w-full flex-1 relative z-10 overflow-y-auto overflow-x-hidden pb-6'>
+
+            {/* Retake notifications */}
+            <AnimatePresence>
+              {notifications.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className='w-full mt-[6%] px-4 py-4 rounded-2xl bg-red-50 border border-red-300'
+                >
+                  <div className='flex items-start justify-between gap-3'>
+                    <div className='flex items-start gap-3'>
+                      <div className='w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0'>
+                        <i className='ri-refresh-line text-red-500 text-lg'></i>
+                      </div>
+                      <div>
+                        <p className='font-bold text-sm text-red-600'>Retake Requested</p>
+                        {notifications.map((n, i) => (
+                          <p key={i} className='text-sm opacity-80 leading-5 mt-0.5'>{n.message}</p>
+                        ))}
+                      </div>
+                    </div>
+                    <button onClick={dismissNotifications} className='shrink-0 text-red-400 active:scale-90 transition-transform'>
+                      <i className='ri-close-line text-xl'></i>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Worker info card */}
             {workerInfo && (
@@ -203,7 +300,14 @@ const WorkerDashboard = () => {
                       {todayUpdate.updateImages?.length > 0 && (
                         <div className='flex gap-2 overflow-x-auto pb-2 mb-3'>
                           {todayUpdate.updateImages.map((src, i) => (
-                            <img key={i} src={src} alt='update' className='w-20 h-20 rounded-lg object-cover shrink-0 border border-white/30' />
+                            <div key={i} className='relative shrink-0 w-20 h-20'>
+                              <img
+                                src={src}
+                                alt='update'
+                                onClick={() => setLightbox(src)}
+                                className='w-full h-full rounded-lg object-cover border border-white/30 cursor-pointer'
+                              />
+                            </div>
                           ))}
                         </div>
                       )}
@@ -244,29 +348,45 @@ const WorkerDashboard = () => {
                           />
                         </div>
 
-                        {/* Image upload */}
+                        {/* Image upload — editable grid */}
                         <div className='w-full'>
-                          <label className='w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[#883bbc] bg-gradient-to-tl from-[#F7D6F3] to-transparent font-semibold cursor-pointer active:scale-95 transition-transform'>
-                            <i className='ri-image-add-line text-2xl text-[#883bbc]'></i>
-                            <span className='text-base opacity-80'>
-                              {images.length > 0 ? `${images.length} photo(s) selected` : 'Upload site photos'}
-                            </span>
-                            <input
-                              type='file'
-                              accept='image/*'
-                              multiple
-                              className='hidden'
-                              onChange={handleImageChange}
-                            />
-                          </label>
-
-                          {previews.length > 0 && (
-                            <div className='flex gap-2 overflow-x-auto mt-3 pb-2'>
-                              {previews.map((src, i) => (
-                                <img key={i} src={src} alt='preview' className='w-20 h-20 rounded-lg object-cover shrink-0 border border-white/30' />
-                              ))}
-                            </div>
-                          )}
+                          <p className='text-sm font-semibold opacity-70 mb-2'>
+                            Photos (min. 3) · {images.length} selected
+                            {images.length > 0 && images.length < 3 && (
+                              <span className='text-red-400 ml-1'>— need {3 - images.length} more</span>
+                            )}
+                          </p>
+                          <div className='flex gap-2 overflow-x-auto pb-2'>
+                            {previews.map((src, i) => (
+                              <div key={i} className='relative shrink-0 w-20 h-20'>
+                                <img
+                                  src={src}
+                                  alt='preview'
+                                  onClick={() => setLightbox(src)}
+                                  className='w-full h-full rounded-lg object-cover border border-white/30 cursor-pointer'
+                                />
+                                {/* Delete */}
+                                <button
+                                  type='button'
+                                  onClick={() => deletePhoto(i)}
+                                  className='absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs'
+                                >
+                                  <i className='ri-close-line'></i>
+                                </button>
+                                {/* Replace */}
+                                <label className='absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'>
+                                  <i className='ri-arrow-left-right-line'></i>
+                                  <input type='file' accept='image/*' className='hidden' onChange={e => { if (e.target.files[0]) replacePhoto(i, e.target.files[0]); e.target.value = ''; }} />
+                                </label>
+                              </div>
+                            ))}
+                            {/* Add slot */}
+                            <label className='shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'>
+                              <i className='ri-image-add-line text-2xl text-[#883bbc] opacity-60'></i>
+                              <span className='text-[10px] font-semibold opacity-50 mt-0.5'>Add</span>
+                              <input type='file' accept='image/*' multiple className='hidden' onChange={handleImageChange} />
+                            </label>
+                          </div>
                         </div>
 
                         {error && <p className='text-red-500 font-semibold text-sm'>{error}</p>}

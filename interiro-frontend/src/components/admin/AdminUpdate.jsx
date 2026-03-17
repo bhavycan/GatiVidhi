@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import Butterfly from '../../templates/Butterfly'
 import AdminNavbar from '../../templates/AdminNavbar'
@@ -197,6 +197,7 @@ const AdminUpdate = () => {
   const parent = useRef(null)
   const formRef = useRef(null)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [isopen, setOpen] = useState(false)
 
   const [projects, setProjects] = useState([])
@@ -207,6 +208,11 @@ const AdminUpdate = () => {
   const [isFormOpen, setFormOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [dueProjects, setDueProjects] = useState([])
+  const [workerUpdates, setWorkerUpdates] = useState([])
+  const [workerImageUrls, setWorkerImageUrls] = useState([])
+  // per-update edited photo state: { [updateId]: { keepUrls: string[], newFiles: File[], newPreviews: string[] } }
+  const [editedPhotos, setEditedPhotos] = useState({})
+  const [lightbox, setLightbox] = useState(null) // src string or null
 
   // Dynamic slots — start with 3
   const [images, setImages] = useState([null, null, null])
@@ -261,6 +267,14 @@ const AdminUpdate = () => {
         const { data } = await axios.get('http://localhost:3000/project/all', { withCredentials: true })
         const ongoing = (data?.projects || []).filter(p => p.status === 'ongoing')
         setProjects(ongoing)
+        const paramId = searchParams.get('projectId')
+        if (paramId) {
+          const found = ongoing.find(p => p._id === paramId)
+          if (found) {
+            setFormOpen(true)
+            await handleProjectSelect(found)
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch projects', error)
         if (error.response?.status === 400 || error.response?.status === 401) {
@@ -284,12 +298,95 @@ const AdminUpdate = () => {
     setSelectedProject(project)
     setSelectedTask(null)
     setProjectTasks([])
+    setWorkerUpdates([])
+    setWorkerImageUrls([])
     try {
       const { data } = await axios.get(`http://localhost:3000/task/${project._id}`, { withCredentials: true })
       setLastUpdated(data.lastUpdated || null)
       setProjectTasks((data.tasks || []).map(t => t.name))
     } catch (_) {
       setLastUpdated(null)
+    }
+    try {
+      const { data } = await axios.get(`http://localhost:3000/worker/updates/${project._id}`, { withCredentials: true })
+      setWorkerUpdates(data.updates || [])
+    } catch (_) {}
+  }
+
+  // Initialise editable photo state for an update (lazy)
+  const getEditedPhotos = (wu) =>
+    editedPhotos[wu._id] ?? { keepUrls: wu.updateImages || [], newFiles: [], newPreviews: [] }
+
+  const deleteWorkerPhoto = (wu, index) => {
+    const current = getEditedPhotos(wu)
+    setEditedPhotos(prev => ({
+      ...prev,
+      [wu._id]: { ...current, keepUrls: current.keepUrls.filter((_, i) => i !== index) },
+    }))
+  }
+
+  const deleteNewWorkerPhoto = (wu, index) => {
+    const current = getEditedPhotos(wu)
+    URL.revokeObjectURL(current.newPreviews[index])
+    setEditedPhotos(prev => ({
+      ...prev,
+      [wu._id]: {
+        ...current,
+        newFiles: current.newFiles.filter((_, i) => i !== index),
+        newPreviews: current.newPreviews.filter((_, i) => i !== index),
+      },
+    }))
+  }
+
+  const addWorkerPhotos = (wu, files) => {
+    const current = getEditedPhotos(wu)
+    const newFiles = [...current.newFiles, ...files]
+    const newPreviews = [...current.newPreviews, ...files.map(f => URL.createObjectURL(f))]
+    setEditedPhotos(prev => ({ ...prev, [wu._id]: { ...current, newFiles, newPreviews } }))
+  }
+
+  const replaceWorkerPhoto = (wu, index, file) => {
+    const current = getEditedPhotos(wu)
+    const updatedUrls = current.keepUrls.filter((_, i) => i !== index)
+    const newFiles = [...current.newFiles, file]
+    const newPreviews = [...current.newPreviews, URL.createObjectURL(file)]
+    setEditedPhotos(prev => ({
+      ...prev,
+      [wu._id]: { keepUrls: updatedUrls, newFiles, newPreviews },
+    }))
+  }
+
+  const handleUseWorkerUpdate = async (wu) => {
+    const edited = getEditedPhotos(wu)
+    setNotes(wu.notes || '')
+    setWorkerImageUrls(edited.keepUrls)
+    // Merge worker's new files into the form's image slots
+    if (edited.newFiles.length > 0) {
+      setImages(prev => {
+        const slots = [...prev]
+        edited.newFiles.forEach(f => {
+          const empty = slots.findIndex(s => s === null)
+          if (empty !== -1) slots[empty] = f
+          else slots.push(f)
+        })
+        return slots
+      })
+    }
+    setFormOpen(true)
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+    try {
+      await axios.post(`http://localhost:3000/worker/use/${wu._id}`, {}, { withCredentials: true })
+      setWorkerUpdates(prev => prev.map(u => u._id === wu._id ? { ...u, status: 'used' } : u))
+    } catch (_) {}
+  }
+
+  const handleRetakeWorkerUpdate = async (wu) => {
+    try {
+      await axios.post(`http://localhost:3000/worker/retake/${wu._id}`, {}, { withCredentials: true })
+      setWorkerUpdates(prev => prev.map(u => u._id === wu._id ? { ...u, status: 'retake' } : u))
+      showToast('Retake notification sent to worker.')
+    } catch (_) {
+      showToast('Failed to send retake request.')
     }
   }
 
@@ -323,7 +420,8 @@ const AdminUpdate = () => {
     if (!selectedProject) return showToast('Please select a project')
 
     const uploadedImages = images.filter(Boolean)
-    if (uploadedImages.length < 3) return showToast('Please upload at least 3 images')
+    const totalImages = uploadedImages.length + workerImageUrls.length
+    if (totalImages < 3) return showToast('Please upload at least 3 images')
     if (!workDone.trim()) return showToast('Please fill in Work Done')
     if (!workLeft.trim()) return showToast('Please fill in Work Left')
     if (!notes.trim() || notes.trim().length < 3) return showToast('Notes must be at least 3 characters')
@@ -338,6 +436,7 @@ const AdminUpdate = () => {
       if (selectedTask) formData.append('task', selectedTask)
       formData.append('activeRooms', JSON.stringify(activeRooms))
       uploadedImages.forEach(img => formData.append('images', img))
+      workerImageUrls.forEach(url => formData.append('existingImages', url))
 
       await axios.post('http://localhost:3000/update/create', formData, {
         withCredentials: true,
@@ -355,6 +454,7 @@ const AdminUpdate = () => {
       setActiveRooms([])
       setRoomInput('')
       setLastUpdated(null)
+      setWorkerImageUrls([])
       showToast('update has been submitted')
     } catch (error) {
       console.error(error)
@@ -388,6 +488,36 @@ const AdminUpdate = () => {
           <img className='w-full h-full object-cover' src='/images/butterfly2.png' alt='' />
         </figure>
       </section>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightbox(null)}
+            className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4'
+          >
+            <motion.img
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              src={lightbox}
+              alt='preview'
+              onClick={e => e.stopPropagation()}
+              className='max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl'
+            />
+            <button
+              onClick={() => setLightbox(null)}
+              className='absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl'
+            >
+              <i className='ri-close-line'></i>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* CallMessage-style toast */}
       <AnimatePresence>
@@ -504,6 +634,76 @@ const AdminUpdate = () => {
                       />
                     </motion.div>
 
+                    {/* Worker pre-loaded images — full editable grid */}
+                    {workerImageUrls.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className='px-3 py-3 rounded-lg bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc]/40'
+                      >
+                        <p className='text-xs font-bold text-[#883bbc] mb-2 flex items-center gap-2'>
+                          <i className='ri-user-settings-line'></i> Worker photos ({workerImageUrls.length})
+                          <span className='opacity-50 font-normal'>tap · <i className='ri-close-circle-line text-red-400'></i> del · <i className='ri-arrow-left-right-line text-blue-400'></i> replace</span>
+                        </p>
+                        <div className='flex gap-2 overflow-x-auto pb-1'>
+                          {workerImageUrls.map((url, i) => (
+                            <div key={i} className='relative shrink-0 w-20 h-20'>
+                              <img
+                                src={url}
+                                alt='worker'
+                                onClick={() => setLightbox(url)}
+                                className='w-full h-full rounded-lg object-cover border border-[#883bbc]/30 cursor-pointer'
+                              />
+                              {/* Delete */}
+                              <button
+                                type='button'
+                                onClick={() => setWorkerImageUrls(prev => prev.filter((_, j) => j !== i))}
+                                className='absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs'
+                              >
+                                <i className='ri-close-line'></i>
+                              </button>
+                              {/* Replace */}
+                              <label className='absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'>
+                                <i className='ri-arrow-left-right-line'></i>
+                                <input type='file' accept='image/*' className='hidden' onChange={e => {
+                                  const f = e.target.files[0]
+                                  if (!f) return
+                                  setWorkerImageUrls(prev => prev.filter((_, j) => j !== i))
+                                  setImages(prev => {
+                                    const slots = [...prev]
+                                    const empty = slots.findIndex(s => s === null)
+                                    if (empty !== -1) slots[empty] = f
+                                    else slots.push(f)
+                                    return slots
+                                  })
+                                  e.target.value = ''
+                                }} />
+                              </label>
+                            </div>
+                          ))}
+                          {/* Add more to worker section */}
+                          <label className='shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'>
+                            <i className='ri-image-add-line text-xl text-[#883bbc] opacity-60'></i>
+                            <span className='text-[10px] font-semibold opacity-50 mt-0.5'>Add</span>
+                            <input type='file' accept='image/*' multiple className='hidden' onChange={e => {
+                              const files = Array.from(e.target.files)
+                              if (!files.length) return
+                              setImages(prev => {
+                                const slots = [...prev]
+                                files.forEach(f => {
+                                  const empty = slots.findIndex(s => s === null)
+                                  if (empty !== -1) slots[empty] = f
+                                  else slots.push(f)
+                                })
+                                return slots
+                              })
+                              e.target.value = ''
+                            }} />
+                          </label>
+                        </div>
+                      </motion.div>
+                    )}
+
                     {/* Image uploads — dynamic slots */}
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -513,7 +713,7 @@ const AdminUpdate = () => {
                       <label className='block text-black font-medium mb-2'>
                         Photos
                         <span className='text-xs opacity-60 font-normal ml-1'>
-                          (min. 3 required · {images.filter(Boolean).length}/{images.length} uploaded)
+                          (min. 3 required · {images.filter(Boolean).length + workerImageUrls.length} total)
                         </span>
                       </label>
                       <div className='grid grid-cols-3 md:grid-cols-5 gap-2'>
@@ -721,6 +921,145 @@ const AdminUpdate = () => {
                     <div className='text-right'>
                       <p className='text-xs opacity-50 font-mono'>Last update</p>
                       <p className='text-sm font-semibold text-[#883bbc]'>{formatDate(p.lastUpdate)}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </section>
+
+          {/* Worker Received section */}
+          <section className='w-full relative z-10 pb-20'>
+            <h1 className='text-xl font-bold mt-[2%] mb-3 flex items-center gap-2'>
+              <i className='ri-user-settings-line text-[#883bbc]'></i> Worker Received :
+            </h1>
+
+            {!selectedProject ? (
+              <div className='px-4 py-3 rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent'>
+                <p className='text-sm font-semibold opacity-70'>Select a project above to view worker submissions.</p>
+              </div>
+            ) : workerUpdates.length === 0 ? (
+              <div className='px-4 py-3 rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent'>
+                <p className='text-sm font-semibold opacity-70'>No pending worker updates for this project.</p>
+              </div>
+            ) : (
+              <motion.div layout className='space-y-4'>
+                {workerUpdates.map((wu, i) => (
+                  <motion.div
+                    key={wu._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ delay: i * 0.07 }}
+                    className='w-full rounded-xl border border-[#883bbc]/40 bg-gradient-to-br from-[#F7D6F3]/60 to-transparent backdrop-blur-sm overflow-hidden'
+                  >
+                    {/* Header */}
+                    <div className='flex items-center justify-between px-4 py-3 border-b border-[#883bbc]/20'>
+                      <div className='flex items-center gap-2'>
+                        <div className='w-8 h-8 rounded-full bg-[#883bbc] flex items-center justify-center shrink-0'>
+                          <i className='ri-user-3-fill text-white text-sm'></i>
+                        </div>
+                        <div className='leading-4'>
+                          <p className='font-bold text-sm'>{wu.workerId?.name || 'Worker'}</p>
+                          <p className='text-xs opacity-50'>{new Date(wu.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {new Date(wu.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                      </div>
+                      {wu.status === 'retake' && (
+                        <span className='text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-500'>Retake</span>
+                      )}
+                    </div>
+
+                    {/* Editable Photos */}
+                    {(() => {
+                      const ep = getEditedPhotos(wu)
+                      const total = ep.keepUrls.length + ep.newFiles.length
+                      return (
+                        <div className='px-4 pt-3'>
+                          <p className='text-xs font-bold opacity-60 mb-2'>
+                            Photos ({total}) — tap to view · <i className='ri-close-circle-line text-red-400'></i> delete · <i className='ri-arrow-left-right-line text-blue-400'></i> replace
+                          </p>
+                          <div className='flex gap-2 overflow-x-auto pb-2'>
+
+                            {/* Existing URL photos */}
+                            {ep.keepUrls.map((src, j) => (
+                              <div key={`url-${j}`} className='relative shrink-0 w-24 h-24 group'>
+                                <img
+                                  src={src}
+                                  alt='worker'
+                                  onClick={() => setLightbox(src)}
+                                  className='w-full h-full rounded-lg object-cover border border-white/30 cursor-pointer'
+                                />
+                                {/* Delete */}
+                                <button
+                                  type='button'
+                                  onClick={() => deleteWorkerPhoto(wu, j)}
+                                  className='absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs leading-none'
+                                >
+                                  <i className='ri-close-line'></i>
+                                </button>
+                                {/* Replace */}
+                                <label className='absolute bottom-1 right-1 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'>
+                                  <i className='ri-arrow-left-right-line'></i>
+                                  <input type='file' accept='image/*' className='hidden' onChange={e => { if (e.target.files[0]) replaceWorkerPhoto(wu, j, e.target.files[0]); e.target.value = '' }} />
+                                </label>
+                              </div>
+                            ))}
+
+                            {/* Newly added file previews */}
+                            {ep.newPreviews.map((src, j) => (
+                              <div key={`new-${j}`} className='relative shrink-0 w-24 h-24'>
+                                <img
+                                  src={src}
+                                  alt='new'
+                                  onClick={() => setLightbox(src)}
+                                  className='w-full h-full rounded-lg object-cover border-2 border-[#883bbc]/60 cursor-pointer'
+                                />
+                                <button
+                                  type='button'
+                                  onClick={() => deleteNewWorkerPhoto(wu, j)}
+                                  className='absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs leading-none'
+                                >
+                                  <i className='ri-close-line'></i>
+                                </button>
+                              </div>
+                            ))}
+
+                            {/* Add more slot */}
+                            <label className='shrink-0 w-24 h-24 rounded-lg border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'>
+                              <i className='ri-image-add-line text-2xl text-[#883bbc] opacity-60'></i>
+                              <span className='text-[10px] font-semibold opacity-50 mt-1'>Add</span>
+                              <input type='file' accept='image/*' multiple className='hidden' onChange={e => { if (e.target.files.length) addWorkerPhotos(wu, Array.from(e.target.files)); e.target.value = '' }} />
+                            </label>
+
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* Notes */}
+                    {wu.notes && (
+                      <div className='px-4 py-3'>
+                        <p className='text-xs font-bold opacity-60 mb-1'>Notes</p>
+                        <p className='text-sm font-semibold leading-5 opacity-80'>{wu.notes}</p>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className='flex gap-2 px-4 pb-4'>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleUseWorkerUpdate(wu)}
+                        className='flex-1 py-2.5 rounded-lg bg-[#883bbc] text-white font-bold text-sm flex items-center justify-center gap-2'
+                      >
+                        <i className='ri-check-line'></i> Use
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleRetakeWorkerUpdate(wu)}
+                        className='flex-1 py-2.5 rounded-lg border border-[#883bbc] text-[#883bbc] font-bold text-sm flex items-center justify-center gap-2'
+                      >
+                        <i className='ri-refresh-line'></i> Retake
+                      </motion.button>
                     </div>
                   </motion.div>
                 ))}

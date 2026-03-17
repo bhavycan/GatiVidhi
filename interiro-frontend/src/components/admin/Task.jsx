@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Butterfly from '../../templates/Butterfly'
 import CustomButtom from '../../templates/CustomButtom'
 import { usePopcard } from '../../context/PopCardContext'
@@ -197,6 +197,7 @@ const Task = () => {
   const parent = useRef(null)
   const formRef = useRef(null)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [isopen, setOpen] = useState(false)
   const { showPopcard, popcard } = usePopcard()
 
@@ -244,6 +245,11 @@ const Task = () => {
         const { data } = await axios.get('http://localhost:3000/project/all', { withCredentials: true })
         const ongoing = (data?.projects || []).filter(p => p.status === 'ongoing')
         setProjects(ongoing)
+        const paramId = searchParams.get('projectId')
+        if (paramId) {
+          const found = ongoing.find(p => p._id === paramId)
+          if (found) handleProjectSelect(found)
+        }
       } catch (error) {
         console.error('Failed to fetch projects', error)
         if (error.response?.status === 400 || error.response?.status === 401) {

@@ -57,15 +57,19 @@ const Notification = ({ state, onClear }) => {
 
   }, [notifications, loading]);
 
+  const closePanel = (remaining) => {
+    if (onClear) onClear(remaining ?? notifications.length);
+    setNotification(false);
+  };
+
   const handleClear = async () => {
     setClearing(true);
     try {
       await axios.post('http://localhost:3000/project/notifications/clear', {}, { withCredentials: true });
       setNotifications([]);
-      if (onClear) onClear();
+      closePanel(0);
     } catch (_) {}
     setClearing(false);
-    setNotification(false);
   };
 
   const handleNotifClick = (type) => {
@@ -86,7 +90,7 @@ const Notification = ({ state, onClear }) => {
 
   const handleMainDrag = (e, info) => {
     if (info.offset.y < -10 && Math.abs(info.offset.x) < Math.abs(info.offset.y)) {
-      setNotification(false);
+      closePanel();
     }
   };
 
@@ -101,7 +105,7 @@ const Notification = ({ state, onClear }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={() => setNotification(false)}
+      onClick={() => closePanel()}
       transition={{ duration: 0.2 }}
       className="fixed inset-0 z-50 w-screen h-screen bg-gradient-to-tr from-[#F7D6F3] to-transparent flex justify-center items-start bg-opacity-90"
     >

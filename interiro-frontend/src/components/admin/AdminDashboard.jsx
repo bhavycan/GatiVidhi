@@ -2,6 +2,7 @@ import moment from 'moment'
 import { useRef, useState, useEffect } from 'react'
 import Butterfly from '../../templates/Butterfly';
 import AdminNavbar from '../../templates/AdminNavbar';
+import NotificationPanel from '../../templates/NotificationPanel';
 import { AnimatePresence, motion } from 'motion/react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +17,8 @@ const AdminDashboard = () => {
     const [ongoingCount, setOngoingCount] = useState(null)
     const [completedCount, setCompletedCount] = useState(null)
     const [updates, setUpdates] = useState([])
+    const [notifications, setNotifications] = useState([])
+    const [notifOpen, setNotifOpen] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -37,6 +40,13 @@ const AdminDashboard = () => {
             } catch (error) {
                 console.error('Failed to fetch updates', error)
             }
+
+            try {
+                const { data: notifData } = await axios.get('http://localhost:3000/admin/notifications', { withCredentials: true })
+                setNotifications(notifData?.notifications || [])
+            } catch (error) {
+                console.error('Failed to fetch notifications', error)
+            }
         }
         fetchData()
     }, [])
@@ -44,14 +54,28 @@ const AdminDashboard = () => {
   return (
     <div className='w-screen min-h-screen relative overflow-hidden'>
 
-      {/* Menu icon — fixed top-right */}
-      <nav className='z-10 fixed mt-[10%] right-4 md:top-6 md:right-8'>
+      {/* Nav icons — fixed top-right */}
+      <nav className='z-10 fixed mt-[10%] right-4 md:top-6 md:right-8 flex items-center gap-3'>
+        {/* Notification bell */}
+        <motion.div
+          onClick={() => setNotifOpen(true)}
+          className="relative w-10 h-10 md:w-12 md:h-12 items-center justify-center flex cursor-pointer">
+          <i className="ri-notification-3-line text-3xl text-white opacity-90"></i>
+          {notifications.length > 0 && (
+            <span className='absolute top-0 right-0 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center'>
+              {notifications.length > 9 ? '9+' : notifications.length}
+            </span>
+          )}
+        </motion.div>
+        {/* Menu */}
         <motion.div
           onClick={() => setOpen(!isopen)}
           className="admin-menuicon w-10 h-10 md:w-12 md:h-12 items-center justify-center flex cursor-pointer">
           <i className="ri-menu-fill text-3xl text-white opacity-90"></i>
         </motion.div>
       </nav>
+
+      <NotificationPanel isOpen={notifOpen} setOpen={setNotifOpen} notifications={notifications} />
 
       <AnimatePresence mode='wait'>
         {isopen && <AdminNavbar value={{ isopen, setOpen }} />}

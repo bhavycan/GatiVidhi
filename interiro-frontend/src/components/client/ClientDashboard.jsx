@@ -58,7 +58,7 @@ const { showPopcard, popcard } = usePopcard();
     useEffect(()=>{
             fetchProfile()
             fetchNotifCount()
-    },[notifCount])
+    },[])
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
     const parent = useRef(null)
@@ -132,7 +132,7 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
                   )}
                 </div>
                 <AnimatePresence mode='wait'>
-                  {isNotification && <Notification state={{isNotification,setNotification}} onClear={() => setNotifCount(0)} />}
+                  {isNotification && <Notification state={{isNotification,setNotification}} onClear={(remaining) => setNotifCount(remaining ?? 0)} />}
                 </AnimatePresence>
               </div>
             </div>
