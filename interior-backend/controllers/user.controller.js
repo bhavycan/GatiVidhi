@@ -75,20 +75,28 @@ module.exports.userChangePassword = async(req,res)=>{
 module.exports.userLogInController = async(req,res)=>{
     try {
         const {email,password} = req.body;
+        console.log(`[LOGIN] Attempt - email: ${email}, origin: ${req.headers.origin}, ip: ${req.ip}`);
         let user = await userModel.findOne({email});
-        if(!user) return res.status(400).send("User does not exist");
+        if(!user){
+            console.log(`[LOGIN] Failed - user not found: ${email}`);
+            return res.status(400).send("User does not exist");
+        }
         let checkPassword = await bcrypt.compare(password,user.password);
-        if(!checkPassword) return res.status(400).send("Wrong Password");
+        if(!checkPassword){
+            console.log(`[LOGIN] Failed - wrong password for: ${email}`);
+            return res.status(400).send("Wrong Password");
+        }
         const token = jwt.sign({email: email}, process.env.USER_JWT_SECRET);
         res.cookie("token", token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
+          secure: false,
+          sameSite: "lax",
           maxAge: 24 * 60 * 60 * 1000,
         });
+        console.log(`[LOGIN] Success - ${email}`);
         return res.status(200).send("Logged in Succesfully!!");
     } catch (error) {
-        console.error(error);
+        console.error(`[LOGIN] Error:`, error);
         res.status(500).send('Something went wrong')
     }
 }
