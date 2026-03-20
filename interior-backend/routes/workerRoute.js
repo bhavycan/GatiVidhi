@@ -16,12 +16,14 @@ const {
   retakeWorkerUpdateController,
   workerNotificationsController,
   markWorkerNotificationsReadController,
+  workerLogoutController,
 } = require('../controllers/worker.controller');
 
 const route = express.Router();
 
 // Worker auth
 route.post('/login', workerLoginController);
+route.post('/logout', workerAuthentification, workerLogoutController);
 route.get('/profile', workerAuthentification, workerProfileController);
 route.post('/update', workerAuthentification, upload.array('updateImages'), workerSubmitUpdateController);
 route.get('/today-update/:projectId', workerAuthentification, workerTodayUpdateController);

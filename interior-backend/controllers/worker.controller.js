@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const { workerModel } = require('../models/workerModel');
 const { workerUpdateModel } = require('../models/workerUpdateModel');
+const { blacklistModel } = require('../models/blacklisttoken');
 const { projectModel } = require('../models/projectModel');
 const uploadImage = require('../utils/cloudinary.multer');
 const generatePassword = require('../utils/passwordGenerator');
@@ -269,6 +270,18 @@ module.exports.markWorkerNotificationsReadController = async (req, res) => {
       { $set: { 'notifications.$[].read': true } }
     );
     res.status(200).send('Marked as read');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+module.exports.workerLogoutController = async (req, res) => {
+  try {
+    const token = req.cookies.workertoken;
+    if (token) await blacklistModel.create({ token });
+    res.cookie('workertoken', '', { httpOnly: true, secure: true, sameSite: 'none', maxAge: 0 });
+    res.status(200).send('Logged out successfully');
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');

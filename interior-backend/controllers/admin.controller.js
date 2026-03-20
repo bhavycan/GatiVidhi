@@ -1,4 +1,5 @@
 const { adminModel } = require("../models/adminModel");
+const { blacklistModel } = require("../models/blacklisttoken");
 const { taskListModel } = require("../models/taskListModel");
 const { projectModel } = require("../models/projectModel");
 const { updateModel } = require("../models/updateModel");
@@ -43,14 +44,13 @@ module.exports.adminLogInController = async (req, res) => {
 
 module.exports.adminLogOutController = async(req,res)=>{
     try {
-            const {id} = req.body;
-            let admin = await adminModel.findOne({_id : id});
-            if(!admin) return res.status(400).send("Inavlid Id");
-            res.cookie("admintoken", "")
+            const token = req.cookies.admintoken;
+            if(token) await blacklistModel.create({ token });
+            res.cookie("admintoken", "", { httpOnly: true, secure: true, sameSite: "none", maxAge: 0 });
             res.status(200).send("Logged Out succesfully")
         } catch (error) {
             console.error(error);
-            res.status(500).send("Something wend wrong!")
+            res.status(500).send("Something went wrong!")
         }
 }
 
