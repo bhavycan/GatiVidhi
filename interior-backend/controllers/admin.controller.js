@@ -29,8 +29,8 @@ module.exports.adminLogInController = async (req, res) => {
     const token = jwt.sign({ email: email }, process.env.ADMIN_JWT_SECRET);
     res.cookie("admintoken", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     });
     console.log(`[ADMIN LOGIN] Success - ${email}`);

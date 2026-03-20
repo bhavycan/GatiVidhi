@@ -101,8 +101,8 @@ module.exports.workerLoginController = async (req, res) => {
     const token = jwt.sign({ email: worker.email, id: worker._id }, secret);
     res.cookie('workertoken', token, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000,
     });
 

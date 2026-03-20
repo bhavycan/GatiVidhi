@@ -89,8 +89,8 @@ module.exports.userLogInController = async(req,res)=>{
         const token = jwt.sign({email: email}, process.env.USER_JWT_SECRET);
         res.cookie("token", token, {
           httpOnly: true,
-          secure: false,
-          sameSite: "lax",
+          secure: true,
+          sameSite: "none",
           maxAge: 24 * 60 * 60 * 1000,
         });
         console.log(`[LOGIN] Success - ${email}`);
