@@ -8,6 +8,7 @@ import CustomButtom from '../../templates/CustomButtom'
 import { usePopcard } from '../../context/PopCardContext'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const Report = () => {
   const [isopen, setOpen] = useState(false)
@@ -20,7 +21,7 @@ const Report = () => {
 
   const fetchReports = async () => {
     try {
-      const { data } = await axios.get("http://localhost:3000/report/all", { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/report/all`, { withCredentials: true })
       setReports(data?.reports || [])
     } catch (error) {
       console.error("Failed to fetch reports", error)

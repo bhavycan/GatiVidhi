@@ -2,12 +2,14 @@ import React, { useState } from 'react'
 import CustomButtom from '../../templates/CustomButtom'
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE } from '../../config.js'
 
 const Login = () => {
 
         const [email,setEmail] = useState("");
         const [password,setPassword] = useState("");
         const [error,setError] = useState("")
+        const [showPassword, setShowPassword] = useState(false)
         const navigate = useNavigate();
 
         const handleSubmit = async(e)=>{
@@ -15,7 +17,7 @@ const Login = () => {
             setError("");
                  try {
       await axios.post(
-        "http://localhost:3000/user/login",
+        `${API_BASE}/user/login`,
         { email, password },
         { withCredentials: true }
       );
@@ -64,9 +66,11 @@ const Login = () => {
           </figure>
 
           <article className='hidden md:flex w-full mt-6 flex-col items-start font-semibold opacity-80'>
-            <h4>Login for Admin</h4>
-            <h4 className='text-white'>Click Here</h4>
-            <h1 className='text-sm mt-4 opacity-50 text-white'>All right@TankiaAssociate</h1>
+            <button onClick={() => navigate('/')} className='flex items-center gap-2 text-white opacity-70 hover:opacity-100 transition-opacity'>
+              <i className='ri-arrow-left-line text-xl'></i>
+              <span>Back to Home</span>
+            </button>
+            <h1 className='text-sm mt-4 opacity-50 text-white'>All right@TanikaAssociate</h1>
           </article>
         </div>
 
@@ -104,9 +108,12 @@ const Login = () => {
                 </div>
                 <input
                   onChange={(e) => setPassword(e.target.value)}
-                  type="password" value={password} name="password"
+                  type={showPassword ? 'text' : 'password'} value={password} name="password"
                   className='bg-white outline-none flex-1 h-full px-4 py-2 text-base font-semibold'
                 />
+                <button type='button' onClick={() => setShowPassword(p => !p)} className='w-12 bg-white h-full flex items-center justify-center shrink-0'>
+                  <i className={`${showPassword ? 'ri-eye-off-line' : 'ri-eye-line'} text-xl opacity-55`}></i>
+                </button>
               </div>
             </div>
 
@@ -120,9 +127,11 @@ const Login = () => {
 
           {/* Footer — mobile only */}
           <article className='md:hidden w-full mt-8 leading-5 flex flex-col items-center font-semibold opacity-80'>
-            <h4>Login for Admin</h4>
-            <h4 className='text-white'>Click Here</h4>
-            <h1 className='text-sm mt-4 opacity-50 text-white'>All right@TankiaAssociate</h1>
+            <button onClick={() => navigate('/')} className='flex items-center gap-2 text-white opacity-70 hover:opacity-100 transition-opacity'>
+              <i className='ri-arrow-left-line text-xl'></i>
+              <span>Back to Home</span>
+            </button>
+            <h1 className='text-sm mt-4 opacity-50 text-white'>All right@TanikaAssociate</h1>
           </article>
         </div>
 

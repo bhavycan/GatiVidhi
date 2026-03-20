@@ -1,4 +1,5 @@
 import React from 'react'
+import HomePage from './components/HomePage'
 import Login from './components/client/Login'
 import CustomButtom from './templates/CustomButtom'
 import AdminDashboard from './components/admin/AdminDashboard'
@@ -27,6 +28,7 @@ const App = () => {
   return (
     <div className=' w-screen max-h-[100vh] '>
       <Routes>
+        <Route path="/" element={<HomePage />} />
         <Route path="/user/login" element={<Login />} />
         <Route path='/admin/profile' element={<AdminDashboard />} />
         <Route path='/user/projectview' element={<ProjectView />} />

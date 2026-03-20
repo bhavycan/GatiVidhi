@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ProgressTree from "./ProgressTree";
 import ProfressCore from "./ProfressCore";
+import { API_BASE } from '../../../../config.js'
 
 const Progress = ({ showPopcard, projectId }) => {
   const [progressisOpen, setprogressOpen] = useState(false)
@@ -12,7 +13,7 @@ const Progress = ({ showPopcard, projectId }) => {
     if (!projectId) return
     const fetchTasks = async () => {
       try {
-        const { data } = await axios.get(`http://localhost:3000/task/client/${projectId}`, { withCredentials: true })
+        const { data } = await axios.get(`${API_BASE}/task/client/${projectId}`, { withCredentials: true })
         setTaskData(data)
       } catch (error) {
         console.error('Failed to fetch task data', error)

@@ -8,6 +8,7 @@ import CustomButtom from "../../templates/CustomButtom";
 import TickitInfo from "../../templates/TickitInfo";
 import moment from "moment";
 import axios from "axios";
+import { API_BASE } from '../../config.js'
 
 const PRIORITY_COLORS = {
   high: "bg-red-100 text-red-600 border-red-300",
@@ -26,7 +27,7 @@ const Ticket = () => {
 
   const fetchTickets = async () => {
     try {
-      const { data } = await axios.get("http://localhost:3000/comment/my", { withCredentials: true });
+      const { data } = await axios.get(`${API_BASE}/comment/my`, { withCredentials: true });
       setTickets(data?.comments || []);
     } catch (error) {
       console.error("Failed to fetch tickets", error);

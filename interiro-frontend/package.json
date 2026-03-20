@@ -7,9 +7,21 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:mobile": "vite build && npx cap sync",
+    "open:android": "CAPACITOR_ANDROID_STUDIO_PATH=/home/bhavyatlinux/Downloads/android-studio-panda2-linux/android-studio/bin/studio npx cap open android",
+    "open:ios": "npx cap open ios",
+    "sync": "npx cap sync"
   },
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/app": "^8.0.1",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
+    "@capacitor/keyboard": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.10.0",
     "gsap": "^3.13.0",

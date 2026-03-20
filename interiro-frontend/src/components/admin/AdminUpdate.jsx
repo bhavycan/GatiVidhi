@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Butterfly from '../../templates/Butterfly'
 import AdminNavbar from '../../templates/AdminNavbar'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const formatDate = (date) => {
   if (!date) return 'Never'
@@ -254,7 +255,7 @@ const AdminUpdate = () => {
 
   const fetchDueProjects = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/update/due-today', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/update/due-today`, { withCredentials: true })
       setDueProjects(data)
     } catch (error) {
       console.error('Failed to fetch due projects', error)
@@ -264,7 +265,7 @@ const AdminUpdate = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data } = await axios.get('http://localhost:3000/project/all', { withCredentials: true })
+        const { data } = await axios.get(`${API_BASE}/project/all`, { withCredentials: true })
         const ongoing = (data?.projects || []).filter(p => p.status === 'ongoing')
         setProjects(ongoing)
         const paramId = searchParams.get('projectId')
@@ -301,14 +302,14 @@ const AdminUpdate = () => {
     setWorkerUpdates([])
     setWorkerImageUrls([])
     try {
-      const { data } = await axios.get(`http://localhost:3000/task/${project._id}`, { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/task/${project._id}`, { withCredentials: true })
       setLastUpdated(data.lastUpdated || null)
       setProjectTasks((data.tasks || []).map(t => t.name))
     } catch (_) {
       setLastUpdated(null)
     }
     try {
-      const { data } = await axios.get(`http://localhost:3000/worker/updates/${project._id}`, { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/worker/updates/${project._id}`, { withCredentials: true })
       setWorkerUpdates(data.updates || [])
     } catch (_) {}
   }
@@ -375,14 +376,14 @@ const AdminUpdate = () => {
     setFormOpen(true)
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     try {
-      await axios.post(`http://localhost:3000/worker/use/${wu._id}`, {}, { withCredentials: true })
+      await axios.post(`${API_BASE}/worker/use/${wu._id}`, {}, { withCredentials: true })
       setWorkerUpdates(prev => prev.map(u => u._id === wu._id ? { ...u, status: 'used' } : u))
     } catch (_) {}
   }
 
   const handleRetakeWorkerUpdate = async (wu) => {
     try {
-      await axios.post(`http://localhost:3000/worker/retake/${wu._id}`, {}, { withCredentials: true })
+      await axios.post(`${API_BASE}/worker/retake/${wu._id}`, {}, { withCredentials: true })
       setWorkerUpdates(prev => prev.map(u => u._id === wu._id ? { ...u, status: 'retake' } : u))
       showToast('Retake notification sent to worker.')
     } catch (_) {
@@ -438,7 +439,7 @@ const AdminUpdate = () => {
       uploadedImages.forEach(img => formData.append('images', img))
       workerImageUrls.forEach(url => formData.append('existingImages', url))
 
-      await axios.post('http://localhost:3000/update/create', formData, {
+      await axios.post(`${API_BASE}/update/create`, formData, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       })

@@ -6,6 +6,7 @@ import NotificationPanel from '../../templates/NotificationPanel';
 import { AnimatePresence, motion } from 'motion/react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../../config.js'
 
 const AdminDashboard = () => {
     const date = moment().format('LL');
@@ -23,7 +24,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { data: projectData } = await axios.get('http://localhost:3000/project/all', { withCredentials: true })
+                const { data: projectData } = await axios.get(`${API_BASE}/project/all`, { withCredentials: true })
                 const projects = projectData?.projects || []
                 setOngoingCount(projects.filter(p => p.status === 'ongoing').length)
                 setCompletedCount(projects.filter(p => p.status === 'completed').length)
@@ -35,14 +36,14 @@ const AdminDashboard = () => {
             }
 
             try {
-                const { data: updateData } = await axios.get('http://localhost:3000/update/admin-all', { withCredentials: true })
+                const { data: updateData } = await axios.get(`${API_BASE}/update/admin-all`, { withCredentials: true })
                 setUpdates(updateData?.updates || [])
             } catch (error) {
                 console.error('Failed to fetch updates', error)
             }
 
             try {
-                const { data: notifData } = await axios.get('http://localhost:3000/admin/notifications', { withCredentials: true })
+                const { data: notifData } = await axios.get(`${API_BASE}/admin/notifications`, { withCredentials: true })
                 setNotifications(notifData?.notifications || [])
             } catch (error) {
                 console.error('Failed to fetch notifications', error)

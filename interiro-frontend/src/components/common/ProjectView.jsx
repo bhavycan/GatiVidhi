@@ -5,6 +5,7 @@ import Material from "./Material";
 import Navbar from "../../templates/Navbar";
 import { AnimatePresence, motion } from "motion/react";
 import axios from "axios";
+import { API_BASE } from '../../config.js'
 
 const ProjectView = () => {
   const [isopen, setOpen] = useState(false);
@@ -12,7 +13,7 @@ const ProjectView = () => {
   const parent = useRef(null);
 
   useEffect(() => {
-    axios.get("http://localhost:3000/user/profile", { withCredentials: true })
+    axios.get(`${API_BASE}/user/profile`, { withCredentials: true })
       .then(({ data }) => setProject(data?.project))
       .catch(console.error);
   }, []);

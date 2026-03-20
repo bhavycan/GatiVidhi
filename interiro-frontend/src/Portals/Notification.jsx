@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from '../config.js'
 
 const TYPE_STYLES = {
   update: { icon: 'ri-refresh-line',     color: 'bg-[#883bbc] text-white',   label: 'Update',  path: '/user/update' },
@@ -25,7 +26,7 @@ const Notification = ({ state, onClear }) => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const { data } = await axios.get('http://localhost:3000/project/notifications', { withCredentials: true });
+        const { data } = await axios.get(`${API_BASE}/project/notifications`, { withCredentials: true });
         setNotifications(data?.notifications || []);
       } catch (_) {}
       finally { setLoading(false); }
@@ -36,7 +37,7 @@ const Notification = ({ state, onClear }) => {
    const deleteNotification = (index) => {
   const fetch = async () => {
     try {
-      await axios.get(`http://localhost:3000/project/notifications/delete/${index}`, {
+      await axios.get(`${API_BASE}/project/notifications/delete/${index}`, {
         withCredentials: true
       });
     } catch (_) {}
@@ -65,7 +66,7 @@ const Notification = ({ state, onClear }) => {
   const handleClear = async () => {
     setClearing(true);
     try {
-      await axios.post('http://localhost:3000/project/notifications/clear', {}, { withCredentials: true });
+      await axios.post(`${API_BASE}/project/notifications/clear`, {}, { withCredentials: true });
       setNotifications([]);
       closePanel(0);
     } catch (_) {}

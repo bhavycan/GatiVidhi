@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from '../config.js'
 
 const Navbar = ({ value }) => {
   const { setOpen } = value;
@@ -29,7 +30,7 @@ const Navbar = ({ value }) => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:3000/user/logout", {}, { withCredentials: true });
+      await axios.post(`${API_BASE}/user/logout`, {}, { withCredentials: true });
     } catch (_) {
       // proceed regardless
     }

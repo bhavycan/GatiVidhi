@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from '../config.js'
 
 const AdminNavbar = ({ value }) => {
   const { setOpen } = value;
@@ -31,7 +32,7 @@ const AdminNavbar = ({ value }) => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:3000/admin/logout", {}, { withCredentials: true });
+      await axios.post(`${API_BASE}/admin/logout`, {}, { withCredentials: true });
     } catch (_) {
       // proceed regardless
     }
@@ -69,14 +70,14 @@ const AdminNavbar = ({ value }) => {
       </div>
 
       {/* Sidebar */}
-      <motion.div className="admin-menu w-[75%] sm:w-[55%] md:w-[35%] lg:w-[25%] min-h-full relative px-3 py-4 flex items-center flex-col bg-gradient-to-br from-[#F7D6F3] to-transparent bg-black/30 ml-auto">
-        <div className="menu-title w-full text-4xl font-semibold text-white pb-2 border-b-2">
+      <motion.div className="admin-menu w-[75%] sm:w-[55%] md:w-[35%] lg:w-[25%] h-full relative flex flex-col bg-gradient-to-br from-[#F7D6F3] to-transparent bg-black/30 ml-auto overflow-y-auto">
+        <div className="menu-title w-full text-4xl font-semibold text-white pb-2 border-b-2 px-3 pt-4 shrink-0">
           <h1>Admin</h1>
           <h1 className="bg-white/50 w-fit text-black">Panel!</h1>
         </div>
 
         {/* Main nav */}
-        <div className="part-1 w-full mt-[10%] pb-[10%] border-b-2 border-white">
+        <div className="part-1 w-full mt-[10%] pb-[10%] border-b-2 border-white px-3">
           <h2 className="w-full font-semibold opacity-80 text-xl">Projects:</h2>
           <div className="tags w-full flex flex-col items-center justify-center mt-[2%]">
             {menuItems.map((item, index) => (
@@ -94,7 +95,7 @@ const AdminNavbar = ({ value }) => {
         </div>
 
         {/* Action nav */}
-        <div className="part-2 w-full mt-[5%] pb-[10%] border-b-2 border-white">
+        <div className="part-2 w-full mt-[5%] pb-[10%] border-b-2 border-white px-3">
           <h2 className="w-full font-semibold opacity-80 text-xl">Actions:</h2>
           <div className="tags w-full flex flex-col items-center justify-center mt-[2%]">
             {actionItems.map((item, index) => (
@@ -112,12 +113,14 @@ const AdminNavbar = ({ value }) => {
         </div>
 
         {/* Logout */}
-        <div
-          onClick={handleLogout}
-          className="w-full px-[5%] py-[4%] bg-white/50 mt-[5%] rounded-lg cursor-pointer hover:bg-white/70 transition-colors flex items-center gap-3"
-        >
-          <i className="ri-logout-box-r-line text-lg text-[#883bbc]"></i>
-          <h1 className="text-base font-bold">LogOut</h1>
+        <div className="w-full px-3 mb-4">
+          <div
+            onClick={handleLogout}
+            className="w-full px-[5%] py-[4%] bg-white/50 mt-[5%] rounded-lg cursor-pointer hover:bg-white/70 transition-colors flex items-center gap-3"
+          >
+            <i className="ri-logout-box-r-line text-lg text-[#883bbc]"></i>
+            <h1 className="text-base font-bold">LogOut</h1>
+          </div>
         </div>
       </motion.div>
     </motion.div>

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios';
 import TaskCore from './TaskCore';
 import TaskTree from './TaskTree';
+import { API_BASE } from '../../../../config.js'
 
 const TaskBox = ({ showPopcard, projectId, startDate, endDate }) => {
   const [taskIsOpen, settaskOpen] = useState(false)
@@ -12,7 +13,7 @@ const TaskBox = ({ showPopcard, projectId, startDate, endDate }) => {
     if (!projectId) return
     const fetchTasks = async () => {
       try {
-        const { data } = await axios.get(`http://localhost:3000/task/client/${projectId}`, { withCredentials: true })
+        const { data } = await axios.get(`${API_BASE}/task/client/${projectId}`, { withCredentials: true })
         setTaskData(data)
       } catch (error) {
         console.error('Failed to fetch task data', error)

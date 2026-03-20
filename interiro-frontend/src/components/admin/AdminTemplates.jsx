@@ -6,6 +6,7 @@ import CustomButtom from '../../templates/CustomButtom'
 import { usePopcard } from '../../context/PopCardContext'
 import AdminNavbar from '../../templates/AdminNavbar'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const TYPE_OPTIONS = ['home', 'office', 'modular kitchen', 'renovation', 'furniture', 'small']
 
@@ -170,7 +171,7 @@ const AdminTemplates = () => {
 
   const fetchTemplates = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/template/all', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/template/all`, { withCredentials: true })
       setTemplates(data.templates || [])
     } catch (error) {
       console.error(error)
@@ -258,7 +259,7 @@ const AdminTemplates = () => {
     setSaving(true)
     try {
       if (editingTemplate) {
-        await axios.post('http://localhost:3000/template/update', {
+        await axios.post(`${API_BASE}/template/update`, {
           id: editingTemplate._id,
           name: formName.trim(),
           type: formType,
@@ -266,7 +267,7 @@ const AdminTemplates = () => {
         }, { withCredentials: true })
         showPopcard('Template updated!', true, 2000)
       } else {
-        await axios.post('http://localhost:3000/template/create', {
+        await axios.post(`${API_BASE}/template/create`, {
           name: formName.trim(),
           type: formType,
           tasks: formTasks.map(n => ({ name: n })),
@@ -285,7 +286,7 @@ const AdminTemplates = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.post('http://localhost:3000/template/delete', { id }, { withCredentials: true })
+      await axios.post(`${API_BASE}/template/delete`, { id }, { withCredentials: true })
       showPopcard('Template deleted.', true, 2000)
       fetchTemplates()
     } catch (error) {

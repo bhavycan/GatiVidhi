@@ -6,6 +6,7 @@ import AdminNavbar from '../../templates/AdminNavbar'
 import CustomButtom from '../../templates/CustomButtom'
 import { usePopcard } from '../../context/PopCardContext'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const AdminNotes = () => {
   const parent = useRef(null)
@@ -22,7 +23,7 @@ const AdminNotes = () => {
 
   const fetchNotes = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/note/all', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/note/all`, { withCredentials: true })
       setNotes(data)
     } catch {
       setNotes([])
@@ -34,7 +35,7 @@ const AdminNotes = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await axios.get('http://localhost:3000/admin/', { withCredentials: true })
+        await axios.get(`${API_BASE}/admin/`, { withCredentials: true })
       } catch (error) {
         if (error.response?.status === 401 || error.response?.status === 400) {
           navigate('/admin/login')
@@ -50,7 +51,7 @@ const AdminNotes = () => {
     if (!form.title.trim()) return showPopcard('Title is required.', false, 2000)
     setLoading(true)
     try {
-      const { data } = await axios.post('http://localhost:3000/note/create', form, { withCredentials: true })
+      const { data } = await axios.post(`${API_BASE}/note/create`, form, { withCredentials: true })
       setNotes(prev => [data, ...prev])
       setForm({ title: '', body: '' })
       setFormOpen(false)
@@ -65,7 +66,7 @@ const AdminNotes = () => {
 
   const toggleDone = async (id) => {
     try {
-      const { data } = await axios.post('http://localhost:3000/note/toggle', { id }, { withCredentials: true })
+      const { data } = await axios.post(`${API_BASE}/note/toggle`, { id }, { withCredentials: true })
       setNotes(prev => prev.map(n => n._id === id ? data : n))
     } catch {
       showPopcard('Failed to update note.', false, 2000)
@@ -74,7 +75,7 @@ const AdminNotes = () => {
 
   const deleteNote = async (id) => {
     try {
-      await axios.post('http://localhost:3000/note/delete', { id }, { withCredentials: true })
+      await axios.post(`${API_BASE}/note/delete`, { id }, { withCredentials: true })
       setNotes(prev => prev.filter(n => n._id !== id))
       showPopcard('Note deleted.', true, 1500)
     } catch {

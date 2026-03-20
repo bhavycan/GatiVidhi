@@ -7,6 +7,7 @@ import CustomButtom from '../../templates/CustomButtom'
 import Dropdown from '../../templates/Dropdown'
 import { usePopcard } from '../../context/PopCardContext'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const AdminWorker = () => {
   const parent = useRef(null)
@@ -31,7 +32,7 @@ const AdminWorker = () => {
 
   const fetchWorkers = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/worker/all', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/worker/all`, { withCredentials: true })
       setWorkers(data?.workers || [])
     } catch {
       setWorkers([])
@@ -42,7 +43,7 @@ const AdminWorker = () => {
 
   const fetchProjects = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/project/all', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/project/all`, { withCredentials: true })
       setProjects((data?.projects || []).filter(p => p.status === 'ongoing'))
     } catch {
       setProjects([])
@@ -52,7 +53,7 @@ const AdminWorker = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await axios.get('http://localhost:3000/admin/', { withCredentials: true })
+        await axios.get(`${API_BASE}/admin/`, { withCredentials: true })
       } catch (err) {
         if (err.response?.status === 401 || err.response?.status === 400) navigate('/admin/login')
       }
@@ -69,7 +70,7 @@ const AdminWorker = () => {
     if (!form.name || !form.email) return showPopcard('Name and email are required.', false, 2500)
     setLoading(true)
     try {
-      await axios.post('http://localhost:3000/worker/create', form, { withCredentials: true })
+      await axios.post(`${API_BASE}/worker/create`, form, { withCredentials: true })
       showPopcard('Worker created!', true, 1500)
       setForm({ name: '', email: '' })
       setFormOpen(false)
@@ -89,7 +90,7 @@ const AdminWorker = () => {
     if (!project || !worker) return
     setAssigning(true)
     try {
-      await axios.post('http://localhost:3000/worker/assign-project', { workerId: worker._id, projectId: project._id }, { withCredentials: true })
+      await axios.post(`${API_BASE}/worker/assign-project`, { workerId: worker._id, projectId: project._id }, { withCredentials: true })
       showPopcard('Project assigned!', true, 1500)
       setSelectedWorker(null)
       setSelectedProject(null)
@@ -106,7 +107,7 @@ const AdminWorker = () => {
     if (!deleteTarget) return
     setDeleteLoading(true)
     try {
-      await axios.post('http://localhost:3000/worker/delete', { id: deleteTarget._id }, { withCredentials: true })
+      await axios.post(`${API_BASE}/worker/delete`, { id: deleteTarget._id }, { withCredentials: true })
       showPopcard('Worker deleted.', true, 2500)
       setDeleteTarget(null)
       fetchWorkers()

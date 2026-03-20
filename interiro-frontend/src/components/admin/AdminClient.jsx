@@ -6,6 +6,7 @@ import AdminNavbar from '../../templates/AdminNavbar'
 import CustomButtom from '../../templates/CustomButtom'
 import { usePopcard } from '../../context/PopCardContext'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const initialForm = { name: '', email: '', phone: '' }
 
@@ -32,7 +33,7 @@ const AdminClient = () => {
 
   const fetchClients = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/user/all', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/user/all`, { withCredentials: true })
       setClients(data?.users || [])
     } catch {
       setClients([])
@@ -44,7 +45,7 @@ const AdminClient = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await axios.get('http://localhost:3000/admin/', { withCredentials: true })
+        await axios.get(`${API_BASE}/admin/`, { withCredentials: true })
       } catch (error) {
         if (error.response?.status === 401 || error.response?.status === 400) {
           navigate('/admin/login')
@@ -67,7 +68,7 @@ const AdminClient = () => {
     }
     setLoading(true)
     try {
-      await axios.post('http://localhost:3000/user/create', { name, email, phone }, { withCredentials: true })
+      await axios.post(`${API_BASE}/user/create`, { name, email, phone }, { withCredentials: true })
       showPopcard('Client added!', true, 1500)
       setForm(initialForm)
       setFormOpen(false)
@@ -94,7 +95,7 @@ const AdminClient = () => {
     if (!deleteTarget) return
     setDeleteLoading(true)
     try {
-      await axios.post('http://localhost:3000/user/delete', { id: deleteTarget._id }, { withCredentials: true })
+      await axios.post(`${API_BASE}/user/delete`, { id: deleteTarget._id }, { withCredentials: true })
       showPopcard('Client deleted.', true, 2500)
       setDeleteTarget(null)
       fetchClients()
@@ -114,7 +115,7 @@ const AdminClient = () => {
     setUpdateLoading(true)
     try {
       await axios.post(
-        'http://localhost:3000/user/update',
+        `${API_BASE}/user/update`,
         { id: clientId, name: editForm.name, phone: editForm.phone },
         { withCredentials: true }
       )

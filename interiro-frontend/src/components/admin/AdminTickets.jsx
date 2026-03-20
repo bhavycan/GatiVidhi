@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Butterfly from '../../templates/Butterfly'
 import AdminNavbar from '../../templates/AdminNavbar'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const formatDate = (date) => {
   if (!date) return '—'
@@ -59,7 +60,7 @@ const TicketDetail = ({ ticket, onClose, onResolve }) => {
   const handleResolve = async () => {
     setResolving(true)
     try {
-      await axios.patch(`http://localhost:3000/comment/${ticket._id}/resolve`, {}, { withCredentials: true })
+      await axios.patch(`${API_BASE}/comment/${ticket._id}/resolve`, {}, { withCredentials: true })
       setResolved(true)
       if (onResolve) onResolve(ticket._id)
     } catch (e) {
@@ -174,7 +175,7 @@ const AdminTickets = () => {
   useEffect(() => {
     const fetchTickets = async () => {
       try {
-        const { data } = await axios.get('http://localhost:3000/comment/all', { withCredentials: true })
+        const { data } = await axios.get(`${API_BASE}/comment/all`, { withCredentials: true })
         setTickets(data?.comments || [])
       } catch (error) {
         console.error(error)

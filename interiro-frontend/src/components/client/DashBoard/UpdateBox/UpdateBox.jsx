@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import UpdateCore from "./UpdateCore";
 import UpdateTree from "./UpdateTree";
+import { API_BASE } from '../../../../config.js'
 
 const UpdateBox = ({ showPopcard }) => {
   const [updateisOpen, setUpdateOpen] = useState(false);
@@ -12,7 +13,7 @@ const UpdateBox = ({ showPopcard }) => {
   useEffect(() => {
     const fetchUpdates = async () => {
       try {
-        const { data } = await axios.get("http://localhost:3000/update/all", { withCredentials: true });
+        const { data } = await axios.get(`${API_BASE}/update/all`, { withCredentials: true });
         const list = data?.updates ?? [];
         setUpdateCount(list.length);
         setUpdates([...list].reverse()); // oldest first (welcome update at top)

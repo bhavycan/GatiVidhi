@@ -6,6 +6,7 @@ import CustomButtom from '../../templates/CustomButtom'
 import { usePopcard } from '../../context/PopCardContext'
 import AdminNavbar from '../../templates/AdminNavbar'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const AdminMaterial = () => {
   const parent = useRef(null)
@@ -27,7 +28,7 @@ const AdminMaterial = () => {
 
   const fetchMaterials = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/material/all', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/material/all`, { withCredentials: true })
       setMaterials(data.materials || [])
     } catch (error) {
       if (error.response?.status === 401) navigate('/admin/login')
@@ -43,7 +44,7 @@ const AdminMaterial = () => {
     if (!formLabel.trim() || !formMaterial.trim()) return showPopcard('Both fields are required.', false, 2000)
     setSaving(true)
     try {
-      await axios.post('http://localhost:3000/material/create', { label: formLabel.trim(), materialName: formMaterial.trim() }, { withCredentials: true })
+      await axios.post(`${API_BASE}/material/create`, { label: formLabel.trim(), materialName: formMaterial.trim() }, { withCredentials: true })
       showPopcard('Material added!', true, 1500)
       setFormLabel('')
       setFormMaterial('')
@@ -71,7 +72,7 @@ const AdminMaterial = () => {
   const handleUpdate = async (id) => {
     if (!editLabel.trim() || !editMaterial.trim()) return showPopcard('Both fields are required.', false, 2000)
     try {
-      await axios.post('http://localhost:3000/material/update', { id, label: editLabel.trim(), materialName: editMaterial.trim() }, { withCredentials: true })
+      await axios.post(`${API_BASE}/material/update`, { id, label: editLabel.trim(), materialName: editMaterial.trim() }, { withCredentials: true })
       showPopcard('Updated!', true, 1500)
       cancelEdit()
       fetchMaterials()
@@ -82,7 +83,7 @@ const AdminMaterial = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.post('http://localhost:3000/material/delete', { id }, { withCredentials: true })
+      await axios.post(`${API_BASE}/material/delete`, { id }, { withCredentials: true })
       showPopcard('Deleted.', true, 1500)
       fetchMaterials()
     } catch {
@@ -92,7 +93,7 @@ const AdminMaterial = () => {
 
   const handleToggleDefault = async (id) => {
     try {
-      await axios.post('http://localhost:3000/material/set-default', { id }, { withCredentials: true })
+      await axios.post(`${API_BASE}/material/set-default`, { id }, { withCredentials: true })
       fetchMaterials()
     } catch {
       showPopcard('Something went wrong.', false, 2000)

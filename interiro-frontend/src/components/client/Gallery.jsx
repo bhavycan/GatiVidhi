@@ -12,6 +12,7 @@ import Slideshow from 'yet-another-react-lightbox/plugins/slideshow'
 import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
 import Counter from 'yet-another-react-lightbox/plugins/counter'
 import 'yet-another-react-lightbox/plugins/counter.css'
+import { API_BASE } from '../../config.js'
 
 const TaskFilterDropdown = ({ tasks, value, onChange }) => {
   const [open, setOpen] = useState(false)
@@ -71,7 +72,7 @@ const Gallery = () => {
 
   const fetchUpdates = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/update/all', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/update/all`, { withCredentials: true })
       setUpdates(data?.updates || [])
     } catch (error) {
       console.error('Failed to fetch updates', error)

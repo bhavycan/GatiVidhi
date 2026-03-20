@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from '../config.js'
 
 const TicketForm = ({ setTicketOpen, showPopcard, onSubmitSuccess }) => {
   const [note, setNote] = useState("");
@@ -19,7 +20,7 @@ const TicketForm = ({ setTicketOpen, showPopcard, onSubmitSuccess }) => {
     setLoading(true);
     try {
       await axios.post(
-        "http://localhost:3000/comment/create",
+        `${API_BASE}/comment/create`,
         { note: note.trim(), priorityLevel },
         { withCredentials: true }
       );

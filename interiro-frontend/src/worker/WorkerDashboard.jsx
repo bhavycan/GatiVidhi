@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import axios from 'axios';
 import Dropdown from '../templates/Dropdown';
 import Butterfly from '../templates/Butterfly';
+import { API_BASE } from '../config.js'
 
 const WorkerDashboard = () => {
   const date = moment().format('LL');
@@ -25,7 +26,7 @@ const WorkerDashboard = () => {
 
   const fetchProfile = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/worker/profile', { withCredentials: true });
+      const { data } = await axios.get(`${API_BASE}/worker/profile`, { withCredentials: true });
       setWorkerInfo(data?.worker);
       setProjects(data?.projects || []);
     } catch (err) {
@@ -35,14 +36,14 @@ const WorkerDashboard = () => {
 
   const fetchNotifications = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/worker/notifications', { withCredentials: true });
+      const { data } = await axios.get(`${API_BASE}/worker/notifications`, { withCredentials: true });
       setNotifications((data?.notifications || []).filter(n => !n.read));
     } catch (_) {}
   };
 
   const dismissNotifications = async () => {
     try {
-      await axios.post('http://localhost:3000/worker/notifications/read', {}, { withCredentials: true });
+      await axios.post(`${API_BASE}/worker/notifications/read`, {}, { withCredentials: true });
       setNotifications([]);
     } catch (_) {}
   };
@@ -61,7 +62,7 @@ const WorkerDashboard = () => {
     setError('');
     try {
       const { data } = await axios.get(
-        `http://localhost:3000/worker/today-update/${project._id}`,
+        `${API_BASE}/worker/today-update/${project._id}`,
         { withCredentials: true }
       );
       setTodayUpdate(data?.update || null);
@@ -109,7 +110,7 @@ const WorkerDashboard = () => {
       images.forEach(img => formData.append('updateImages', img));
 
       const { data } = await axios.post(
-        'http://localhost:3000/worker/update',
+        `${API_BASE}/worker/update`,
         formData,
         { withCredentials: true, headers: { 'Content-Type': 'multipart/form-data' } }
       );

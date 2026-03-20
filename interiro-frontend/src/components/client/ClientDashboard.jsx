@@ -16,6 +16,7 @@ import RoomBox from './DashBoard/Room/RoomBox';
 import Notification from '../../Portals/Notification';
 import { usePopcard } from '../../context/PopCardContext';
 import axios from 'axios';
+import { API_BASE } from '../../config.js'
 
 
 const ClientDashboard = () => {
@@ -37,7 +38,7 @@ const { showPopcard, popcard } = usePopcard();
 
     const fetchProfile = async() =>{
                 try {
-                const {data} = await axios.get("http://localhost:3000/user/profile",{withCredentials: true});
+                const {data} = await axios.get(`${API_BASE}/user/profile`,{withCredentials: true});
                 setUserInfo(data?.user);
                 setProjectInfo(data?.project)
                 setlastUpdate(data?.lastUpdate)
@@ -50,7 +51,7 @@ const { showPopcard, popcard } = usePopcard();
 
     const fetchNotifCount = async () => {
       try {
-        const { data } = await axios.get('http://localhost:3000/project/notifications', { withCredentials: true });
+        const { data } = await axios.get(`${API_BASE}/project/notifications`, { withCredentials: true });
         setNotifCount(data?.notifications?.length || 0);
       } catch (_) {}
     };

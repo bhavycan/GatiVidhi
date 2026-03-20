@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import axios from "axios";
 import Navbar from "../../templates/Navbar";
 import Butterfly from "../../templates/Butterfly";
+import { API_BASE } from '../../config.js'
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -21,7 +22,7 @@ const Chatbot = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data } = await axios.get("http://localhost:3000/user/profile", {
+        const { data } = await axios.get(`${API_BASE}/user/profile`, {
           withCredentials: true,
         });
         setUserId(data?.user?._id);
@@ -36,7 +37,7 @@ const Chatbot = () => {
   useEffect(() => {
     if (!userId) return;
 
-    const socket = io("http://localhost:3000", {
+    const socket = io(`${API_BASE}`, {
       auth: { clientId: userId },
     });
     socketRef.current = socket;

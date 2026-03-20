@@ -1,13 +1,14 @@
 import { AnimatePresence, motion } from "motion/react";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from '../../config.js'
 
 const Material = () => {
   const [isOpen, setOpen] = useState(false);
   const [materials, setMaterials] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:3000/material/client", { withCredentials: true })
+    axios.get(`${API_BASE}/material/client`, { withCredentials: true })
       .then(({ data }) => setMaterials(data.materials || []))
       .catch(console.error);
   }, []);

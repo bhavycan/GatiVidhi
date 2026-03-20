@@ -1,0 +1,75 @@
+import { useNavigate } from 'react-router-dom'
+
+const HomePage = () => {
+  const navigate = useNavigate()
+
+  const roles = [
+    {
+      label: 'Admin',
+      icon: 'ri-shield-user-line',
+      desc: 'Manage projects, tasks and reports',
+      path: '/admin/login',
+    },
+    {
+      label: 'Client',
+      icon: 'ri-user-3-line',
+      desc: 'Track your project progress',
+      path: '/user/login',
+    },
+    {
+      label: 'Worker',
+      icon: 'ri-tools-line',
+      desc: 'View daily tasks and updates',
+      path: '/worker/login',
+    },
+  ]
+
+  return (
+    <div className='login w-full min-h-screen relative overflow-hidden'>
+
+      <section className='overflow-hidden -z-10'>
+        <figure className='w-screen h-full absolute'>
+          <img className='w-full h-full object-cover' src='/images/background.png' alt='' />
+        </figure>
+        <figure className='w-24 h-28 md:w-32 md:h-40 absolute top-[18%] right-[10%]'>
+          <img className='w-full h-full object-cover' src='/images/butterfly.png' alt='' />
+        </figure>
+        <figure className='w-24 h-28 md:w-32 md:h-40 absolute bottom-[2%] left-[10%]'>
+          <img className='w-full h-full object-cover' src='/images/butterfly2.png' alt='' />
+        </figure>
+      </section>
+
+      <main className='w-full min-h-screen relative z-40 flex flex-col items-center justify-center px-[8%] py-[10%]'>
+
+        <header className='text-center mb-12'>
+          <div className='text-5xl md:text-6xl font-semibold tracking-tight flex justify-center'>
+            <h1>Tanika</h1>
+            <h1 className='text-white'>Associate</h1>
+          </div>
+          <p className='text-white font-bold text-md opacity-70 mt-3'>Welcome! Who are you?</p>
+        </header>
+
+        <div className='w-full max-w-3xl grid grid-cols-1 md:grid-cols-3 gap-6'>
+          {roles.map((role) => (
+            <button
+              key={role.label}
+              onClick={() => navigate(role.path)}
+              className='group relative flex flex-col items-center gap-4 bg-white rounded-2xl px-6 py-8 border border-black shadow-lg hover:shadow-[#883bbc] hover:shadow-xl transition-all duration-200 cursor-pointer'
+            >
+              <div className='w-full h-full bg-[#f3a9de] rounded-2xl absolute top-[6px] left-[6px] -z-10'></div>
+              <div className='w-16 h-16 rounded-full bg-[#f3a9de] flex items-center justify-center'>
+                <i className={`${role.icon} text-3xl text-[#883bbc]`}></i>
+              </div>
+              <h2 className='text-2xl font-semibold tracking-tight'>{role.label}</h2>
+              <p className='text-sm text-gray-500 font-medium text-center leading-5'>{role.desc}</p>
+            </button>
+          ))}
+        </div>
+
+        <p className='text-sm mt-16 opacity-40 text-white font-semibold'>All rights @ TanikaAssociate</p>
+      </main>
+    </div>
+  )
+}
+
+export default HomePage

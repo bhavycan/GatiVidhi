@@ -7,6 +7,7 @@ import CustomButtom from '../../templates/CustomButtom'
 import Navbar from '../../templates/Navbar'
 import Dropdown from '../../templates/Dropdown'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const Update = () => {
   const [isopen, setOpen] = useState(false)
@@ -18,7 +19,7 @@ const Update = () => {
 
   const fetchUpdates = async () => {
     try {
-      const { data } = await axios.get("http://localhost:3000/update/all", { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/update/all`, { withCredentials: true })
       setUpdates(data?.updates || [])
     } catch (error) {
       console.error("Failed to fetch updates", error)

@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Rectangle, ResponsiveContainer } from 'recharts';
+import { API_BASE } from '../../../../config.js'
 
 const UpdateTree = ({ setUpdateOpen }) => {
   const [taskCounts, setTaskCounts] = useState([])
@@ -10,7 +11,7 @@ const UpdateTree = ({ setUpdateOpen }) => {
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const { data } = await axios.get('http://localhost:3000/update/task-counts', { withCredentials: true })
+        const { data } = await axios.get(`${API_BASE}/update/task-counts`, { withCredentials: true })
         setTaskCounts(data?.taskCounts || [])
       } catch (_) {
         setTaskCounts([])

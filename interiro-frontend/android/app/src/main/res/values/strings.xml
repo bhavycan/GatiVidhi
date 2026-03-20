@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tanika Interior</string>
+    <string name="title_activity_main">Tanika Interior</string>
+    <string name="package_name">com.tanika.interior</string>
+    <string name="custom_url_scheme">com.tanika.interior</string>
+</resources>

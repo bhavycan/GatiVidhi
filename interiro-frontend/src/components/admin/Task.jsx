@@ -6,6 +6,7 @@ import CustomButtom from '../../templates/CustomButtom'
 import { usePopcard } from '../../context/PopCardContext'
 import AdminNavbar from '../../templates/AdminNavbar'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const STATUS_OPTIONS = ['not started', 'ongoing', 'completed']
 
@@ -223,7 +224,7 @@ const Task = () => {
 
   const fetchStaleProjects = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/task/stale', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/task/stale`, { withCredentials: true })
       setStaleProjects(data)
     } catch (error) {
       console.error('Failed to fetch stale projects', error)
@@ -232,7 +233,7 @@ const Task = () => {
 
   const fetchTemplates = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3000/template/all', { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/template/all`, { withCredentials: true })
       setTemplates(data.templates || [])
     } catch (error) {
       console.error('Failed to fetch templates', error)
@@ -242,7 +243,7 @@ const Task = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data } = await axios.get('http://localhost:3000/project/all', { withCredentials: true })
+        const { data } = await axios.get(`${API_BASE}/project/all`, { withCredentials: true })
         const ongoing = (data?.projects || []).filter(p => p.status === 'ongoing')
         setProjects(ongoing)
         const paramId = searchParams.get('projectId')
@@ -265,7 +266,7 @@ const Task = () => {
   const handleProjectSelect = async (project) => {
     setSelectedProject(project)
     try {
-      const { data } = await axios.get(`http://localhost:3000/task/${project._id}`, { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/task/${project._id}`, { withCredentials: true })
       setTasks(data.tasks?.map(t => ({ name: t.name, status: t.status || 'not started' })) || [])
       setLastUpdated(data.lastUpdated || null)
     } catch (_) {
@@ -328,7 +329,7 @@ const Task = () => {
   const handleUpdateProjectSelect = async (project) => {
     setUpdateProject(project)
     try {
-      const { data } = await axios.get(`http://localhost:3000/task/${project._id}`, { withCredentials: true })
+      const { data } = await axios.get(`${API_BASE}/task/${project._id}`, { withCredentials: true })
       setUpdateTasks(data.tasks?.map(t => ({ name: t.name, status: t.status || 'not started' })) || [])
       setUpdateLastUpdated(data.lastUpdated || null)
     } catch (_) {
@@ -349,7 +350,7 @@ const Task = () => {
     setUpdateLoading(true)
     try {
       await axios.post(
-        'http://localhost:3000/task/update',
+        `${API_BASE}/task/update`,
         { projectId: updateProject._id, tasks: updateTasks },
         { withCredentials: true }
       )
@@ -373,7 +374,7 @@ const Task = () => {
     setLoading(true)
     try {
       await axios.post(
-        'http://localhost:3000/task/update',
+        `${API_BASE}/task/update`,
         { projectId, tasks },
         { withCredentials: true }
       )

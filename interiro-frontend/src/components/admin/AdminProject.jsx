@@ -7,6 +7,7 @@ import CustomButtom from '../../templates/CustomButtom'
 import Dropdown from '../../templates/Dropdown'
 import { usePopcard } from '../../context/PopCardContext'
 import axios from 'axios'
+import { API_BASE } from '../../config.js'
 
 const initialForm = { projectName: '', description: '', estimatedEndDate: '' }
 const STATUS_OPTIONS = ['ongoing', 'completed', 'cancelled']
@@ -145,7 +146,7 @@ const AdminProject = () => {
       formData.append('squareFeet', squareFeet)
       formData.append('totalRooms', totalRooms)
       formData.append('designPdf', designPdf)
-      await axios.post('http://localhost:3000/project/additional-info', formData, { withCredentials: true })
+      await axios.post(`${API_BASE}/project/additional-info`, formData, { withCredentials: true })
       showPopcard('Information saved!', true, 1500)
       setInfoOpen(false)
       setInfoForm({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null })
@@ -163,8 +164,8 @@ const AdminProject = () => {
   const fetchData = async () => {
     try {
       const [{ data: userData }, { data: projectData }] = await Promise.all([
-        axios.get('http://localhost:3000/user/all', { withCredentials: true }),
-        axios.get('http://localhost:3000/project/all', { withCredentials: true }),
+        axios.get(`${API_BASE}/user/all`, { withCredentials: true }),
+        axios.get(`${API_BASE}/project/all`, { withCredentials: true }),
       ])
       setClients(userData?.users || [])
       setProjects(projectData?.projects || [])
@@ -192,7 +193,7 @@ const AdminProject = () => {
     setLoading(true)
     try {
       await axios.post(
-        'http://localhost:3000/project/create',
+        `${API_BASE}/project/create`,
         { projectName, description, clientEmail: selectedClient.email, estimatedEndDate },
         { withCredentials: true }
       )
@@ -232,7 +233,7 @@ const AdminProject = () => {
     setUpdateLoading(true)
     try {
       await axios.post(
-        'http://localhost:3000/project/update',
+        `${API_BASE}/project/update`,
         { id: projectId, ...editForm },
         { withCredentials: true }
       )

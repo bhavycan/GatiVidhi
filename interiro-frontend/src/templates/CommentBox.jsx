@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import CallMessage from '../Portals/CallMessage'
 import { usePopcard } from '../context/PopCardContext'
 import axios from 'axios'
+import { API_BASE } from '../config.js'
 
 const CommentBox = ({isComOpen, setComOpen, isType, setType, commentText, setCommentText}) => {
  const { showPopcard, popcard } = usePopcard();
@@ -14,7 +15,7 @@ const CommentBox = ({isComOpen, setComOpen, isType, setType, commentText, setCom
   const handleSentMessage = async () => {
     if(isType){
       try {
-        await axios.post('http://localhost:3000/comment/create', { note: commentText, priorityLevel: 'normal' }, { withCredentials: true })
+        await axios.post(`${API_BASE}/comment/create`, { note: commentText, priorityLevel: 'normal' }, { withCredentials: true })
         setComOpen(false)
         setMessageOpen(true)
         showPopcard("Sent!", true)
