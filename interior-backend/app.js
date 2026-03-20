@@ -35,6 +35,7 @@ const ALLOWED_ORIGINS = [
   "https://localhost",
   "http://localhost",
   "capacitor://localhost",
+  "https://gati-vidhi.vercel.app",
 ]
 
 const server = http.createServer(app)
