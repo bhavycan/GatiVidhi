@@ -69,8 +69,9 @@ const Notification = ({ state, onClear }) => {
       await axios.post(`${API_BASE}/project/notifications/clear`, {}, { withCredentials: true });
       setNotifications([]);
       closePanel(0);
-    } catch (_) {}
-    setClearing(false);
+    } catch (_) {
+      setClearing(false);
+    }
   };
 
   const handleNotifClick = (type) => {
@@ -108,6 +109,7 @@ const Notification = ({ state, onClear }) => {
       exit={{ opacity: 0 }}
       onClick={() => closePanel()}
       transition={{ duration: 0.2 }}
+      style={{ pointerEvents: isNotification ? 'auto' : 'none' }}
       className="fixed inset-0 z-50 w-screen h-screen bg-gradient-to-tr from-[#F7D6F3] to-transparent flex justify-center items-start bg-opacity-90"
     >
       <motion.div

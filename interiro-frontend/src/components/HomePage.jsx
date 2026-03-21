@@ -42,6 +42,9 @@ const HomePage = () => {
       <main className='w-full min-h-screen relative z-40 flex flex-col items-center justify-center px-[8%] py-[10%]'>
 
         <header className='text-center mb-12'>
+          <div className='flex justify-center mb-4'>
+            <img src='/images/butterfly.png' alt='Tanika Associate Logo' className='w-20 h-24 object-contain drop-shadow-lg' />
+          </div>
           <div className='text-5xl md:text-6xl font-semibold tracking-tight flex justify-center'>
             <h1>Tanika</h1>
             <h1 className='text-white'>Associate</h1>
