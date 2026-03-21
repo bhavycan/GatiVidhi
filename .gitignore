@@ -1,0 +1,55 @@
+# ===========================
+# Claude AI
+# ===========================
+.claude/
+
+# ===========================
+# IDE / Editor
+# ===========================
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===========================
+# OS
+# ===========================
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Backend
+# ===========================
+interior-backend/node_modules/
+interior-backend/.env
+interior-backend/.env.*
+interior-backend/uploads/
+interior-backend/logs/
+interior-backend/*.log
+
+# ===========================
+# Frontend
+# ===========================
+interiro-frontend/node_modules/
+interiro-frontend/.env
+interiro-frontend/.env.*
+interiro-frontend/dist/
+interiro-frontend/.cache/
+
+# ===========================
+# Capacitor / Android
+# ===========================
+interiro-frontend/android/.gradle/
+interiro-frontend/android/build/
+interiro-frontend/android/app/build/
+interiro-frontend/android/.idea/
+interiro-frontend/android/local.properties
+interiro-frontend/android/app/release/
+
+# ===========================
+# Logs & misc
+# ===========================
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.pem
