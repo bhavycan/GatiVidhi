@@ -19,6 +19,8 @@ module.exports.createCommentController = async (req, res) => {
       projectId: project._id,
     });
 
+    console.log(`[TICKET CREATED] user: "${user.email}" | name: "${user.name}" | project: "${project.projectName}" | priority: "${priorityLevel || 'medium'}" | ticketId: ${comment._id}`);
+
     res.status(200).json(comment);
   } catch (error) {
     console.error(error);

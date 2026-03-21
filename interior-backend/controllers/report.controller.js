@@ -28,6 +28,7 @@ module.exports.reportGetAllController = async (req, res) => {
 module.exports.reportCreateController = async (req, res) => {
   const id = req.params.id;
   try{
+    const project = await projectModel.findById(id).lean();
     const reporttext = await createReport(id)
     const report = await reportModel.create({
       projectId: id,
@@ -38,7 +39,7 @@ module.exports.reportCreateController = async (req, res) => {
       { _id: id },
       { $push: { notifications: { type: 'report', message: 'A new project report has been published' } } }
     );
-    console.log("new report generated")
+    console.log(`[REPORT CREATED] project: "${project?.projectName || id}" | reportId: ${report._id} | date: ${report.PublishedDate.toISOString()}`);
     res.status(200).send(report);
   } catch (error) {
     console.error(error);

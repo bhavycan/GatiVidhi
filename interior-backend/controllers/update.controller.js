@@ -42,6 +42,8 @@ try {
         activeRooms: Array.isArray(activeRooms) ? activeRooms : (activeRooms ? JSON.parse(activeRooms) : [])
     })
 
+    console.log(`[UPDATE CREATED] project: "${projectName}" | task: "${task || 'none'}" | images: ${imageUrls.length} | updateId: ${update._id}`);
+
     project.updates.push(update._id);
     await project.save();
 
