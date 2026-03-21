@@ -45,9 +45,9 @@ const HomePage = () => {
           
           <div className='text-5xl md:text-6xl font-semibold tracking-tight flex justify-center'>
             <h1>Gati</h1>
-            <h1 className='text-white text-shadow-fuchsia-700'>Vidhi</h1>
+            <h1 className='text-zinc-500'>Vidhi</h1>
           </div>
-          <p className='text-white font-bold text-md opacity-70 mt-3'>Welcome! Who are you?</p>
+          <p className='text-zinc-500 font-bold text-md opacity-70 mt-3'>Welcome! Who are you?</p>
         </header>
 
         <div className='w-full max-w-sm flex flex-col gap-3'>
