@@ -182,14 +182,14 @@ module.exports.forgotPasswordSendOtpController = async (req, res) => {
     if (!user) return res.status(404).send("No account found with this email");
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     otpStore.set(user.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
-    sendEmail(
+    await sendEmail(
       { name: user.name, email: user.email, otp, subject: "Password Reset OTP - GatiVidhi" },
       path.join(__dirname, "../views/otpEmail.ejs")
     );
     res.status(200).send("OTP sent to your email");
   } catch (error) {
     console.error(error);
-    res.status(500).send("Something went wrong");
+    res.status(500).send("Failed to send OTP email. Please try again.");
   }
 };
 
@@ -231,7 +231,7 @@ module.exports.sendOtpController = async (req, res) => {
       otp,
       subject: "Your Password Change OTP - GatiVidhi",
     };
-    sendEmail(client, path.join(__dirname, "../views/otpEmail.ejs"));
+    await sendEmail(client, path.join(__dirname, "../views/otpEmail.ejs"));
 
     res.status(200).send("OTP sent to your email");
   } catch (error) {

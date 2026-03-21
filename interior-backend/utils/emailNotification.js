@@ -16,6 +16,7 @@ const sendEmail = async(user, ejsFilePath) =>{
     console.log("Message sent:", info.messageId);
     } catch (error) {
         console.error("Failed to send email:", error);
+        throw error;
     }
  
 }

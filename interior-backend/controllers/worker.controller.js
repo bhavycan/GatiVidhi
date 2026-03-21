@@ -287,14 +287,14 @@ module.exports.workerForgotPasswordSendOtpController = async (req, res) => {
     if (!worker) return res.status(404).send("No worker account found with this email");
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     workerOtpStore.set(worker.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
-    sendEmail(
+    await sendEmail(
       { name: worker.name, email: worker.email, otp, subject: "Password Reset OTP - GatiVidhi" },
       path.join(__dirname, "../views/otpEmail.ejs")
     );
     res.status(200).send("OTP sent to your email");
   } catch (err) {
     console.error(err);
-    res.status(500).send("Something went wrong");
+    res.status(500).send("Failed to send OTP email. Please try again.");
   }
 };
 
@@ -343,14 +343,14 @@ module.exports.sendWorkerOtpController = async (req, res) => {
     if (!worker) return res.status(404).send("Worker not found");
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     workerOtpStore.set(worker.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
-    sendEmail(
+    await sendEmail(
       { name: worker.name, email: worker.email, otp, subject: "Your Password Change OTP - GatiVidhi" },
       path.join(__dirname, "../views/otpEmail.ejs")
     );
     res.status(200).send("OTP sent to your email");
   } catch (err) {
     console.error(err);
-    res.status(500).send("Something went wrong");
+    res.status(500).send("Failed to send OTP email. Please try again.");
   }
 };
 

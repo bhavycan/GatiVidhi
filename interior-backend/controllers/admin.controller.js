@@ -67,14 +67,14 @@ module.exports.adminForgotPasswordSendOtpController = async (req, res) => {
     if (!admin) return res.status(404).send("No admin account found with this email");
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     adminOtpStore.set(admin.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
-    sendEmail(
+    await sendEmail(
       { name: admin.name, email: admin.email, otp, subject: "Password Reset OTP - GatiVidhi" },
       path.join(__dirname, "../views/otpEmail.ejs")
     );
     res.status(200).send("OTP sent to your email");
   } catch (error) {
     console.error(error);
-    res.status(500).send("Something went wrong");
+    res.status(500).send("Failed to send OTP email. Please try again.");
   }
 };
 
