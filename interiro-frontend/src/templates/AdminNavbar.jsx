@@ -10,6 +10,7 @@ const AdminNavbar = ({ value }) => {
 
   const menuItems = [
     { label: "Dashboard",  icon: "ri-dashboard-line",       path: "/admin/profile" },
+    { label: "My Profile", icon: "ri-user-settings-line",   path: "/admin/account" },
   ];
 
   const actionItems = [

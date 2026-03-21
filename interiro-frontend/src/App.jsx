@@ -23,6 +23,9 @@ import AdminMaterial from './components/admin/AdminMaterial'
 import WorkerLogin from './worker/WorkerLogin'
 import WorkerDashboard from './worker/WorkerDashboard'
 import AdminWorker from './components/admin/AdminWorker'
+import ClientProfile from './components/client/ClientProfile'
+import AdminProfile from './components/admin/AdminProfile'
+import WorkerProfile from './worker/WorkerProfile'
 
 const App = () => {
   return (
@@ -50,6 +53,9 @@ const App = () => {
             <Route path='/worker/login' element={<WorkerLogin />} />
             <Route path='/worker/profile' element={<WorkerDashboard />} />
             <Route path='/admin/worker' element={<AdminWorker />} />
+            <Route path='/user/account' element={<ClientProfile />} />
+            <Route path='/admin/account' element={<AdminProfile />} />
+            <Route path='/worker/account' element={<WorkerProfile />} />
       </Routes>
      
 

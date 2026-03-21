@@ -9,6 +9,9 @@ const uploadImage = require('../utils/cloudinary.multer');
 const generatePassword = require('../utils/passwordGenerator');
 const sendEmail = require('../utils/emailNotification');
 
+// In-memory OTP store for workers: email -> { otp, expiresAt }
+const workerOtpStore = new Map();
+
 module.exports.createWorkerController = async (req, res) => {
   const { name, email } = req.body;
   if (!name || !email) return res.status(400).send('Name and email are required');
@@ -273,6 +276,105 @@ module.exports.markWorkerNotificationsReadController = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
+  }
+};
+
+module.exports.workerForgotPasswordSendOtpController = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).send("Email is required");
+  try {
+    const worker = await workerModel.findOne({ email: email.toLowerCase() });
+    if (!worker) return res.status(404).send("No worker account found with this email");
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    workerOtpStore.set(worker.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    sendEmail(
+      { name: worker.name, email: worker.email, otp, subject: "Password Reset OTP - GatiVidhi" },
+      path.join(__dirname, "../views/otpEmail.ejs")
+    );
+    res.status(200).send("OTP sent to your email");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.workerForgotPasswordResetController = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) return res.status(400).send("All fields are required");
+  try {
+    const worker = await workerModel.findOne({ email: email.toLowerCase() });
+    if (!worker) return res.status(404).send("No worker account found with this email");
+    const record = workerOtpStore.get(worker.email);
+    if (!record) return res.status(400).send("No OTP requested. Please request a new one.");
+    if (Date.now() > record.expiresAt) {
+      workerOtpStore.delete(worker.email);
+      return res.status(400).send("OTP has expired. Please request a new one.");
+    }
+    if (record.otp !== otp.toString()) return res.status(400).send("Invalid OTP");
+    const salt = await bcrypt.genSalt(10);
+    worker.password = await bcrypt.hash(newPassword, salt);
+    await worker.save();
+    workerOtpStore.delete(worker.email);
+    res.status(200).send("Password reset successfully");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.updateWorkerSelfController = async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).send("Name is required");
+  try {
+    const worker = await workerModel.findOne({ email: req.worker.email });
+    if (!worker) return res.status(404).send("Worker not found");
+    worker.name = name;
+    await worker.save();
+    res.status(200).json({ message: "Profile updated", worker: { name: worker.name, email: worker.email } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.sendWorkerOtpController = async (req, res) => {
+  try {
+    const worker = await workerModel.findOne({ email: req.worker.email });
+    if (!worker) return res.status(404).send("Worker not found");
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    workerOtpStore.set(worker.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    sendEmail(
+      { name: worker.name, email: worker.email, otp, subject: "Your Password Change OTP - GatiVidhi" },
+      path.join(__dirname, "../views/otpEmail.ejs")
+    );
+    res.status(200).send("OTP sent to your email");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.verifyWorkerOtpChangePasswordController = async (req, res) => {
+  const { otp, newPassword } = req.body;
+  if (!otp || !newPassword) return res.status(400).send("OTP and new password are required");
+  try {
+    const worker = await workerModel.findOne({ email: req.worker.email });
+    if (!worker) return res.status(404).send("Worker not found");
+    const record = workerOtpStore.get(worker.email);
+    if (!record) return res.status(400).send("No OTP requested. Please request a new one.");
+    if (Date.now() > record.expiresAt) {
+      workerOtpStore.delete(worker.email);
+      return res.status(400).send("OTP has expired. Please request a new one.");
+    }
+    if (record.otp !== otp.toString()) return res.status(400).send("Invalid OTP");
+    const salt = await bcrypt.genSalt(10);
+    worker.password = await bcrypt.hash(newPassword, salt);
+    await worker.save();
+    workerOtpStore.delete(worker.email);
+    res.status(200).send("Password changed successfully");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Something went wrong");
   }
 };
 

@@ -6,6 +6,11 @@ const { updateModel } = require("../models/updateModel");
 const { commentModel } = require("../models/commentModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+const sendEmail = require("../utils/emailNotification");
+
+// In-memory OTP store for admin: email -> { otp, expiresAt }
+const adminOtpStore = new Map();
 
 
 module.exports.adminLogInController = async (req, res) => {
@@ -53,6 +58,116 @@ module.exports.adminLogOutController = async(req,res)=>{
             res.status(500).send("Something went wrong!")
         }
 }
+
+module.exports.adminForgotPasswordSendOtpController = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).send("Email is required");
+  try {
+    const admin = await adminModel.findOne({ email: email.toLowerCase() });
+    if (!admin) return res.status(404).send("No admin account found with this email");
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    adminOtpStore.set(admin.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    sendEmail(
+      { name: admin.name, email: admin.email, otp, subject: "Password Reset OTP - GatiVidhi" },
+      path.join(__dirname, "../views/otpEmail.ejs")
+    );
+    res.status(200).send("OTP sent to your email");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.adminForgotPasswordResetController = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) return res.status(400).send("All fields are required");
+  try {
+    const admin = await adminModel.findOne({ email: email.toLowerCase() });
+    if (!admin) return res.status(404).send("No admin account found with this email");
+    const record = adminOtpStore.get(admin.email);
+    if (!record) return res.status(400).send("No OTP requested. Please request a new one.");
+    if (Date.now() > record.expiresAt) {
+      adminOtpStore.delete(admin.email);
+      return res.status(400).send("OTP has expired. Please request a new one.");
+    }
+    if (record.otp !== otp.toString()) return res.status(400).send("Invalid OTP");
+    const salt = await bcrypt.genSalt(10);
+    admin.password = await bcrypt.hash(newPassword, salt);
+    await admin.save();
+    adminOtpStore.delete(admin.email);
+    res.status(200).send("Password reset successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.adminProfileInfoController = async (req, res) => {
+  try {
+    const admin = await adminModel.findOne({ email: req.admin.email }).select("-password").lean();
+    if (!admin) return res.status(404).send("Admin not found");
+    res.status(200).json({ admin });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.updateAdminSelfController = async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).send("Name is required");
+  try {
+    const admin = await adminModel.findOne({ email: req.admin.email });
+    if (!admin) return res.status(404).send("Admin not found");
+    admin.name = name;
+    await admin.save();
+    res.status(200).json({ message: "Profile updated", admin: { name: admin.name, email: admin.email } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.sendAdminOtpController = async (req, res) => {
+  try {
+    const admin = await adminModel.findOne({ email: req.admin.email });
+    if (!admin) return res.status(404).send("Admin not found");
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    adminOtpStore.set(admin.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    sendEmail(
+      { name: admin.name, email: admin.email, otp, subject: "Your Password Change OTP - GatiVidhi" },
+      path.join(__dirname, "../views/otpEmail.ejs")
+    );
+    res.status(200).send("OTP sent to your email");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.verifyAdminOtpChangePasswordController = async (req, res) => {
+  const { otp, newPassword } = req.body;
+  if (!otp || !newPassword) return res.status(400).send("OTP and new password are required");
+  try {
+    const admin = await adminModel.findOne({ email: req.admin.email });
+    if (!admin) return res.status(404).send("Admin not found");
+    const record = adminOtpStore.get(admin.email);
+    if (!record) return res.status(400).send("No OTP requested. Please request a new one.");
+    if (Date.now() > record.expiresAt) {
+      adminOtpStore.delete(admin.email);
+      return res.status(400).send("OTP has expired. Please request a new one.");
+    }
+    if (record.otp !== otp.toString()) return res.status(400).send("Invalid OTP");
+    const salt = await bcrypt.genSalt(10);
+    admin.password = await bcrypt.hash(newPassword, salt);
+    await admin.save();
+    adminOtpStore.delete(admin.email);
+    res.status(200).send("Password changed successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
 
 module.exports.adminNotificationsController = async (req, res) => {
   try {

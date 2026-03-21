@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import CustomButtom from '../../templates/CustomButtom'
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { AnimatePresence } from 'motion/react'
+import ForgotPassword from '../../templates/ForgotPassword'
 import { API_BASE } from '../../config.js'
 
 const Login = () => {
@@ -10,6 +12,7 @@ const Login = () => {
         const [password,setPassword] = useState("");
         const [error,setError] = useState("")
         const [showPassword, setShowPassword] = useState(false)
+        const [showForgot, setShowForgot] = useState(false)
         const navigate = useNavigate();
 
         const handleSubmit = async(e)=>{
@@ -31,6 +34,9 @@ const Login = () => {
 
   return (
     <div className='login w-full min-h-screen relative overflow-hidden'>
+      <AnimatePresence>
+        {showForgot && <ForgotPassword role='user' onClose={() => setShowForgot(false)} />}
+      </AnimatePresence>
 
       {/* Background & decorations */}
       <section className='overflow-hidden -z-10'>
@@ -117,10 +123,14 @@ const Login = () => {
               </div>
             </div>
 
-             <div className='w-full h-[10vh] -mt-[9%] z-0 '>
-                        <CustomButtom text='Login' />
-            
-                        </div>
+            <div className='w-full h-[10vh] -mt-[9%] z-0'>
+              <CustomButtom text='Login' />
+            </div>
+
+            <button type='button' onClick={() => setShowForgot(true)}
+              className='text-sm font-semibold text-white opacity-70 hover:opacity-100 transition-opacity text-center -mt-2'>
+              Forgot Password?
+            </button>
 
             {error && <p className="text-red-500">{error}</p>}
           </form>

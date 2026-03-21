@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Password Change OTP</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 30px auto;
+        background-color: #ffffff;
+        padding: 5px;
+        border-radius: 10px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        background: linear-gradient(135deg, #883bbc, #b06cd4);
+        color: #ffffff;
+        padding: 28px 20px;
+        border-radius: 10px 10px 0 0;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 1px;
+      }
+      .header p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        opacity: 0.85;
+      }
+      .content {
+        padding: 28px 24px;
+        font-size: 16px;
+        line-height: 1.7;
+      }
+      .otp-box {
+        margin: 24px auto;
+        text-align: center;
+        background: linear-gradient(135deg, #f3a9de22, #883bbc11);
+        border: 2px dashed #883bbc;
+        border-radius: 12px;
+        padding: 20px;
+        width: fit-content;
+        min-width: 200px;
+      }
+      .otp-box .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #883bbc;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+      .otp-code {
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 10px;
+        color: #883bbc;
+        font-family: 'Courier New', monospace;
+      }
+      .expiry-note {
+        background-color: #fff8e1;
+        border-left: 4px solid #f3a9de;
+        padding: 10px 14px;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #555;
+        margin: 16px 0;
+      }
+      .warning {
+        font-size: 13px;
+        color: #888;
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 14px;
+      }
+      .footer {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 12px;
+        color: #aaa;
+        padding: 12px;
+      }
+      .brand {
+        font-size: 18px;
+        font-weight: bold;
+        color: #883bbc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Password Change Request</h1>
+        <p>GatiVidhi — Your Work Progress Tracker</p>
+      </div>
+
+      <div class="content">
+        <p>Hi <strong><%= user.name %></strong>,</p>
+
+        <p>We received a request to change the password for your GatiVidhi account. Use the OTP below to confirm and proceed:</p>
+
+        <div class="otp-box">
+          <div class="label">Your One-Time Password</div>
+          <div class="otp-code"><%= user.otp %></div>
+        </div>
+
+        <div class="expiry-note">
+          This OTP is valid for <strong>10 minutes</strong> only. Do not share it with anyone.
+        </div>
+
+        <p>If you did not request a password change, please ignore this email. Your account remains secure.</p>
+
+        <div class="warning">
+          This is an automated message. Please do not reply to this email.
+        </div>
+
+        <p style="margin-top:20px;">Warm regards,<br /><span class="brand">Team GatiVidhi</span><br /><em>Transforming spaces. Creating stories.</em></p>
+      </div>
+
+      <div class="footer">
+        &copy; <%= new Date().getFullYear() %> GatiVidhi. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>

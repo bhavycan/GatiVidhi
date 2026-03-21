@@ -6,6 +6,20 @@ import axios from 'axios';
 import Dropdown from '../templates/Dropdown';
 import Butterfly from '../templates/Butterfly';
 import { API_BASE } from '../config.js'
+import ImagePickerSheet from '../components/common/ImagePickerSheet'
+
+// Wrapper that shows a Camera / Gallery picker sheet on click
+const PickerButton = ({ onChange, multiple = false, className, children }) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div className={className} onClick={() => setOpen(true)}>
+        {children}
+      </div>
+      <ImagePickerSheet open={open} onClose={() => setOpen(false)} onChange={onChange} multiple={multiple} />
+    </>
+  )
+}
 
 const WorkerDashboard = () => {
   const date = moment().format('LL');
@@ -200,10 +214,16 @@ const WorkerDashboard = () => {
                   <h4>{day}</h4>
                 </div>
               </div>
-              <button onClick={handleLogout} className='flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white font-semibold text-sm hover:bg-white/30 transition-colors'>
-                <i className='ri-logout-box-r-line text-lg'></i>
-                <span>Logout</span>
-              </button>
+              <div className='flex items-center gap-2'>
+                <button onClick={() => navigate('/worker/account')} className='flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white font-semibold text-sm hover:bg-white/30 transition-colors'>
+                  <i className='ri-user-line text-lg'></i>
+                  <span>Profile</span>
+                </button>
+                <button onClick={handleLogout} className='flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white font-semibold text-sm hover:bg-white/30 transition-colors'>
+                  <i className='ri-logout-box-r-line text-lg'></i>
+                  <span>Logout</span>
+                </button>
+              </div>
             </div>
           </header>
 
@@ -388,18 +408,23 @@ const WorkerDashboard = () => {
                                   <i className='ri-close-line'></i>
                                 </button>
                                 {/* Replace */}
-                                <label className='absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'>
+                                <PickerButton
+                                  className='absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'
+                                  onChange={e => { if (e.target.files[0]) replacePhoto(i, e.target.files[0]) }}
+                                >
                                   <i className='ri-arrow-left-right-line'></i>
-                                  <input type='file' accept='image/*' className='hidden' onChange={e => { if (e.target.files[0]) replacePhoto(i, e.target.files[0]); e.target.value = ''; }} />
-                                </label>
+                                </PickerButton>
                               </div>
                             ))}
                             {/* Add slot */}
-                            <label className='shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'>
+                            <PickerButton
+                              multiple
+                              className='shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'
+                              onChange={handleImageChange}
+                            >
                               <i className='ri-image-add-line text-2xl text-[#883bbc] opacity-60'></i>
                               <span className='text-[10px] font-semibold opacity-50 mt-0.5'>Add</span>
-                              <input type='file' accept='image/*' multiple className='hidden' onChange={handleImageChange} />
-                            </label>
+                            </PickerButton>
                           </div>
                         </div>
 

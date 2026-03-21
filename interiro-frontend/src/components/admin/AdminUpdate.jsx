@@ -6,6 +6,20 @@ import Butterfly from '../../templates/Butterfly'
 import AdminNavbar from '../../templates/AdminNavbar'
 import axios from 'axios'
 import { API_BASE } from '../../config.js'
+import ImagePickerSheet from '../common/ImagePickerSheet'
+
+// Wrapper that shows a Camera / Gallery picker sheet on click
+const PickerButton = ({ onChange, multiple = false, className, children }) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div className={className} onClick={() => setOpen(true)}>
+        {children}
+      </div>
+      <ImagePickerSheet open={open} onClose={() => setOpen(false)} onChange={onChange} multiple={multiple} />
+    </>
+  )
+}
 
 const formatDate = (date) => {
   if (!date) return 'Never'
@@ -105,9 +119,9 @@ const AnimatedDropdown = ({ label, options, selected, onSelect, renderOption, re
 
 // Image upload slot with change/delete overlay
 const ImageSlot = ({ index, file, onFileChange, onRemove, isRequired }) => {
-  const inputRef = useRef(null)
   const preview = file ? URL.createObjectURL(file) : null
   const [hovered, setHovered] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   return (
     <div
@@ -115,18 +129,16 @@ const ImageSlot = ({ index, file, onFileChange, onRemove, isRequired }) => {
       onMouseLeave={() => setHovered(false)}
       className='relative aspect-square rounded-lg border border-dashed border-[#883bbc] bg-gradient-to-tl from-[#F7D6F3] to-transparent overflow-hidden flex items-center justify-center'
     >
-      <input
-        ref={inputRef}
-        type='file'
-        accept='image/*'
-        className='hidden'
+      <ImagePickerSheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
         onChange={(e) => onFileChange(index, e.target.files[0])}
       />
 
       {/* Empty state — click to upload */}
       {!file && (
         <div
-          onClick={() => inputRef.current?.click()}
+          onClick={() => setPickerOpen(true)}
           className='w-full h-full flex flex-col items-center justify-center gap-1 text-[#883bbc] opacity-70 cursor-pointer hover:opacity-100 transition-opacity'
         >
           <i className='ri-image-add-line text-3xl'></i>
@@ -168,7 +180,7 @@ const ImageSlot = ({ index, file, onFileChange, onRemove, isRequired }) => {
                 <motion.button
                   type='button'
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => inputRef.current?.click()}
+                  onClick={() => setPickerOpen(true)}
                   className='w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-[#883bbc] hover:bg-white transition-colors'
                   title='Change image'
                 >
@@ -664,9 +676,9 @@ const AdminUpdate = () => {
                                 <i className='ri-close-line'></i>
                               </button>
                               {/* Replace */}
-                              <label className='absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'>
-                                <i className='ri-arrow-left-right-line'></i>
-                                <input type='file' accept='image/*' className='hidden' onChange={e => {
+                              <PickerButton
+                                className='absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'
+                                onChange={e => {
                                   const f = e.target.files[0]
                                   if (!f) return
                                   setWorkerImageUrls(prev => prev.filter((_, j) => j !== i))
@@ -677,16 +689,17 @@ const AdminUpdate = () => {
                                     else slots.push(f)
                                     return slots
                                   })
-                                  e.target.value = ''
-                                }} />
-                              </label>
+                                }}
+                              >
+                                <i className='ri-arrow-left-right-line'></i>
+                              </PickerButton>
                             </div>
                           ))}
                           {/* Add more to worker section */}
-                          <label className='shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'>
-                            <i className='ri-image-add-line text-xl text-[#883bbc] opacity-60'></i>
-                            <span className='text-[10px] font-semibold opacity-50 mt-0.5'>Add</span>
-                            <input type='file' accept='image/*' multiple className='hidden' onChange={e => {
+                          <PickerButton
+                            multiple
+                            className='shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'
+                            onChange={e => {
                               const files = Array.from(e.target.files)
                               if (!files.length) return
                               setImages(prev => {
@@ -698,9 +711,11 @@ const AdminUpdate = () => {
                                 })
                                 return slots
                               })
-                              e.target.value = ''
-                            }} />
-                          </label>
+                            }}
+                          >
+                            <i className='ri-image-add-line text-xl text-[#883bbc] opacity-60'></i>
+                            <span className='text-[10px] font-semibold opacity-50 mt-0.5'>Add</span>
+                          </PickerButton>
                         </div>
                       </motion.div>
                     )}
@@ -999,10 +1014,12 @@ const AdminUpdate = () => {
                                   <i className='ri-close-line'></i>
                                 </button>
                                 {/* Replace */}
-                                <label className='absolute bottom-1 right-1 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'>
+                                <PickerButton
+                                  className='absolute bottom-1 right-1 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs cursor-pointer'
+                                  onChange={e => { if (e.target.files[0]) replaceWorkerPhoto(wu, j, e.target.files[0]) }}
+                                >
                                   <i className='ri-arrow-left-right-line'></i>
-                                  <input type='file' accept='image/*' className='hidden' onChange={e => { if (e.target.files[0]) replaceWorkerPhoto(wu, j, e.target.files[0]); e.target.value = '' }} />
-                                </label>
+                                </PickerButton>
                               </div>
                             ))}
 
@@ -1026,11 +1043,14 @@ const AdminUpdate = () => {
                             ))}
 
                             {/* Add more slot */}
-                            <label className='shrink-0 w-24 h-24 rounded-lg border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'>
+                            <PickerButton
+                              multiple
+                              className='shrink-0 w-24 h-24 rounded-lg border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors'
+                              onChange={e => { if (e.target.files.length) addWorkerPhotos(wu, Array.from(e.target.files)) }}
+                            >
                               <i className='ri-image-add-line text-2xl text-[#883bbc] opacity-60'></i>
                               <span className='text-[10px] font-semibold opacity-50 mt-1'>Add</span>
-                              <input type='file' accept='image/*' multiple className='hidden' onChange={e => { if (e.target.files.length) addWorkerPhotos(wu, Array.from(e.target.files)); e.target.value = '' }} />
-                            </label>
+                            </PickerButton>
 
                           </div>
                         </div>

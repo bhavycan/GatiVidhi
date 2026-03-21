@@ -13,6 +13,9 @@ const {taskListModel} = require("../models/taskListModel");
 const {commentModel} = require("../models/commentModel");
 const {designModel} = require("../models/designModel");
 
+// In-memory OTP store: email -> { otp, expiresAt }
+const otpStore = new Map();
+
 module.exports.userCreateController = async (req, res) => {
   const { name, email, phone } = req.body;
   const password = generatePassword()
@@ -168,6 +171,115 @@ module.exports.userGetAllController = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
+module.exports.forgotPasswordSendOtpController = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).send("Email is required");
+  try {
+    const user = await userModel.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).send("No account found with this email");
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore.set(user.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    sendEmail(
+      { name: user.name, email: user.email, otp, subject: "Password Reset OTP - GatiVidhi" },
+      path.join(__dirname, "../views/otpEmail.ejs")
+    );
+    res.status(200).send("OTP sent to your email");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.forgotPasswordResetController = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) return res.status(400).send("All fields are required");
+  try {
+    const user = await userModel.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).send("No account found with this email");
+    const record = otpStore.get(user.email);
+    if (!record) return res.status(400).send("No OTP requested. Please request a new one.");
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(user.email);
+      return res.status(400).send("OTP has expired. Please request a new one.");
+    }
+    if (record.otp !== otp.toString()) return res.status(400).send("Invalid OTP");
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+    otpStore.delete(user.email);
+    res.status(200).send("Password reset successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.sendOtpController = async (req, res) => {
+  try {
+    const user = await userModel.findOne({ email: req.user.email });
+    if (!user) return res.status(404).send("User not found");
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore.set(user.email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+    const client = {
+      name: user.name,
+      email: user.email,
+      otp,
+      subject: "Your Password Change OTP - GatiVidhi",
+    };
+    sendEmail(client, path.join(__dirname, "../views/otpEmail.ejs"));
+
+    res.status(200).send("OTP sent to your email");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.verifyOtpChangePasswordController = async (req, res) => {
+  const { otp, newPassword } = req.body;
+  if (!otp || !newPassword) return res.status(400).send("OTP and new password are required");
+  try {
+    const user = await userModel.findOne({ email: req.user.email });
+    if (!user) return res.status(404).send("User not found");
+
+    const record = otpStore.get(user.email);
+    if (!record) return res.status(400).send("No OTP requested. Please request a new one.");
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(user.email);
+      return res.status(400).send("OTP has expired. Please request a new one.");
+    }
+    if (record.otp !== otp.toString()) return res.status(400).send("Invalid OTP");
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+    otpStore.delete(user.email);
+
+    res.status(200).send("Password changed successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+module.exports.updateSelfController = async (req, res) => {
+  const { name, phone } = req.body;
+  if (!name || !phone) return res.status(400).send("Name and phone are required");
+  try {
+    const user = await userModel.findOne({ email: req.user.email });
+    if (!user) return res.status(404).send("User not found");
+    user.name = name;
+    user.phone = phone;
+    await user.save();
+    res.status(200).json({ message: "Profile updated successfully", user: { name: user.name, email: user.email, phone: user.phone } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
   }
 };
 
