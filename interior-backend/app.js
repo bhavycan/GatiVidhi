@@ -4,7 +4,16 @@ const path = require('path');
 const http = require('http')
 const socketIo = require('socket.io')
 const cors = require("cors");
+const rateLimit = require('express-rate-limit');
 require('dotenv').config()
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Too many login attempts, please try again after 15 minutes',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(express.static(path.join(__dirname,'public')));
@@ -75,6 +84,9 @@ app.use(expressSession({
 
 
 
+app.use('/user/login', loginLimiter)
+app.use('/admin/login', loginLimiter)
+app.use('/worker/login', loginLimiter)
 app.use('/user',userRoute)
 app.use('/project',projectRoute)
 app.use('/admin', adminRoute)

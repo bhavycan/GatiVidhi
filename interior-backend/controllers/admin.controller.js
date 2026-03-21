@@ -27,7 +27,7 @@ module.exports.adminLogInController = async (req, res) => {
       console.log(`[ADMIN LOGIN] Failed - wrong password for: ${email}`);
       return res.status(400).send("Wrong Password");
     }
-    const token = jwt.sign({ email: email }, process.env.ADMIN_JWT_SECRET);
+    const token = jwt.sign({ email: email }, process.env.ADMIN_JWT_SECRET, { expiresIn: '24h' });
     res.cookie("admintoken", token, {
       httpOnly: true,
       secure: true,

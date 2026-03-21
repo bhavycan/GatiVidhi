@@ -99,7 +99,7 @@ module.exports.workerLoginController = async (req, res) => {
     if (!isMatch) return res.status(400).send('Wrong password');
 
     const secret = process.env.WORKER_JWT_SECRET || 'workerxsecretkey99';
-    const token = jwt.sign({ email: worker.email, id: worker._id }, secret);
+    const token = jwt.sign({ email: worker.email, id: worker._id }, secret, { expiresIn: '24h' });
     res.cookie('workertoken', token, {
       httpOnly: true,
       secure: true,

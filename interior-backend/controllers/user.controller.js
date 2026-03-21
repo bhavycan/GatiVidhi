@@ -86,7 +86,7 @@ module.exports.userLogInController = async(req,res)=>{
             console.log(`[LOGIN] Failed - wrong password for: ${email}`);
             return res.status(400).send("Wrong Password");
         }
-        const token = jwt.sign({email: email}, process.env.USER_JWT_SECRET);
+        const token = jwt.sign({email: email}, process.env.USER_JWT_SECRET, { expiresIn: '24h' });
         res.cookie("token", token, {
           httpOnly: true,
           secure: true,
@@ -104,27 +104,9 @@ module.exports.userLogInController = async(req,res)=>{
 
 module.exports.userLogOutController = async (req, res) => {
   try {
-    const { id } = req.body;
-    const user = await userModel.findById(id);
-
-    if (!user) return res.status(400).send("Invalid ID");
-
-    
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer "))
-      return res.status(400).send("Token missing");
-
-    const token = authHeader.split(" ")[1];
-
-  
-    await blacklistModel.create({ token });
-
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-    });
-
+    const token = req.cookies.token;
+    if (token) await blacklistModel.create({ token });
+    res.cookie("token", "", { httpOnly: true, secure: true, sameSite: "none", maxAge: 0 });
     res.status(200).send("Logged out successfully");
   } catch (error) {
     console.error(error);
@@ -170,8 +152,6 @@ module.exports.userDeleteController = async (req, res) => {
       await projectModel.deleteOne({ _id: projectId });
     }
 
-    // Delete the user and their blacklisted tokens
-    await blacklistModel.deleteMany({});
     await userModel.deleteOne({ _id: id });
 
     res.status(200).send('Client and all related data deleted successfully');
