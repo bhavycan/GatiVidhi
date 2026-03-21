@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Dropdown from '../templates/Dropdown';
 import Butterfly from '../templates/Butterfly';
@@ -9,6 +10,14 @@ import { API_BASE } from '../config.js'
 const WorkerDashboard = () => {
   const date = moment().format('LL');
   const day = moment().format('dddd');
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE}/worker/logout`, {}, { withCredentials: true });
+    } catch (_) {}
+    navigate('/worker/login');
+  };
   const parent = useRef(null);
 
   const [workerInfo, setWorkerInfo] = useState(null);
@@ -30,7 +39,7 @@ const WorkerDashboard = () => {
       setWorkerInfo(data?.worker);
       setProjects(data?.projects || []);
     } catch (err) {
-      console.log('Worker fetch failed:', err.message);
+      console.error('Worker fetch failed:', err.message);
     }
   };
 
@@ -191,6 +200,10 @@ const WorkerDashboard = () => {
                   <h4>{day}</h4>
                 </div>
               </div>
+              <button onClick={handleLogout} className='flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white font-semibold text-sm hover:bg-white/30 transition-colors'>
+                <i className='ri-logout-box-r-line text-lg'></i>
+                <span>Logout</span>
+              </button>
             </div>
           </header>
 

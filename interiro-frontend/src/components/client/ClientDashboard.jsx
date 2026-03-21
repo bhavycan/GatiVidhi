@@ -44,8 +44,7 @@ const { showPopcard, popcard } = usePopcard();
                 setlastUpdate(data?.lastUpdate)
                 setLastReport(data?.report)
             } catch (error) {
-                console.log("Fetching failed"+ error)
-                console.log(error.response?.data || error.message);
+                console.error("Fetching failed", error.message);
             }
     }
 

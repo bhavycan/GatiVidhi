@@ -31,7 +31,7 @@ const AdminMaterial = () => {
       const { data } = await axios.get(`${API_BASE}/material/all`, { withCredentials: true })
       setMaterials(data.materials || [])
     } catch (error) {
-      if (error.response?.status === 401) navigate('/admin/login')
+      if (error.response?.status === 401 || error.response?.status === 400) navigate('/admin/login')
     } finally {
       setLoading(false)
     }
