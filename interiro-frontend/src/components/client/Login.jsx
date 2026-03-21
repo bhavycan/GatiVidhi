@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import CustomButtom from '../../templates/CustomButtom'
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -76,7 +76,7 @@ const Login = () => {
               <i className='ri-arrow-left-line text-xl'></i>
               <span>Back to Home</span>
             </button>
-            <h1 className='text-sm mt-4 opacity-50 text-white'>All right@TanikaAssociate</h1>
+            <h1 className='text-sm mt-4 opacity-50 text-black'>All right@TanikaAssociate</h1>
           </article>
         </div>
 
@@ -100,6 +100,7 @@ const Login = () => {
                 <input
                   onChange={(e) => setEmail(e.target.value)}
                   type="email" name="email" value={email}
+                  placeholder='Your email'
                   className='bg-white outline-none flex-1 h-full px-4 py-2 text-base font-semibold'
                 />
               </div>
@@ -128,7 +129,7 @@ const Login = () => {
             </div>
 
             <button type='button' onClick={() => setShowForgot(true)}
-              className='text-sm font-semibold text-white opacity-70 hover:opacity-100 transition-opacity text-center -mt-2'>
+              className='text-sm font-semibold text-zinc-700 hover:text-zinc-900 transition-colors text-center -mt-2'>
               Forgot Password?
             </button>
 
@@ -137,11 +138,11 @@ const Login = () => {
 
           {/* Footer — mobile only */}
           <article className='md:hidden w-full mt-8 leading-5 flex flex-col items-center font-semibold opacity-80'>
-            <button onClick={() => navigate('/')} className='flex items-center gap-2 text-white opacity-70 hover:opacity-100 transition-opacity'>
+            <button onClick={() => navigate('/')} className='flex items-center gap-2 text-black opacity-70 hover:opacity-100 transition-opacity'>
               <i className='ri-arrow-left-line text-xl'></i>
               <span>Back to Home</span>
             </button>
-            <h1 className='text-sm mt-4 opacity-50 text-white'>All right@TanikaAssociate</h1>
+            <h1 className='text-sm mt-4 opacity-50 text-black'>All right@TanikaAssociate</h1>
           </article>
         </div>
 

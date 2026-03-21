@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { API_BASE } from '../config.js'
+import moment from 'moment'
 
 const Field = ({ icon, label, value, editing, onChange, disabled = false }) => (
   <div className='w-full'>
@@ -27,6 +28,15 @@ const Field = ({ icon, label, value, editing, onChange, disabled = false }) => (
 
 const WorkerProfile = () => {
   const navigate = useNavigate()
+  const date = moment().format('LL')
+  const day = moment().format('dddd')
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE}/worker/logout`, {}, { withCredentials: true })
+    } catch (_) {}
+    navigate('/worker/login')
+  }
 
   const [worker, setWorker] = useState({ name: '', email: '', assignedProjectId: null, assignedClientId: null })
   const [formName, setFormName] = useState('')
@@ -117,25 +127,32 @@ const WorkerProfile = () => {
         </figure>
       </section>
 
-      <main className='w-full min-h-screen relative z-10 px-[8%] py-[14%] md:py-[6%] flex flex-col items-center'>
+      <main className='w-full min-h-screen relative z-10 px-[8%] py-[6%] flex flex-col items-center'>
         <div className='w-full max-w-md'>
 
           {/* Header */}
           <header className='mb-8'>
-            <button
-              onClick={() => navigate('/worker/profile')}
-              className='flex items-center gap-2 text-white opacity-70 hover:opacity-100 transition-opacity mb-4'>
-              <i className='ri-arrow-left-line text-xl'></i>
-              <span className='font-semibold text-sm'>Back</span>
-            </button>
-            <div className='flex items-center gap-4'>
-              <div className='w-16 h-16 rounded-full bg-[#f3a9de] border-2 border-[#883bbc] flex items-center justify-center shrink-0'>
-                <i className='ri-tools-line text-3xl text-[#883bbc]'></i>
+            <div className='title w-full text-4xl md:text-5xl font-semibold tracking-tight mt-[6%] flex gap-[3%]'>
+              <h1>My</h1>
+              <h1 className='text-white'>Account<span className='inline-block text-black'>!</span></h1>
+            </div>
+            <div className='subtitle w-full font-semibold mt-[1%] text-md opacity-70 leading-5 pl-[1%]'>
+              <h4>Manage your profile & security</h4>
+            </div>
+            <div className='w-full flex items-center mt-[3%] pb-4 border-b-2 border-white justify-between'>
+              <div className='backdrop-blur-3xl px-2 py-2 bg-white/20 rounded-md leading-5 font-bold'>
+                <h4>{date}</h4>
+                <h4>{day}</h4>
               </div>
-              <div>
-                <h1 className='text-3xl font-bold'>{worker.name || '—'}</h1>
-                <p className='text-sm text-white opacity-70 font-medium'>{worker.email}</p>
-                <span className='text-xs bg-[#883bbc] text-white px-2 py-0.5 rounded-full font-semibold mt-1 inline-block'>Site Worker</span>
+              <div className='flex items-center gap-2'>
+                <button onClick={() => navigate('/worker/profile')} className='flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white font-semibold text-sm hover:bg-white/30 transition-colors'>
+                  <i className='ri-home-line text-lg'></i>
+                  <span>Home</span>
+                </button>
+                <button onClick={handleLogout} className='flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white font-semibold text-sm hover:bg-white/30 transition-colors'>
+                  <i className='ri-logout-box-r-line text-lg'></i>
+                  <span>Logout</span>
+                </button>
               </div>
             </div>
           </header>

@@ -69,7 +69,7 @@ const AdminLogin = () => {
               <i className='ri-arrow-left-line text-xl'></i>
               <span>Back to Home</span>
             </button>
-            <h1 className='text-sm mt-4 opacity-50 text-white'>All right@TanikaAssociate</h1>
+            <h1 className='text-sm mt-4 opacity-50 text-black'>All right@TanikaAssociate</h1>
           </article>
         </div>
 
@@ -122,7 +122,7 @@ const AdminLogin = () => {
             </div>
 
             <button type='button' onClick={() => setShowForgot(true)}
-              className='text-sm font-semibold text-white opacity-70 hover:opacity-100 transition-opacity text-center -mt-2'>
+              className='text-sm font-semibold text-zinc-700 hover:text-zinc-900 transition-colors text-center -mt-2'>
               Forgot Password?
             </button>
 
@@ -130,11 +130,11 @@ const AdminLogin = () => {
           </form>
 
           <article className='md:hidden w-full mt-8 leading-5 flex flex-col items-center font-semibold opacity-80'>
-            <button onClick={() => navigate('/')} className='flex items-center gap-2 text-white opacity-70 hover:opacity-100 transition-opacity'>
+            <button onClick={() => navigate('/')} className='flex items-center gap-2 text-black opacity-70 hover:opacity-100 transition-opacity'>
               <i className='ri-arrow-left-line text-xl'></i>
               <span>Back to Home</span>
             </button>
-            <h1 className='text-sm mt-4 opacity-50 text-white'>All right@TanikaAssociate</h1>
+            <h1 className='text-sm mt-4 opacity-50 text-black'>All right@TanikaAssociate</h1>
           </article>
         </div>
 

@@ -150,7 +150,7 @@ const ClientProfile = () => {
       </section>
 
       {/* Navbar */}
-      <nav className='z-10 fixed mt-[10%] right-4 md:top-6 md:right-8'>
+      <nav className='z-50 fixed mt-[10%] right-4 md:top-6 md:right-8'>
         <motion.div
           onClick={() => setOpen(!isopen)}
           className='menuicon w-10 h-10 md:w-12 md:h-12 items-center justify-center flex cursor-pointer'>
@@ -161,24 +161,27 @@ const ClientProfile = () => {
         {isopen && <Navbar value={{ isopen, setOpen }} />}
       </AnimatePresence>
 
-      <main className='w-full min-h-screen relative z-10 px-[8%] py-[14%] md:py-[6%] flex flex-col items-center'>
+      <main className='w-full min-h-screen relative z-10 px-[8%] py-[6%] flex flex-col items-center'>
         <div className='w-full max-w-md'>
 
           {/* Header */}
           <header className='mb-8'>
-            <button
-              onClick={() => navigate('/user/profile')}
-              className='flex items-center gap-2 text-white opacity-70 hover:opacity-100 transition-opacity mb-4'>
-              <i className='ri-arrow-left-line text-xl'></i>
-              <span className='font-semibold text-sm'>Back</span>
-            </button>
-            <div className='flex items-center gap-4'>
-              <div className='w-16 h-16 rounded-full bg-[#f3a9de] border-2 border-[#883bbc] flex items-center justify-center shrink-0'>
-                <i className='ri-user-3-line text-3xl text-[#883bbc]'></i>
-              </div>
-              <div>
-                <h1 className='text-3xl font-bold'>{user.name || '—'}</h1>
-                <p className='text-sm text-white opacity-70 font-medium'>{user.email}</p>
+            <div className='title w-full text-4xl md:text-5xl font-semibold tracking-tight mt-[6%] flex gap-[3%]'>
+              <h1>My</h1>
+              <h1 className='text-white'>Account<span className='inline-block text-black'>!</span></h1>
+            </div>
+            <div className='subtitle w-full font-semibold mt-[1%] text-md opacity-70 leading-5 pl-[1%]'>
+              <h4>Manage your profile & security</h4>
+            </div>
+            <div className='w-full flex items-center mt-[4%] pb-4 border-b-2 border-white justify-between'>
+              <div className='flex items-center gap-3'>
+                <div className='w-12 h-12 rounded-full bg-[#f3a9de] border-2 border-[#883bbc] flex items-center justify-center shrink-0'>
+                  <i className='ri-user-3-line text-2xl text-[#883bbc]'></i>
+                </div>
+                <div>
+                  <p className='font-bold text-base leading-tight'>{user.name || '—'}</p>
+                  <p className='text-xs text-white opacity-70 font-medium'>{user.email}</p>
+                </div>
               </div>
             </div>
           </header>
