@@ -41,7 +41,7 @@ const HomePage = () => {
 
       <main className='w-full min-h-screen relative z-40 flex flex-col items-center justify-center px-[8%] py-[10%]'>
 
-        <header className='text-center mb-12'>
+        <header className='text-center mb-12 mt-5'>
           
           <div className='text-5xl md:text-6xl font-semibold tracking-tight flex justify-center'>
             <h1>Gati</h1>
