@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(npm install:*)",
-      "Read(//media/bhavyatlinux/Bhavy2TB/tanika\\\\ project/interior-backend/**)",
-      "Bash(npm create:*)"
-    ]
-  }
-}
