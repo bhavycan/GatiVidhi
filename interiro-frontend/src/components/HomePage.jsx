@@ -43,33 +43,35 @@ const HomePage = () => {
 
         <header className='text-center mb-12'>
           <div className='flex justify-center mb-4'>
-            <img src='/images/butterfly.png' alt='Tanika Associate Logo' className='w-20 h-24 object-contain drop-shadow-lg' />
+            <img src='/images/butterfly.png' alt='GatiVidhi Logo' className='w-20 h-24 object-contain drop-shadow-lg' />
           </div>
           <div className='text-5xl md:text-6xl font-semibold tracking-tight flex justify-center'>
-            <h1>Tanika</h1>
-            <h1 className='text-white'>Associate</h1>
+            <h1>Gati</h1>
+            <h1 className='text-white'>Vidhi</h1>
           </div>
           <p className='text-white font-bold text-md opacity-70 mt-3'>Welcome! Who are you?</p>
         </header>
 
-        <div className='w-full max-w-3xl grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div className='w-full max-w-sm flex flex-col gap-3'>
           {roles.map((role) => (
             <button
               key={role.label}
               onClick={() => navigate(role.path)}
-              className='group relative flex flex-col items-center gap-4 bg-white rounded-2xl px-6 py-8 border border-black shadow-lg hover:shadow-[#883bbc] hover:shadow-xl transition-all duration-200 cursor-pointer'
+              className='relative flex items-center gap-4 bg-white rounded-xl px-5 py-3 border border-black shadow-md hover:shadow-[#883bbc] hover:shadow-lg transition-all duration-200 cursor-pointer'
             >
-              <div className='w-full h-full bg-[#f3a9de] rounded-2xl absolute top-[6px] left-[6px] -z-10'></div>
-              <div className='w-16 h-16 rounded-full bg-[#f3a9de] flex items-center justify-center'>
-                <i className={`${role.icon} text-3xl text-[#883bbc]`}></i>
+              <div className='w-full h-full bg-[#f3a9de] rounded-xl absolute top-[5px] left-[5px] -z-10'></div>
+              <div className='w-10 h-10 rounded-full bg-[#f3a9de] flex items-center justify-center shrink-0'>
+                <i className={`${role.icon} text-xl text-[#883bbc]`}></i>
               </div>
-              <h2 className='text-2xl font-semibold tracking-tight'>{role.label}</h2>
-              <p className='text-sm text-gray-500 font-medium text-center leading-5'>{role.desc}</p>
+              <div className='text-left'>
+                <h2 className='text-lg font-semibold tracking-tight'>{role.label}</h2>
+                <p className='text-xs text-gray-500 font-medium leading-4'>{role.desc}</p>
+              </div>
             </button>
           ))}
         </div>
 
-        <p className='text-sm mt-16 opacity-40 text-white font-semibold'>All rights @ TanikaAssociate</p>
+        <p className='text-sm mt-16 opacity-40 text-white font-semibold'>All rights @ GatiVidhi</p>
       </main>
     </div>
   )
