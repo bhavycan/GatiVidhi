@@ -42,12 +42,10 @@ const HomePage = () => {
       <main className='w-full min-h-screen relative z-40 flex flex-col items-center justify-center px-[8%] py-[10%]'>
 
         <header className='text-center mb-12'>
-          <div className='flex justify-center mb-4'>
-            <img src='/images/butterfly.png' alt='GatiVidhi Logo' className='w-20 h-24 object-contain drop-shadow-lg' />
-          </div>
+          
           <div className='text-5xl md:text-6xl font-semibold tracking-tight flex justify-center'>
             <h1>Gati</h1>
-            <h1 className='text-white'>Vidhi</h1>
+            <h1 className='text-white text-shadow-fuchsia-700'>Vidhi</h1>
           </div>
           <p className='text-white font-bold text-md opacity-70 mt-3'>Welcome! Who are you?</p>
         </header>
