@@ -12,6 +12,30 @@ const {updateModel} = require("../models/updateModel");
 const {taskListModel} = require("../models/taskListModel");
 const {commentModel} = require("../models/commentModel");
 const {designModel} = require("../models/designModel");
+const { approvalModel } = require("../models/approvalModel");
+const { workerUpdateModel } = require("../models/workerUpdateModel");
+const cloudinary = require('cloudinary').v2;
+
+// Extract Cloudinary public_id from a URL
+const extractPublicId = (url) => {
+  try {
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
+    if (uploadIndex === -1) return null;
+    let startIndex = uploadIndex + 1;
+    if (/^v\d+$/.test(parts[startIndex])) startIndex++;
+    const rest = parts.slice(startIndex).join('/');
+    return rest.replace(/\.[^/.]+$/, '');
+  } catch {
+    return null;
+  }
+};
+
+// Delete an array of Cloudinary URLs (best-effort, never throws)
+const deleteCloudinaryImages = async (urls) => {
+  const ids = urls.map(extractPublicId).filter(Boolean);
+  await Promise.allSettled(ids.map(id => cloudinary.uploader.destroy(id)));
+};
 
 // In-memory OTP store: email -> { otp, expiresAt }
 const otpStore = new Map();
@@ -141,25 +165,52 @@ module.exports.userDeleteController = async (req, res) => {
     const user = await userModel.findById(id);
     if (!user) return res.status(404).send('Client not found');
 
-    // Find the client's project
     const project = await projectModel.findOne({ clientId: id });
 
     if (project) {
       const projectId = project._id;
-      // Delete all related data
-      await updateModel.deleteMany({ projectId });
-      await reportModel.deleteMany({ projectId });
-      await taskListModel.deleteMany({ projectId });
-      await commentModel.deleteMany({ projectId });
-      await designModel.deleteMany({ projectId });
+
+      // Collect all Cloudinary image URLs to delete
+      const [updates, designs, approvals, workerUpdates] = await Promise.all([
+        updateModel.find({ projectId }).select('images'),
+        designModel.find({ projectId }).select('images'),
+        approvalModel.find({ projectId }).select('images'),
+        workerUpdateModel.find({ projectId }).select('updateImages'),
+      ]);
+
+      const allImageUrls = [
+        ...updates.flatMap(u => u.images || []),
+        ...designs.flatMap(d => d.images || []),
+        ...approvals.flatMap(a => a.images || []),
+        ...workerUpdates.flatMap(w => w.updateImages || []),
+        ...(project.designPdfUrl ? [project.designPdfUrl] : []),
+      ];
+
+      if (allImageUrls.length > 0) {
+        console.log(`[CLIENT DELETE] Deleting ${allImageUrls.length} Cloudinary assets for project: ${project.projectName}`);
+        await deleteCloudinaryImages(allImageUrls);
+        console.log(`[CLIENT DELETE] Cloudinary cleanup done for project: ${project.projectName}`);
+      }
+
+      // Delete all DB records
+      await Promise.all([
+        updateModel.deleteMany({ projectId }),
+        reportModel.deleteMany({ projectId }),
+        taskListModel.deleteMany({ projectId }),
+        commentModel.deleteMany({ projectId }),
+        designModel.deleteMany({ projectId }),
+        approvalModel.deleteMany({ projectId }),
+        workerUpdateModel.deleteMany({ projectId }),
+      ]);
       await projectModel.deleteOne({ _id: projectId });
     }
 
     await userModel.deleteOne({ _id: id });
+    console.log(`[CLIENT DELETE] Client ${user.name} (${id}) and all related data deleted`);
 
     res.status(200).send('Client and all related data deleted successfully');
   } catch (error) {
-    console.error(error);
+    console.error('[CLIENT DELETE ERROR]', error);
     res.status(500).send('Something went wrong');
   }
 };
