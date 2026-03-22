@@ -4,6 +4,7 @@ const { taskListModel } = require("../models/taskListModel");
 const { projectModel } = require("../models/projectModel");
 const { updateModel } = require("../models/updateModel");
 const { commentModel } = require("../models/commentModel");
+const { approvalModel } = require("../models/approvalModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
@@ -230,6 +231,22 @@ module.exports.adminNotificationsController = async (req, res) => {
         ticketId: t._id,
         priority: t.priorityLevel,
         date: t.receivedDate,
+      });
+    });
+
+    // 4. Approvals responded to by client (not yet seen by admin)
+    const unseenResponses = await approvalModel
+      .find({ status: { $in: ['approved', 'rejected'] }, adminSeen: false })
+      .sort({ respondedAt: -1 });
+
+    unseenResponses.forEach(a => {
+      notifications.push({
+        type: 'approval',
+        message: `"${a.title}" was ${a.status} by client`,
+        projectName: a.projectName,
+        projectId: a.projectId,
+        approvalId: a._id,
+        date: a.respondedAt,
       });
     });
 
