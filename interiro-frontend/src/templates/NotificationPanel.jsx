@@ -1,6 +1,9 @@
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect } from 'react';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_BASE } from '../config.js';
 
 const priorityColor = (p) => ({
   high: 'text-red-500 bg-red-100',
@@ -10,10 +13,18 @@ const priorityColor = (p) => ({
 }[p] || 'text-gray-500 bg-gray-100');
 
 const NotificationPanel = ({ isOpen, setOpen, notifications }) => {
-  const tasks = notifications.filter(n => n.type === 'task');
-  const updates = notifications.filter(n => n.type === 'update');
-  const tickets = notifications.filter(n => n.type === 'ticket');
-  const navigate = useNavigate();
+  const tasks     = notifications.filter(n => n.type === 'task');
+  const updates   = notifications.filter(n => n.type === 'update');
+  const tickets   = notifications.filter(n => n.type === 'ticket');
+  const approvals = notifications.filter(n => n.type === 'approval');
+  const navigate  = useNavigate();
+
+  // Mark approval notifications as seen when the panel opens
+  useEffect(() => {
+    if (isOpen && approvals.length > 0) {
+      axios.post(`${API_BASE}/approval/admin-clear`, {}, { withCredentials: true }).catch(() => {});
+    }
+  }, [isOpen]);
 
   const handleDrag = (e, info) => {
     if (info.offset.y > 60) setOpen(false);
@@ -152,6 +163,38 @@ const NotificationPanel = ({ isOpen, setOpen, notifications }) => {
                           <i className='ri-arrow-right-s-line text-[#883bbc] text-lg mt-0.5 shrink-0'></i>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {approvals.length > 0 && (
+                  <div>
+                    <h3 className='text-sm font-bold opacity-60 uppercase tracking-wide mb-2 flex items-center gap-2'>
+                      <i className='ri-checkbox-circle-line text-[#883bbc]'></i> Client Responses ({approvals.length})
+                    </h3>
+                    <div className='flex flex-col gap-2'>
+                      {approvals.map((n, i) => {
+                        const isApproved = n.message.includes('approved');
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => goTo('/admin/approval')}
+                            className='w-full px-4 py-3 rounded-xl bg-white/60 border border-[#883bbc]/20 flex items-start gap-3 cursor-pointer active:scale-[0.98] transition-transform'
+                          >
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isApproved ? 'bg-green-100' : 'bg-red-100'}`}>
+                              <i className={`text-base ${isApproved ? 'ri-check-line text-green-600' : 'ri-close-line text-red-500'}`}></i>
+                            </div>
+                            <div className='leading-5 flex-1'>
+                              <p className='font-bold text-sm'>{n.message}</p>
+                              <p className='text-xs opacity-60 mt-0.5'>{n.projectName}</p>
+                              {n.date && (
+                                <p className='text-xs opacity-40 mt-0.5'>{moment(n.date).fromNow()}</p>
+                              )}
+                            </div>
+                            <i className='ri-arrow-right-s-line text-[#883bbc] text-lg mt-0.5 shrink-0'></i>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -23,6 +23,7 @@ const AdminNavbar = ({ value }) => {
     { label: "Templates", icon: "ri-layout-3-line",        path: "/admin/templates" },
     { label: "Material",  icon: "ri-hammer-line",           path: "/admin/material" },
     { label: "Workers",   icon: "ri-user-settings-line",    path: "/admin/worker" },
+    { label: "Approvals", icon: "ri-checkbox-circle-line",  path: "/admin/approval" },
   ];
 
   const handleNav = (path) => {

@@ -7,10 +7,11 @@ import axios from "axios";
 import { API_BASE } from '../config.js'
 
 const TYPE_STYLES = {
-  update: { icon: 'ri-refresh-line',     color: 'bg-[#883bbc] text-white',   label: 'Update',  path: '/user/update' },
-  task:   { icon: 'ri-task-line',         color: 'bg-blue-500 text-white',    label: 'Task',    path: '/user/profile' },
-  ticket: { icon: 'ri-ticket-line',       color: 'bg-green-500 text-white',   label: 'Ticket',  path: '/user/ticket' },
-  report: { icon: 'ri-file-text-line',    color: 'bg-orange-400 text-white',  label: 'Report',  path: '/user/report' },
+  update:   { icon: 'ri-refresh-line',           color: 'bg-[#883bbc] text-white',  label: 'Update',   path: '/user/update' },
+  task:     { icon: 'ri-task-line',               color: 'bg-blue-500 text-white',   label: 'Task',     path: '/user/profile' },
+  ticket:   { icon: 'ri-ticket-line',             color: 'bg-green-500 text-white',  label: 'Ticket',   path: '/user/ticket' },
+  report:   { icon: 'ri-file-text-line',          color: 'bg-orange-400 text-white', label: 'Report',   path: '/user/report' },
+  approval: { icon: 'ri-checkbox-circle-line',    color: 'bg-amber-500 text-white',  label: 'Approval', path: '/user/approval' },
 }
 
 const Notification = ({ state, onClear }) => {
