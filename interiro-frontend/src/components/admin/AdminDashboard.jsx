@@ -17,9 +17,9 @@ const AdminDashboard = () => {
 
     const [ongoingCount, setOngoingCount] = useState(null)
     const [completedCount, setCompletedCount] = useState(null)
-    const [updates, setUpdates] = useState([])
     const [notifications, setNotifications] = useState([])
     const [notifOpen, setNotifOpen] = useState(false)
+    const [stats, setStats] = useState(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -36,17 +36,17 @@ const AdminDashboard = () => {
             }
 
             try {
-                const { data: updateData } = await axios.get(`${API_BASE}/update/admin-all`, { withCredentials: true })
-                setUpdates(updateData?.updates || [])
-            } catch (error) {
-                console.error('Failed to fetch updates', error)
-            }
-
-            try {
                 const { data: notifData } = await axios.get(`${API_BASE}/admin/notifications`, { withCredentials: true })
                 setNotifications(notifData?.notifications || [])
             } catch (error) {
                 console.error('Failed to fetch notifications', error)
+            }
+
+            try {
+                const { data: statsData } = await axios.get(`${API_BASE}/admin/dashboard-stats`, { withCredentials: true })
+                setStats(statsData)
+            } catch (error) {
+                console.error('Failed to fetch dashboard stats', error)
             }
         }
         fetchData()
@@ -146,27 +146,35 @@ const AdminDashboard = () => {
             </div>
           </section>
 
-          <section className='daily-update-log w-full mt-[5%]'>
-            <h4 className='text-lg w-full h-12 border-b-2 border-zinc-400 flex items-center justify-center font-bold'>Daily Updates</h4>
+          <section className='w-full mt-[5%]'>
+            <h4 className='text-lg w-full h-12 border-b-2 border-zinc-400 flex items-center justify-center font-bold'>Activity Log</h4>
 
-            <div ref={parent} className="update-log-cards mt-[4%] flex flex-col justify-center max-h-[40vh] overflow-y-auto">
-              {updates.length === 0 && (
-                <div className='flex items-center justify-center h-20 opacity-50 font-semibold text-sm'>
-                  No updates yet.
-                </div>
-              )}
-              {updates.map((item, index) => (
-                <div key={item._id || index} className="update-card px-[2%] mt-[5%] py-[1%] bg-gradient-to-r from-white to-transparent w-full h-20 md:h-16 rounded-md flex-shrink-0 shadow-xl backdrop-blur-lg flex items-center justify-center">
-                  <div className='name w-[40%] h-full flex items-center justify-center'>
-                    <h4 className='text-lg leading-5'>{item.projectName}</h4>
+            <div className='mt-[4%] grid grid-cols-2 gap-3'>
+              {[
+                { label: 'Worker Updates', value: stats?.workerUpdatesReceived, icon: 'ri-user-line', color: 'text-purple-600', bg: 'bg-purple-100', path: '/admin/updates' },
+                { label: 'Due Updates', value: stats?.dueUpdates, icon: 'ri-time-line', color: 'text-orange-500', bg: 'bg-orange-100', path: '/admin/updates' },
+                { label: 'Due Tasks', value: stats?.dueTaskUpdates, icon: 'ri-alarm-warning-line', color: 'text-red-500', bg: 'bg-red-100', path: '/admin/task' },
+                { label: 'Created Updates', value: stats?.createdUpdates, icon: 'ri-refresh-line', color: 'text-blue-500', bg: 'bg-blue-100', path: '/admin/updates' },
+                { label: 'Created Reports', value: stats?.createdReports, icon: 'ri-file-text-line', color: 'text-green-600', bg: 'bg-green-100', path: '/admin/report' },
+                { label: 'Pending Approvals', value: stats?.pendingApprovals, icon: 'ri-time-fill', color: 'text-amber-500', bg: 'bg-amber-100', path: '/admin/approval' },
+                { label: 'Approved', value: stats?.approvedApprovals, icon: 'ri-checkbox-circle-line', color: 'text-emerald-600', bg: 'bg-emerald-100', path: '/admin/approval' },
+                { label: 'Rejected', value: stats?.rejectedApprovals, icon: 'ri-close-circle-line', color: 'text-rose-500', bg: 'bg-rose-100', path: '/admin/approval' },
+              ].map(({ label, value, icon, color, bg, path }) => (
+                <div
+                  key={label}
+                  onClick={() => navigate(path)}
+                  className='bg-white/50 backdrop-blur-md rounded-xl shadow-md px-4 py-4 flex items-center gap-3 cursor-pointer active:scale-95 transition-transform'
+                >
+                  <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center shrink-0`}>
+                    <i className={`${icon} text-xl ${color}`}></i>
                   </div>
-                  <div className='name w-[60%] flex items-end flex-col justify-center h-full'>
-                    <h4 className='text-base h-6 flex items-center justify-center font-bold'>
-                      {moment(item.createdAt).format('LL')}
-                    </h4>
-                    <h4 className='text-base h-6 flex items-center justify-center font-bold'>
-                      {moment(item.createdAt).format('dddd')}
-                    </h4>
+                  <div className='min-w-0'>
+                    <p className='text-2xl font-bold leading-none'>
+                      {value === undefined || value === null
+                        ? <i className='ri-loader-4-line animate-spin text-lg text-[#883bbc]'></i>
+                        : value}
+                    </p>
+                    <p className='text-xs font-semibold opacity-60 mt-0.5 leading-tight'>{label}</p>
                   </div>
                 </div>
               ))}
