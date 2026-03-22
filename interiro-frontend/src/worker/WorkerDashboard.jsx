@@ -207,14 +207,8 @@ const WorkerDashboard = () => {
             <div className='subtitle w-full md:w-[65%] font-semibold mt-[1%] text-md opacity-70 leading-5 pl-[1%]'>
               <h4>Ready to post today's site update?</h4>
             </div>
-            <div className='date-create w-full flex items-center mt-[3%] justify-between'>
-              <div className='date flex pb-4 border-b-2 border-white items-center w-[50%] gap-4'>
-                <div className='backdrop-blur-3xl px-2 py-2 bg-white/20 rounded-md leading-5 w-full font-bold'>
-                  <h4>{date}</h4>
-                  <h4>{day}</h4>
-                </div>
-              </div>
-              <div className='flex items-center gap-2'>
+
+            <div className='flex items-center mt-[2%] gap-2'>
                 <button onClick={() => navigate('/worker/account')} className='flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white font-semibold text-sm hover:bg-white/30 transition-colors'>
                   <i className='ri-user-line text-lg'></i>
                   <span>Profile</span>
@@ -224,7 +218,16 @@ const WorkerDashboard = () => {
                   <span>Logout</span>
                 </button>
               </div>
+            <div className='date-create w-full flex items-center mt-[3%] justify-between'>
+              <div className='date flex pb-4 border-b-2 border-white items-center w-[50%] gap-4'>
+                <div className='backdrop-blur-3xl px-2 py-2 bg-white/20 rounded-md leading-5 w-full font-bold'>
+                  <h4>{date}</h4>
+                  <h4>{day}</h4>
+                </div>
+              </div>
+              
             </div>
+            
           </header>
 
           {/* Scrollable content */}
@@ -465,7 +468,7 @@ const WorkerDashboard = () => {
                 </div>
               </div>
               <h4 className='w-fit mt-[2%] px-2 backdrop-blur-md rounded-md text-4xl md:text-5xl font-bold'>Keep Up</h4>
-              <h2 className='w-full text-5xl md:text-7xl font-bold text-white'>The Work<span className='inline-block text-black'>!</span></h2>
+              <h2 className='w-full text-5xl md:text-7xl font-bold text-black/50'>The Work<span className='inline-block text-black'>!</span></h2>
             </article>
 
           </section>
