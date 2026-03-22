@@ -5,6 +5,8 @@ const { projectModel } = require("../models/projectModel");
 const { updateModel } = require("../models/updateModel");
 const { commentModel } = require("../models/commentModel");
 const { approvalModel } = require("../models/approvalModel");
+const { workerUpdateModel } = require("../models/workerUpdateModel");
+const { reportModel } = require("../models/reportModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
@@ -253,6 +255,68 @@ module.exports.adminNotificationsController = async (req, res) => {
     return res.status(200).json({ notifications, count: notifications.length });
   } catch (err) {
     console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+module.exports.dashboardStatsController = async (req, res) => {
+  try {
+    const now = new Date();
+    const twoDaysAgo = new Date(now - 2 * 24 * 60 * 60 * 1000);
+
+    // Worker updates received (total)
+    const workerUpdatesReceived = await workerUpdateModel.countDocuments();
+
+    // Due updates: ongoing projects with no update in the last 2 days
+    const ongoingProjects = await projectModel.find({ status: 'ongoing' }).select('_id');
+    let dueUpdates = 0;
+    for (const project of ongoingProjects) {
+      const recent = await updateModel.findOne({
+        projectId: project._id,
+        createdAt: { $gte: twoDaysAgo },
+      });
+      if (!recent) dueUpdates++;
+    }
+
+    // Due task updates: overdue tasks across all ongoing projects
+    const taskLists = await taskListModel
+      .find()
+      .populate('projectId', 'status');
+    let dueTaskUpdates = 0;
+    taskLists.forEach(list => {
+      if (!list.projectId || list.projectId.status !== 'ongoing') return;
+      list.tasks.forEach(task => {
+        if (task.date && new Date(task.date) <= now && task.status !== 'completed') {
+          dueTaskUpdates++;
+        }
+      });
+    });
+
+    // Created updates (total)
+    const createdUpdates = await updateModel.countDocuments();
+
+    // Created reports (total)
+    const createdReports = await reportModel.countDocuments();
+
+    // Approval counts
+    const [pendingApprovals, approvedApprovals, rejectedApprovals] = await Promise.all([
+      approvalModel.countDocuments({ status: 'pending' }),
+      approvalModel.countDocuments({ status: 'approved' }),
+      approvalModel.countDocuments({ status: 'rejected' }),
+    ]);
+
+    return res.status(200).json({
+      workerUpdatesReceived,
+      dueUpdates,
+      dueTaskUpdates,
+      createdUpdates,
+      createdReports,
+      pendingApprovals,
+      approvedApprovals,
+      rejectedApprovals,
+    });
+  } catch (err) {
+    console.error('[DASHBOARD STATS ERROR]', err);
     res.status(500).send('Something went wrong');
   }
 };
