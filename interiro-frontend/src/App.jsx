@@ -28,6 +28,7 @@ import ClientApproval from './components/client/ClientApproval'
 import ClientProfile from './components/client/ClientProfile'
 import AdminProfile from './components/admin/AdminProfile'
 import WorkerProfile from './worker/WorkerProfile'
+import AdminPayment from './components/admin/AdminPayment'
 
 const App = () => {
   return (
@@ -60,6 +61,7 @@ const App = () => {
             <Route path='/user/account' element={<ClientProfile />} />
             <Route path='/admin/account' element={<AdminProfile />} />
             <Route path='/worker/account' element={<WorkerProfile />} />
+            <Route path='/admin/payments' element={<AdminPayment />} />
       </Routes>
      
 

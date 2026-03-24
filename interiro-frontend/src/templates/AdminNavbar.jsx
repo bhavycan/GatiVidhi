@@ -24,6 +24,7 @@ const AdminNavbar = ({ value }) => {
     { label: "Material",  icon: "ri-hammer-line",           path: "/admin/material" },
     { label: "Workers",   icon: "ri-user-settings-line",    path: "/admin/worker" },
     { label: "Approvals", icon: "ri-checkbox-circle-line",  path: "/admin/approval" },
+    { label: "Payments",  icon: "ri-money-rupee-circle-line", path: "/admin/payments" },
   ];
 
   const handleNav = (path) => {

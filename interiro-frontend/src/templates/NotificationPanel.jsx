@@ -17,6 +17,7 @@ const NotificationPanel = ({ isOpen, setOpen, notifications }) => {
   const updates   = notifications.filter(n => n.type === 'update');
   const tickets   = notifications.filter(n => n.type === 'ticket');
   const approvals = notifications.filter(n => n.type === 'approval');
+  const payments  = notifications.filter(n => n.type === 'payment');
   const navigate  = useNavigate();
 
   // Mark approval notifications as seen when the panel opens
@@ -195,6 +196,37 @@ const NotificationPanel = ({ isOpen, setOpen, notifications }) => {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {payments.length > 0 && (
+                  <div>
+                    <h3 className='text-sm font-bold opacity-60 uppercase tracking-wide mb-2 flex items-center gap-2'>
+                      <i className='ri-money-rupee-circle-line text-[#883bbc]'></i> Due Payments ({payments.length})
+                    </h3>
+                    <div className='flex flex-col gap-2'>
+                      {payments.map((n, i) => (
+                        <div
+                          key={i}
+                          onClick={() => goTo('/admin/payments')}
+                          className='w-full px-4 py-3 rounded-xl bg-white/60 border border-[#883bbc]/20 flex items-start gap-3 cursor-pointer active:scale-[0.98] transition-transform'
+                        >
+                          <div className='w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5'>
+                            <i className='ri-money-rupee-circle-line text-amber-500 text-base'></i>
+                          </div>
+                          <div className='leading-5 flex-1'>
+                            <p className='font-bold text-sm'>{n.message}</p>
+                            <p className='text-xs opacity-60 mt-0.5'>{n.projectName}</p>
+                            {n.dueDate && (
+                              <p className='text-xs text-red-400 font-semibold mt-0.5'>
+                                Due: {moment(n.dueDate).format('Do MMM YYYY')}
+                              </p>
+                            )}
+                          </div>
+                          <i className='ri-arrow-right-s-line text-[#883bbc] text-lg mt-0.5 shrink-0'></i>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

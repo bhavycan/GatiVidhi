@@ -20,6 +20,7 @@ const AdminDashboard = () => {
     const [notifications, setNotifications] = useState([])
     const [notifOpen, setNotifOpen] = useState(false)
     const [stats, setStats] = useState(null)
+    const [paymentPlans, setPaymentPlans] = useState([])
 
     useEffect(() => {
         const fetchData = async () => {
@@ -47,6 +48,13 @@ const AdminDashboard = () => {
                 setStats(statsData)
             } catch (error) {
                 console.error('Failed to fetch dashboard stats', error)
+            }
+
+            try {
+                const { data: payData } = await axios.get(`${API_BASE}/payment/all`, { withCredentials: true })
+                setPaymentPlans(payData?.plans || [])
+            } catch (error) {
+                console.error('Failed to fetch payment plans', error)
             }
         }
         fetchData()
@@ -145,6 +153,58 @@ const AdminDashboard = () => {
 
             </div>
           </section>
+
+          {/* Payment Progress */}
+          {paymentPlans.length > 0 && (
+            <section className='w-full mt-[5%]'>
+              <div
+                onClick={() => navigate('/admin/payments')}
+                className='flex items-center justify-between mb-3 cursor-pointer group'
+              >
+                <h4 className='text-lg font-bold flex items-center gap-2'>
+                  <i className='ri-money-rupee-circle-line text-[#883bbc]'></i>
+                  Payment Progress
+                </h4>
+                <span className='text-xs font-semibold text-[#883bbc] opacity-70 group-hover:opacity-100 flex items-center gap-1'>
+                  View all <i className='ri-arrow-right-s-line'></i>
+                </span>
+              </div>
+              <div className='space-y-3'>
+                {paymentPlans.map((plan) => {
+                  const paid = plan.installments.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0)
+                  const pct = plan.totalAmount > 0 ? Math.round((paid / plan.totalAmount) * 100) : 0
+                  const paidCount = plan.installments.filter(i => i.status === 'paid').length
+                  const total = plan.installments.length
+                  return (
+                    <div
+                      key={plan._id}
+                      onClick={() => navigate('/admin/payments')}
+                      className='w-full px-4 py-3 rounded-xl bg-white/50 backdrop-blur-md border border-[#883bbc]/20 shadow-sm cursor-pointer active:scale-[0.98] transition-transform'
+                    >
+                      <div className='flex items-center justify-between mb-2'>
+                        <p className='font-bold text-sm truncate'>{plan.projectId?.projectName || 'Project'}</p>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full
+                          ${pct === 100 ? 'bg-emerald-100 text-emerald-600' : 'bg-[#883bbc]/10 text-[#883bbc]'}`}>
+                          {pct === 100 ? 'Paid' : `${pct}%`}
+                        </span>
+                      </div>
+                      <div className='w-full h-2.5 rounded-full bg-white/60 border border-[#883bbc]/10 overflow-hidden'>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.9, ease: 'easeOut' }}
+                          className='h-full rounded-full bg-gradient-to-r from-[#883bbc] to-[#c084fc]'
+                        />
+                      </div>
+                      <p className='text-xs opacity-50 font-semibold mt-1.5'>
+                        {paidCount}/{total} installments · ₹{paid.toLocaleString('en-IN')} of ₹{plan.totalAmount.toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
           <section className='w-full mt-[5%]'>
             <h4 className='text-lg w-full h-12 border-b-2 border-zinc-400 flex items-center justify-center font-bold'>Activity Log</h4>
