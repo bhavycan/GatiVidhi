@@ -66,8 +66,10 @@ const Gallery = () => {
   const [updates, setUpdates] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTask, setActiveTask] = useState('All')
+  const [mediaType, setMediaType] = useState('All') // 'All' | 'Images' | 'Videos'
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [videoModal, setVideoModal] = useState(null) // src string or null
   const parent = useRef(null)
 
   const fetchUpdates = async () => {
@@ -88,21 +90,29 @@ const Gallery = () => {
   // Derive task list from backend updates
   const tasks = ['All', ...Array.from(new Set(updates.map(u => u.task).filter(Boolean)))]
 
-  // Build flat list of { src, updateDate, task } filtered by activeTask
-  const allPhotos = updates
+  // Build flat list of all media items (images + videos) filtered by task and mediaType
+  const allMedia = updates
     .filter(u => activeTask === 'All' || u.task === activeTask)
-    .flatMap(u =>
-      (u.images || []).map(src => ({
-        src,
-        task: u.task || 'Update',
-        date: u.createdAt,
-      }))
+    .flatMap(u => [
+      ...(u.images || []).map(src => ({ src, type: 'image', task: u.task || 'Update', date: u.createdAt })),
+      ...(u.videos || []).map(src => ({ src, type: 'video', task: u.task || 'Update', date: u.createdAt })),
+    ])
+    .filter(item =>
+      mediaType === 'All' ||
+      (mediaType === 'Images' ? item.type === 'image' : item.type === 'video')
     )
 
-  const slides = allPhotos.map(p => ({ src: p.src }))
+  // Lightbox only for images — compute correct index within image-only list
+  const imageItems = allMedia.filter(m => m.type === 'image')
+  const slides = imageItems.map(p => ({ src: p.src }))
 
-  const openLightbox = (index) => {
-    setLightboxIndex(index)
+  const openMedia = (item) => {
+    if (item.type === 'video') {
+      setVideoModal(item.src)
+      return
+    }
+    const idx = imageItems.findIndex(m => m.src === item.src)
+    setLightboxIndex(idx >= 0 ? idx : 0)
     setLightboxOpen(true)
   }
 
@@ -143,7 +153,7 @@ const Gallery = () => {
             </div>
             <div className='subtitle w-full mt-[2%] font-semibold text-md opacity-70 leading-5 pl-[1%]'>
               <h4 className='w-[70%] border-b-2 pb-[6%] border-white'>
-                All project photos from daily updates
+                All project photos and videos from daily updates
               </h4>
             </div>
           </header>
@@ -156,13 +166,35 @@ const Gallery = () => {
               <TaskFilterDropdown tasks={tasks} value={activeTask} onChange={setActiveTask} />
             </div>
 
+            {/* Media type filter pills */}
+            <div className='flex gap-2 mt-3'>
+              {[
+                { key: 'All', icon: 'ri-apps-line' },
+                { key: 'Images', icon: 'ri-image-line' },
+                { key: 'Videos', icon: 'ri-video-line' },
+              ].map(({ key, icon }) => (
+                <motion.button
+                  key={key}
+                  onClick={() => setMediaType(key)}
+                  whileTap={{ scale: 0.93 }}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors
+                    ${mediaType === key
+                      ? 'bg-[#883bbc] text-white border-[#883bbc]'
+                      : 'bg-white/40 border-[#883bbc]/40 text-black hover:bg-white/60'}`}
+                >
+                  <i className={icon}></i>
+                  {key}
+                </motion.button>
+              ))}
+            </div>
+
             {/* Count */}
             <div className='mt-4 mb-3 flex items-center gap-2'>
               <figure className='w-6 h-6 shrink-0'>
                 <img className='w-full h-full object-cover' src='/images/hearts.png' alt='' />
               </figure>
               <span className='font-semibold text-sm opacity-70'>
-                {loading ? 'Loading...' : `${allPhotos.length} photo${allPhotos.length !== 1 ? 's' : ''}`}
+                {loading ? 'Loading...' : `${allMedia.length} ${mediaType === 'Videos' ? 'video' : mediaType === 'Images' ? 'photo' : 'item'}${allMedia.length !== 1 ? 's' : ''}`}
               </span>
             </div>
 
@@ -178,45 +210,64 @@ const Gallery = () => {
             )}
 
             {/* Empty state */}
-            {!loading && allPhotos.length === 0 && (
+            {!loading && allMedia.length === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className='mt-12 px-4 py-6 rounded-xl bg-gradient-to-tl from-[#F7D6F3] to-transparent text-center'
               >
-                <i className='ri-image-2-line text-4xl text-[#883bbc] opacity-60'></i>
-                <p className='mt-2 font-semibold opacity-60'>No photos found{activeTask !== 'All' ? ` for "${activeTask}"` : ''}.</p>
+                <i className={`${mediaType === 'Videos' ? 'ri-video-off-line' : 'ri-image-2-line'} text-4xl text-[#883bbc] opacity-60`}></i>
+                <p className='mt-2 font-semibold opacity-60'>
+                  No {mediaType === 'Videos' ? 'videos' : mediaType === 'Images' ? 'photos' : 'media'} found
+                  {activeTask !== 'All' ? ` for "${activeTask}"` : ''}.
+                </p>
               </motion.div>
             )}
 
             {/* Masonry-style grid */}
-            {!loading && allPhotos.length > 0 && (
+            {!loading && allMedia.length > 0 && (
               <motion.div
                 layout
                 className='columns-2 md:columns-3 gap-2 space-y-2'
               >
-                {allPhotos.map((photo, i) => (
+                {allMedia.map((item, i) => (
                   <motion.div
                     key={i}
                     layout
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: Math.min(i * 0.04, 0.5), duration: 0.3 }}
-                    onClick={() => openLightbox(i)}
-                    className='relative break-inside-avoid rounded-xl overflow-hidden cursor-pointer group'
+                    onClick={() => openMedia(item)}
+                    className='relative break-inside-avoid rounded-xl overflow-hidden cursor-pointer group bg-black'
                   >
-                    <img
-                      src={photo.src}
-                      alt={`photo-${i}`}
-                      className='w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105'
-                      loading='lazy'
-                    />
+                    {item.type === 'video' ? (
+                      <>
+                        <video
+                          src={item.src}
+                          className='w-full h-auto object-cover opacity-80 transition-opacity duration-300 group-hover:opacity-60'
+                          muted
+                          preload='metadata'
+                        />
+                        <div className='absolute inset-0 flex items-center justify-center'>
+                          <div className='w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center'>
+                            <i className='ri-play-fill text-white text-xl'></i>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <img
+                        src={item.src}
+                        alt={`photo-${i}`}
+                        className='w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105'
+                        loading='lazy'
+                      />
+                    )}
                     {/* Overlay on hover */}
                     <div className='absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-end'>
                       <div className='w-full px-2 py-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/60 to-transparent'>
-                        {photo.task && (
+                        {item.task && (
                           <span className='text-white text-xs font-semibold px-2 py-0.5 rounded-full bg-[#883bbc]/80'>
-                            {photo.task}
+                            {item.task}
                           </span>
                         )}
                       </div>
@@ -230,6 +281,37 @@ const Gallery = () => {
           </section>
         </div>
       </main>
+
+      {/* Video modal */}
+      <AnimatePresence>
+        {videoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setVideoModal(null)}
+            className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4'
+          >
+            <motion.video
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              src={videoModal}
+              controls
+              autoPlay
+              onClick={e => e.stopPropagation()}
+              className='max-w-full max-h-[85vh] rounded-xl shadow-2xl'
+            />
+            <button
+              onClick={() => setVideoModal(null)}
+              className='absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl'
+            >
+              <i className='ri-close-line'></i>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Lightbox */}
       <Lightbox

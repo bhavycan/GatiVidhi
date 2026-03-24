@@ -223,12 +223,16 @@ const AdminUpdate = () => {
   const [dueProjects, setDueProjects] = useState([])
   const [workerUpdates, setWorkerUpdates] = useState([])
   const [workerImageUrls, setWorkerImageUrls] = useState([])
+  const [workerVideoUrls, setWorkerVideoUrls] = useState([])
   // per-update edited photo state: { [updateId]: { keepUrls: string[], newFiles: File[], newPreviews: string[] } }
   const [editedPhotos, setEditedPhotos] = useState({})
   const [lightbox, setLightbox] = useState(null) // src string or null
+  const [videoModal, setVideoModal] = useState(null) // video src string or null
 
   // Dynamic slots — start with 3
   const [images, setImages] = useState([null, null, null])
+  const [videos, setVideos] = useState([])
+  const [videoPreviews, setVideoPreviews] = useState([])
   const [workDone, setWorkDone] = useState('')
   const [workLeft, setWorkLeft] = useState('')
   const [notes, setNotes] = useState('')
@@ -313,6 +317,7 @@ const AdminUpdate = () => {
     setProjectTasks([])
     setWorkerUpdates([])
     setWorkerImageUrls([])
+    setWorkerVideoUrls([])
     try {
       const { data } = await axios.get(`${API_BASE}/task/${project._id}`, { withCredentials: true })
       setLastUpdated(data.lastUpdated || null)
@@ -326,9 +331,9 @@ const AdminUpdate = () => {
     } catch (_) {}
   }
 
-  // Initialise editable photo state for an update (lazy)
+  // Initialise editable photo state for an update (lazy) — includes video URLs from worker
   const getEditedPhotos = (wu) =>
-    editedPhotos[wu._id] ?? { keepUrls: wu.updateImages || [], newFiles: [], newPreviews: [] }
+    editedPhotos[wu._id] ?? { keepUrls: wu.updateImages || [], newFiles: [], newPreviews: [], videoUrls: wu.updateVideos || [] }
 
   const deleteWorkerPhoto = (wu, index) => {
     const current = getEditedPhotos(wu)
@@ -348,6 +353,14 @@ const AdminUpdate = () => {
         newFiles: current.newFiles.filter((_, i) => i !== index),
         newPreviews: current.newPreviews.filter((_, i) => i !== index),
       },
+    }))
+  }
+
+  const deleteWorkerVideo = (wu, index) => {
+    const current = getEditedPhotos(wu)
+    setEditedPhotos(prev => ({
+      ...prev,
+      [wu._id]: { ...current, videoUrls: current.videoUrls.filter((_, i) => i !== index) },
     }))
   }
 
@@ -373,6 +386,7 @@ const AdminUpdate = () => {
     const edited = getEditedPhotos(wu)
     setNotes(wu.notes || '')
     setWorkerImageUrls(edited.keepUrls)
+    setWorkerVideoUrls(edited.videoUrls)
     // Merge worker's new files into the form's image slots
     if (edited.newFiles.length > 0) {
       setImages(prev => {
@@ -450,6 +464,8 @@ const AdminUpdate = () => {
       formData.append('activeRooms', JSON.stringify(activeRooms))
       uploadedImages.forEach(img => formData.append('images', img))
       workerImageUrls.forEach(url => formData.append('existingImages', url))
+      videos.forEach(vid => formData.append('images', vid))
+      workerVideoUrls.forEach(url => formData.append('existingVideos', url))
 
       await axios.post(`${API_BASE}/update/create`, formData, {
         withCredentials: true,
@@ -461,6 +477,9 @@ const AdminUpdate = () => {
       setSelectedTask(null)
       setProjectTasks([])
       setImages([null, null, null])
+      videoPreviews.forEach(url => URL.revokeObjectURL(url))
+      setVideos([])
+      setVideoPreviews([])
       setWorkDone('')
       setWorkLeft('')
       setNotes('')
@@ -468,6 +487,7 @@ const AdminUpdate = () => {
       setRoomInput('')
       setLastUpdated(null)
       setWorkerImageUrls([])
+      setWorkerVideoUrls([])
       showToast('update has been submitted')
     } catch (error) {
       console.error(error)
@@ -524,6 +544,37 @@ const AdminUpdate = () => {
             />
             <button
               onClick={() => setLightbox(null)}
+              className='absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl'
+            >
+              <i className='ri-close-line'></i>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Video modal */}
+      <AnimatePresence>
+        {videoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setVideoModal(null)}
+            className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4'
+          >
+            <motion.video
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              src={videoModal}
+              controls
+              autoPlay
+              onClick={e => e.stopPropagation()}
+              className='max-w-full max-h-[85vh] rounded-xl shadow-2xl'
+            />
+            <button
+              onClick={() => setVideoModal(null)}
               className='absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl'
             >
               <i className='ri-close-line'></i>
@@ -720,6 +771,42 @@ const AdminUpdate = () => {
                       </motion.div>
                     )}
 
+                    {/* Worker pre-loaded videos */}
+                    {workerVideoUrls.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className='px-3 py-3 rounded-lg bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc]/40'
+                      >
+                        <p className='text-xs font-bold text-[#883bbc] mb-2 flex items-center gap-2'>
+                          <i className='ri-video-line'></i> Worker videos ({workerVideoUrls.length})
+                          <span className='opacity-50 font-normal'>· <i className='ri-close-circle-line text-red-400'></i> del</span>
+                        </p>
+                        <div className='flex gap-2 overflow-x-auto pb-1'>
+                          {workerVideoUrls.map((url, i) => (
+                            <div key={i} className='relative shrink-0 w-24 h-20 rounded-lg overflow-hidden border border-[#883bbc]/30 bg-black'>
+                              <video
+                                src={url}
+                                className='w-full h-full object-cover opacity-80'
+                                muted
+                                preload='metadata'
+                              />
+                              <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                                <i className='ri-play-circle-fill text-white text-2xl opacity-70'></i>
+                              </div>
+                              <button
+                                type='button'
+                                onClick={() => setWorkerVideoUrls(prev => prev.filter((_, j) => j !== i))}
+                                className='absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs'
+                              >
+                                <i className='ri-close-line'></i>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+
                     {/* Image uploads — dynamic slots */}
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -743,6 +830,62 @@ const AdminUpdate = () => {
                             isRequired={i < 3}
                           />
                         ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Video uploads */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.52 }}
+                    >
+                      <label className='block text-black font-medium mb-2'>
+                        Videos
+                        <span className='text-xs opacity-60 font-normal ml-1'>(optional · {videos.length} selected)</span>
+                      </label>
+                      <div className='flex gap-2 overflow-x-auto pb-2'>
+                        {videoPreviews.map((src, i) => (
+                          <div key={i} className='relative shrink-0 w-24 h-20 rounded-lg overflow-hidden border border-[#883bbc]/40 bg-black'>
+                            <video
+                              src={src}
+                              className='w-full h-full object-cover'
+                              muted
+                              preload='metadata'
+                            />
+                            <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                              <i className='ri-play-circle-fill text-white text-2xl opacity-70'></i>
+                            </div>
+                            <button
+                              type='button'
+                              onClick={() => {
+                                URL.revokeObjectURL(src)
+                                setVideos(prev => prev.filter((_, j) => j !== i))
+                                setVideoPreviews(prev => prev.filter((_, j) => j !== i))
+                              }}
+                              className='absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs'
+                            >
+                              <i className='ri-close-line'></i>
+                            </button>
+                          </div>
+                        ))}
+                        {/* Add video slot */}
+                        <label className='shrink-0 w-24 h-20 rounded-lg border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors bg-gradient-to-tl from-[#F7D6F3] to-transparent'>
+                          <i className='ri-video-add-line text-2xl text-[#883bbc] opacity-60'></i>
+                          <span className='text-[10px] font-semibold opacity-50 mt-0.5'>Add Video</span>
+                          <input
+                            type='file'
+                            accept='video/mp4,video/quicktime,video/webm,video/avi'
+                            multiple
+                            className='hidden'
+                            onChange={e => {
+                              const files = Array.from(e.target.files)
+                              if (!files.length) return
+                              setVideos(prev => [...prev, ...files])
+                              setVideoPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
+                              e.target.value = ''
+                            }}
+                          />
+                        </label>
                       </div>
                     </motion.div>
 
@@ -1052,6 +1195,45 @@ const AdminUpdate = () => {
                               <span className='text-[10px] font-semibold opacity-50 mt-1'>Add</span>
                             </PickerButton>
 
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* Worker Videos */}
+                    {(() => {
+                      const ep = getEditedPhotos(wu)
+                      if (!ep.videoUrls.length) return null
+                      return (
+                        <div className='px-4 pt-1 pb-2'>
+                          <p className='text-xs font-bold opacity-60 mb-2'>
+                            Videos ({ep.videoUrls.length}) — <i className='ri-close-circle-line text-red-400'></i> delete
+                          </p>
+                          <div className='flex gap-2 overflow-x-auto pb-1'>
+                            {ep.videoUrls.map((src, j) => (
+                              <div key={j} className='relative shrink-0 w-24 h-20 rounded-lg overflow-hidden border border-[#883bbc]/40 bg-black'>
+                                <video
+                                  src={src}
+                                  className='w-full h-full object-cover opacity-80'
+                                  muted
+                                  preload='metadata'
+                                  onClick={() => setVideoModal(src)}
+                                />
+                                <div
+                                  className='absolute inset-0 flex items-center justify-center cursor-pointer'
+                                  onClick={() => setVideoModal(src)}
+                                >
+                                  <i className='ri-play-circle-fill text-white text-2xl opacity-70 pointer-events-none'></i>
+                                </div>
+                                <button
+                                  type='button'
+                                  onClick={() => deleteWorkerVideo(wu, j)}
+                                  className='absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs leading-none'
+                                >
+                                  <i className='ri-close-line'></i>
+                                </button>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )

@@ -42,10 +42,13 @@ const WorkerDashboard = () => {
   const [notes, setNotes] = useState('');
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
+  const [videos, setVideos] = useState([]);
+  const [videoPreviews, setVideoPreviews] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [notifications, setNotifications] = useState([]);
   const [lightbox, setLightbox] = useState(null);
+  const [videoModal, setVideoModal] = useState(null);
 
   const fetchProfile = async () => {
     try {
@@ -131,6 +134,7 @@ const WorkerDashboard = () => {
       formData.append('projectId', selectedProject._id);
       formData.append('notes', notes);
       images.forEach(img => formData.append('updateImages', img));
+      videos.forEach(vid => formData.append('updateImages', vid));
 
       const { data } = await axios.post(
         `${API_BASE}/worker/update`,
@@ -142,6 +146,9 @@ const WorkerDashboard = () => {
       setNotes('');
       setImages([]);
       setPreviews([]);
+      videoPreviews.forEach(url => URL.revokeObjectURL(url));
+      setVideos([]);
+      setVideoPreviews([]);
     } catch (err) {
       setError(err.response?.data || 'Failed to submit update');
     } finally {
@@ -176,6 +183,37 @@ const WorkerDashboard = () => {
             />
             <button
               onClick={() => setLightbox(null)}
+              className='absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl'
+            >
+              <i className='ri-close-line'></i>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Video modal */}
+      <AnimatePresence>
+        {videoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setVideoModal(null)}
+            className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4'
+          >
+            <motion.video
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              src={videoModal}
+              controls
+              autoPlay
+              onClick={e => e.stopPropagation()}
+              className='max-w-full max-h-[85vh] rounded-xl shadow-2xl'
+            />
+            <button
+              onClick={() => setVideoModal(null)}
               className='absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl'
             >
               <i className='ri-close-line'></i>
@@ -335,7 +373,7 @@ const WorkerDashboard = () => {
                       )}
 
                       {todayUpdate.updateImages?.length > 0 && (
-                        <div className='flex gap-2 overflow-x-auto pb-2 mb-3'>
+                        <div className='flex gap-2 overflow-x-auto pb-2 mb-2'>
                           {todayUpdate.updateImages.map((src, i) => (
                             <div key={i} className='relative shrink-0 w-20 h-20'>
                               <img
@@ -346,6 +384,31 @@ const WorkerDashboard = () => {
                               />
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {todayUpdate.updateVideos?.length > 0 && (
+                        <div className='mb-3'>
+                          <p className='text-xs font-bold opacity-60 mb-1'>Videos ({todayUpdate.updateVideos.length})</p>
+                          <div className='flex gap-2 overflow-x-auto pb-2'>
+                            {todayUpdate.updateVideos.map((src, i) => (
+                              <div
+                                key={i}
+                                className='relative shrink-0 w-24 h-20 rounded-lg overflow-hidden bg-black cursor-pointer'
+                                onClick={() => setVideoModal(src)}
+                              >
+                                <video
+                                  src={src}
+                                  className='w-full h-full object-cover opacity-80'
+                                  muted
+                                  preload='metadata'
+                                />
+                                <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                                  <i className='ri-play-circle-fill text-white text-2xl opacity-80'></i>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
@@ -428,6 +491,56 @@ const WorkerDashboard = () => {
                               <i className='ri-image-add-line text-2xl text-[#883bbc] opacity-60'></i>
                               <span className='text-[10px] font-semibold opacity-50 mt-0.5'>Add</span>
                             </PickerButton>
+                          </div>
+                        </div>
+
+                        {/* Video upload */}
+                        <div className='w-full'>
+                          <p className='text-sm font-semibold opacity-70 mb-2'>
+                            Videos (optional) · {videos.length} selected
+                          </p>
+                          <div className='flex gap-2 overflow-x-auto pb-2'>
+                            {videoPreviews.map((src, i) => (
+                              <div key={i} className='relative shrink-0 w-24 h-20 rounded-xl overflow-hidden border border-[#883bbc]/40 bg-black'>
+                                <video
+                                  src={src}
+                                  className='w-full h-full object-cover'
+                                  muted
+                                  preload='metadata'
+                                />
+                                <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                                  <i className='ri-play-circle-fill text-white text-2xl opacity-70'></i>
+                                </div>
+                                <button
+                                  type='button'
+                                  onClick={() => {
+                                    URL.revokeObjectURL(src)
+                                    setVideos(prev => prev.filter((_, j) => j !== i))
+                                    setVideoPreviews(prev => prev.filter((_, j) => j !== i))
+                                  }}
+                                  className='absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs'
+                                >
+                                  <i className='ri-close-line'></i>
+                                </button>
+                              </div>
+                            ))}
+                            <label className='shrink-0 w-24 h-20 rounded-xl border-2 border-dashed border-[#883bbc]/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#883bbc] transition-colors bg-white/20'>
+                              <i className='ri-video-add-line text-2xl text-[#883bbc] opacity-60'></i>
+                              <span className='text-[10px] font-semibold opacity-50 mt-0.5'>Add Video</span>
+                              <input
+                                type='file'
+                                accept='video/mp4,video/quicktime,video/webm,video/avi'
+                                multiple
+                                className='hidden'
+                                onChange={e => {
+                                  const files = Array.from(e.target.files)
+                                  if (!files.length) return
+                                  setVideos(prev => [...prev, ...files])
+                                  setVideoPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
+                                  e.target.value = ''
+                                }}
+                              />
+                            </label>
                           </div>
                         </div>
 

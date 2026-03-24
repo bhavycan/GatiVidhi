@@ -3,6 +3,36 @@ import CommentBox from './CommentBox';
 import { AnimatePresence, motion } from 'motion/react';
 import ImagePortal from '../Portals/ImagePortal';
 import 'photoswipe/style.css';
+import { createPortal } from 'react-dom';
+
+const VideoModal = ({ src, onClose }) => createPortal(
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    onClick={onClose}
+    className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4'
+  >
+    <motion.video
+      initial={{ scale: 0.85, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.85, opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      src={src}
+      controls
+      autoPlay
+      onClick={e => e.stopPropagation()}
+      className='max-w-full max-h-[85vh] rounded-xl shadow-2xl'
+    />
+    <button
+      onClick={onClose}
+      className='absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl'
+    >
+      <i className='ri-close-line'></i>
+    </button>
+  </motion.div>,
+  document.body
+);
 
 
 const UpdateCard = ({ update, setShareOpen }) => {
@@ -34,6 +64,9 @@ const UpdateCard = ({ update, setShareOpen }) => {
   const [isType, setType] = useState(false)
   const [isTap, setTap] = useState(false)
   const [commentText, setCommentText] = useState('')
+  const [activeVideo, setActiveVideo] = useState(null)
+
+  const videos = update?.videos?.length > 0 ? update.videos : []
 
   const handleChange = (text) => {
     setCommentText(text)
@@ -129,6 +162,40 @@ const UpdateCard = ({ update, setShareOpen }) => {
             ))}z
           </div>
         </div>
+
+        {/* Video previews */}
+        <AnimatePresence>
+          {activeVideo && <VideoModal src={activeVideo} onClose={() => setActiveVideo(null)} />}
+        </AnimatePresence>
+
+        {videos.length > 0 && (
+          <div className='mt-4'>
+            <p className='text-xs font-bold text-[#883bbc]/70 uppercase tracking-wider mb-2 flex items-center gap-1'>
+              <i className='ri-video-line'></i> Videos ({videos.length})
+            </p>
+            <div className='flex gap-2 overflow-x-auto pb-1'>
+              {videos.map((src, i) => (
+                <div
+                  key={i}
+                  onClick={() => setActiveVideo(src)}
+                  className='relative shrink-0 w-28 h-20 rounded-xl overflow-hidden bg-black cursor-pointer border border-[#883bbc]/20'
+                >
+                  <video
+                    src={src}
+                    className='w-full h-full object-cover opacity-80'
+                    muted
+                    preload='metadata'
+                  />
+                  <div className='absolute inset-0 flex items-center justify-center bg-black/20'>
+                    <div className='w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center'>
+                      <i className='ri-play-fill text-white text-lg'></i>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Work Done */}
         <div className="mt-5">
