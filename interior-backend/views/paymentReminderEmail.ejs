@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Tanika Associate – Payment Reminder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table { border-collapse: collapse !important; }
+    img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+
+    #name { font-size: 2em; font-family: cursive; }
+
+    .email-wrapper { width: 100%; background-color: #f5f7fa; padding: 0 16px; }
+    .email-content {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .email-header {
+      background-color: #883bbc;
+      color: #ffffff;
+      padding: 24px 32px;
+      text-align: center;
+    }
+    .email-header h1 { margin: 0; font-size: 22px; }
+    .email-header p { margin: 6px 0 0; font-size: 13px; opacity: 0.85; }
+
+    .email-body { padding: 24px 32px; color: #374151; font-size: 16px; }
+
+    .info-box {
+      background-color: #faf5ff;
+      border-left: 4px solid #883bbc;
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .info-box p { margin: 6px 0; font-size: 14px; }
+    .info-box .label { font-weight: bold; color: #883bbc; }
+
+    .amount-highlight {
+      font-size: 28px;
+      font-weight: bold;
+      color: #883bbc;
+      margin: 0;
+    }
+
+    .contant { line-height: 0; }
+    .contant a { text-decoration: none; }
+
+    .email-footer { padding: 16px 32px; text-align: center; font-size: 12px; color: #9ca3af; }
+
+    @media screen and (max-width: 640px) {
+      .email-body  { padding: 16px 20px; }
+      .email-header { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#f5f7fa;">
+  <div class="email-wrapper">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" class="email-content">
+
+      <tr>
+        <td class="email-header">
+          <h1>Tanika Associate</h1>
+          <p>Payment Reminder</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="email-body">
+          <p id="name">Hello <%= user.name %>!</p>
+
+          <p>This is a friendly reminder that a payment installment for your project <strong><%= user.projectName %></strong> is due.</p>
+
+          <div class="info-box">
+            <p class="amount-highlight">₹<%= user.amount %></p>
+            <p><span class="label">Project:</span> <%= user.projectName %></p>
+            <p><span class="label">Due Date:</span> <%= user.dueDate %></p>
+            <% if (user.notes && user.notes.length > 0) { %>
+            <p><span class="label">Notes:</span> <%= user.notes %></p>
+            <% } %>
+          </div>
+
+          <p>Please arrange the payment at your earliest convenience. If you have already made this payment, kindly disregard this reminder.</p>
+
+          <p>If you have any questions or need to discuss the payment schedule, feel free to reach out to us.</p>
+
+          <div class="contant">
+            <h5>Email: <a href="mailto:bhavy203@gmail.com">bhavy203@gmail.com</a></h5>
+            <h5>Phone: <a href="tel:+12342342345">12342342345</a></h5>
+            <h5>Address: 123 Business Rd, Business City, BC 12345</h5>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="email-footer">
+          &copy; 2023 Tanika Associate. All rights reserved.<br />
+          123 Business Rd, Business City, BC 12345
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</body>
+</html>

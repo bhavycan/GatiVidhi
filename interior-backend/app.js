@@ -36,6 +36,7 @@ const templateRoute = require('./routes/templateRoute')
 const materialRoute = require('./routes/materialRoute')
 const workerRoute = require('./routes/workerRoute')
 const approvalRoute = require('./routes/approvalRoute')
+const paymentRoute = require('./routes/paymentRoute')
 const connectCloudinary = require('./config/cloudinary');
 const emailCron = require('./cron/emailCron');
 const connectSocket = require('./config/socketio');
@@ -102,6 +103,7 @@ app.use('/template', templateRoute)
 app.use('/material', materialRoute)
 app.use('/worker', workerRoute)
 app.use('/approval', approvalRoute)
+app.use('/payment', paymentRoute)
 app.get('/', (req,res)=>{
     res.send("Hello ")
 })

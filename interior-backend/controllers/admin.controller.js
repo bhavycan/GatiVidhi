@@ -7,6 +7,7 @@ const { commentModel } = require("../models/commentModel");
 const { approvalModel } = require("../models/approvalModel");
 const { workerUpdateModel } = require("../models/workerUpdateModel");
 const { reportModel } = require("../models/reportModel");
+const { paymentModel } = require("../models/paymentModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
@@ -249,6 +250,30 @@ module.exports.adminNotificationsController = async (req, res) => {
         projectId: a.projectId,
         approvalId: a._id,
         date: a.respondedAt,
+      });
+    });
+
+    // 5. Due payment installments
+    const paymentPlans = await paymentModel.find({}).populate({
+      path: 'projectId',
+      select: 'projectName clientId',
+      populate: { path: 'clientId', select: 'name' },
+    });
+
+    paymentPlans.forEach(plan => {
+      plan.installments.forEach(ins => {
+        if (ins.status === 'pending' && new Date(ins.dueDate) < now) {
+          notifications.push({
+            type: 'payment',
+            message: `₹${ins.amount.toLocaleString('en-IN')} installment is overdue`,
+            projectName: plan.projectId?.projectName || 'Unknown',
+            projectId: plan.projectId?._id,
+            planId: plan._id,
+            installmentId: ins._id,
+            amount: ins.amount,
+            dueDate: ins.dueDate,
+          });
+        }
       });
     });
 
