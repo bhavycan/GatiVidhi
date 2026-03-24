@@ -18,6 +18,10 @@ const updateSchema = new Schema({
     },
     default: [],
   },
+  videos: {
+    type: [String],
+    default: [],
+  },
   workDone: {
     type: String,
     maxlength: 1000,

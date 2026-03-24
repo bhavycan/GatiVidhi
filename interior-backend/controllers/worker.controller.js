@@ -5,7 +5,8 @@ const { workerModel } = require('../models/workerModel');
 const { workerUpdateModel } = require('../models/workerUpdateModel');
 const { blacklistModel } = require('../models/blacklisttoken');
 const { projectModel } = require('../models/projectModel');
-const uploadImage = require('../utils/cloudinary.multer');
+const uploadToCloudinary = require('../utils/cloudinary.multer');
+const VIDEO_MIMETYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo', 'video/avi'];
 const generatePassword = require('../utils/passwordGenerator');
 const sendEmail = require('../utils/emailNotification');
 
@@ -144,11 +145,24 @@ module.exports.workerSubmitUpdateController = async (req, res) => {
     const worker = await workerModel.findOne({ email: req.worker.email });
     if (!worker) return res.status(404).send('Worker not found');
 
+    const allFiles = req.files || [];
+    const imageFiles = allFiles.filter(f => !VIDEO_MIMETYPES.includes(f.mimetype));
+    const videoFiles = allFiles.filter(f => VIDEO_MIMETYPES.includes(f.mimetype));
+
     const imageUrls = await Promise.all(
-      (req.files || []).map(async (file) => {
+      imageFiles.map(async (file) => {
         const b64 = Buffer.from(file.buffer).toString('base64');
         const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
-        const { secure_url } = await uploadImage(dataURI, `worker_${worker._id}_${Date.now()}`);
+        const { secure_url } = await uploadToCloudinary(dataURI, `worker_${worker._id}_img_${Date.now()}`, 'image');
+        return secure_url;
+      })
+    );
+
+    const videoUrls = await Promise.all(
+      videoFiles.map(async (file) => {
+        const b64 = Buffer.from(file.buffer).toString('base64');
+        const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
+        const { secure_url } = await uploadToCloudinary(dataURI, `worker_${worker._id}_vid_${Date.now()}`, 'video');
         return secure_url;
       })
     );
@@ -158,6 +172,7 @@ module.exports.workerSubmitUpdateController = async (req, res) => {
       projectId,
       notes: notes || '',
       updateImages: imageUrls,
+      updateVideos: videoUrls,
     });
 
     res.status(201).json({ update });

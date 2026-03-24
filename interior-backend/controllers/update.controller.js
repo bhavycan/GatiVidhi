@@ -2,11 +2,12 @@ const {projectModel} = require('../models/projectModel');
 const {updateModel} = require('../models/updateModel');
 const {userModel} = require('../models/userModel');
 const {taskListModel} = require('../models/taskListModel');
-const uploadImage = require('../utils/cloudinary.multer');
+const uploadToCloudinary = require('../utils/cloudinary.multer');
 
+const VIDEO_MIMETYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo', 'video/avi'];
 
 module.exports.updateCreateController = async(req,res)=>{
-    const {projectName , workDone, workLeft, notes, task, activeRooms, existingImages} = req.body;
+    const {projectName , workDone, workLeft, notes, task, activeRooms, existingImages, existingVideos} = req.body;
     if(!projectName || !workDone || !workLeft || !notes) {return res.status(400).send("Invalid Entry")}
 
 try {
@@ -14,21 +15,40 @@ try {
     if(!project) return res.status(400).send("The Project does Not exist");
     const projectId = project._id;
 
-    // Upload any new files
-    const uploadedUrls = await Promise.all(
-        (req.files || []).map(async(file)=>{
+    const allFiles = req.files || [];
+    const imageFiles = allFiles.filter(f => !VIDEO_MIMETYPES.includes(f.mimetype));
+    const videoFiles = allFiles.filter(f => VIDEO_MIMETYPES.includes(f.mimetype));
+
+    // Upload new images
+    const uploadedImageUrls = await Promise.all(
+        imageFiles.map(async(file)=>{
             const b64 = Buffer.from(file.buffer).toString("base64");
-          let dataURI = "data:" + file.mimetype + ";base64," + b64;
-           const { secure_url } = await uploadImage(dataURI, projectName);
-        return secure_url;
+            const dataURI = "data:" + file.mimetype + ";base64," + b64;
+            const { secure_url } = await uploadToCloudinary(dataURI, `${projectName}_img_${Date.now()}`, 'image');
+            return secure_url;
         })
-    )
+    );
+
+    // Upload new videos
+    const uploadedVideoUrls = await Promise.all(
+        videoFiles.map(async(file)=>{
+            const b64 = Buffer.from(file.buffer).toString("base64");
+            const dataURI = "data:" + file.mimetype + ";base64," + b64;
+            const { secure_url } = await uploadToCloudinary(dataURI, `${projectName}_vid_${Date.now()}`, 'video');
+            return secure_url;
+        })
+    );
 
     // Merge with any pre-existing URLs (from worker updates)
     const existingUrls = existingImages
       ? (Array.isArray(existingImages) ? existingImages : [existingImages])
       : [];
-    const imageUrls = [...existingUrls, ...uploadedUrls];
+    const imageUrls = [...existingUrls, ...uploadedImageUrls];
+
+    const existingVideoUrls = existingVideos
+      ? (Array.isArray(existingVideos) ? existingVideos : [existingVideos])
+      : [];
+    const videoUrls = [...existingVideoUrls, ...uploadedVideoUrls];
 
     if (imageUrls.length < 1) return res.status(400).send("At least one image is required");
 
@@ -39,10 +59,11 @@ try {
         notes,
         task: task || null,
         images : imageUrls,
+        videos: videoUrls,
         activeRooms: Array.isArray(activeRooms) ? activeRooms : (activeRooms ? JSON.parse(activeRooms) : [])
     })
 
-    console.log(`[UPDATE CREATED] project: "${projectName}" | task: "${task || 'none'}" | images: ${imageUrls.length} | updateId: ${update._id}`);
+    console.log(`[UPDATE CREATED] project: "${projectName}" | task: "${task || 'none'}" | images: ${imageUrls.length} | videos: ${uploadedVideoUrls.length} | updateId: ${update._id}`);
 
     project.updates.push(update._id);
     await project.save();
