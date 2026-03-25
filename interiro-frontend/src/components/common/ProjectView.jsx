@@ -6,10 +6,12 @@ import Navbar from "../../templates/Navbar";
 import { AnimatePresence, motion } from "motion/react";
 import axios from "axios";
 import { API_BASE } from '../../config.js'
+import ModelViewer from "../client/ModelViewer";
 
 const ProjectView = () => {
   const [isopen, setOpen] = useState(false);
   const [project, setProject] = useState(null);
+  const [show3D, setShow3D] = useState(false);
   const parent = useRef(null);
 
   useEffect(() => {
@@ -20,6 +22,10 @@ const ProjectView = () => {
 
   return (
     <div ref={parent} className="w-screen min-h-screen relative overflow-hidden">
+      {show3D && project?.modelGlbUrl && (
+        <ModelViewer url={project.modelGlbUrl} onClose={() => setShow3D(false)} />
+      )}
+
       <AnimatePresence mode="wait">
         {isopen && <Navbar value={{ isopen, setOpen }} />}
       </AnimatePresence>
@@ -99,6 +105,57 @@ const ProjectView = () => {
               ) : (
                 <div className="w-full min-h-[20vh] mt-[2%] rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent flex items-center justify-center">
                   <p className="text-sm font-semibold opacity-50">No design PDF uploaded yet.</p>
+                </div>
+              )}
+            </section>
+
+            {/* 3D Model section */}
+            <section className="w-full mt-[10%]">
+              <div className="w-full flex items-center">
+                <figure className="w-28 h-10 md:w-36 md:h-12 ml-auto shrink-0">
+                  <img className="w-full h-full object-cover" src="/images/hearts.png" alt="" />
+                </figure>
+                <h2 className="flex items-center justify-end text-lg font-bold ml-2 whitespace-nowrap">
+                  3D Model
+                </h2>
+              </div>
+
+              {project?.modelGlbUrl ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="w-full mt-[2%] rounded-xl bg-gradient-to-br from-[#F7D6F3] to-transparent border border-[#883bbc]/30 px-4 py-5 flex flex-col gap-3"
+                >
+                  {/* Preview thumbnail / call-to-action */}
+                  <div className="w-full rounded-lg bg-black/10 border border-[#883bbc]/20 flex flex-col items-center justify-center py-10 gap-3">
+                    <div className="w-14 h-14 rounded-full bg-[#883bbc]/10 border border-[#883bbc]/30 flex items-center justify-center">
+                      <i className="ri-box-3-line text-3xl text-[#883bbc]"></i>
+                    </div>
+                    <p className="text-sm font-semibold opacity-60">Interactive 3D design is ready</p>
+                    <motion.button
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setShow3D(true)}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#883bbc] text-white font-bold text-sm shadow"
+                    >
+                      <i className="ri-eye-line text-base"></i>
+                      View 3D Design
+                    </motion.button>
+                  </div>
+
+                  {/* Download */}
+                  <a
+                    href={project.modelGlbUrl}
+                    download
+                    className="w-full px-2 py-3 bg-white/60 border border-[#883bbc]/30 rounded-lg flex items-center justify-center gap-2 font-semibold text-[#883bbc] text-sm"
+                  >
+                    <i className="ri-download-2-line text-lg"></i>
+                    Download 3D Model (.glb)
+                  </a>
+                </motion.div>
+              ) : (
+                <div className="w-full min-h-[12vh] mt-[2%] rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent flex items-center justify-center">
+                  <p className="text-sm font-semibold opacity-50">No 3D model uploaded yet.</p>
                 </div>
               )}
             </section>

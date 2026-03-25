@@ -17,6 +17,7 @@ import Notification from '../../Portals/Notification';
 import { usePopcard } from '../../context/PopCardContext';
 import axios from 'axios';
 import { API_BASE } from '../../config.js'
+import ModelViewer from './ModelViewer'
 
 
 const ClientDashboard = () => {
@@ -33,6 +34,7 @@ const { showPopcard, popcard } = usePopcard();
     const [isShareOpen, setShareOpen] = useState(false)
     const [isNotification,setNotification] = useState(false)
     const [notifCount, setNotifCount] = useState(0)
+    const [show3D, setShow3D] = useState(false)
     const startingDay = moment(projectinfo?.startDate).format("Do MMMM YYYY");
     const EndingDay = moment(projectinfo?.estimatedEndDate).format("Do MMMM YYYY");
 
@@ -65,6 +67,9 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
   return userinfo && (
     <div className='w-screen h-screen relative overflow-hidden'>
+      {show3D && projectinfo?.modelGlbUrl && (
+        <ModelViewer url={projectinfo.modelGlbUrl} onClose={() => setShow3D(false)} />
+      )}
       <Share update={lastupdate} isShareOpen={isShareOpen} setShareOpen={setShareOpen} />
 
       <AnimatePresence>
@@ -153,6 +158,21 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
               <div className="sub-text opacity-80 mt-[2%] text-sm">
                 <h4 className='leading-5'>{projectinfo?.description}</h4>
               </div>
+
+              {projectinfo?.modelGlbUrl && (
+                <motion.button
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setShow3D(true)}
+                  className='mt-[3%] flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#883bbc] text-white font-bold text-sm shadow-lg'
+                >
+                  <i className='ri-box-3-line text-lg'></i>
+                  View 3D Design
+                </motion.button>
+              )}
+
               <div className="date-create w-full flex items-center mt-[3%] pb-4">
                 <div className="date flex items-center w-full gap-4">
                   <div className="icon w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#883bbc] items-center justify-center flex shrink-0">

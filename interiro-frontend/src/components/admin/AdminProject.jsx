@@ -134,25 +134,31 @@ const AdminProject = () => {
 
   // Additional info state
   const [isInfoOpen, setInfoOpen] = useState(false)
-  const [infoForm, setInfoForm] = useState({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null })
+  const [infoForm, setInfoForm] = useState({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null, designGlb: null })
+  const [infoSubmitting, setInfoSubmitting] = useState(false)
 
   const handleInfoSubmit = async (e) => {
     e.preventDefault()
-    const { projectId, squareFeet, totalRooms, designPdf } = infoForm
-    if (!projectId || !squareFeet || !totalRooms || !designPdf) return showPopcard('All fields required.', false, 2500)
+    const { projectId, squareFeet, totalRooms } = infoForm
+    if (!projectId || !squareFeet || !totalRooms) return showPopcard('Project, area and rooms are required.', false, 2500)
+    setInfoSubmitting(true)
     try {
       const formData = new FormData()
       formData.append('projectId', projectId)
       formData.append('squareFeet', squareFeet)
       formData.append('totalRooms', totalRooms)
-      formData.append('designPdf', designPdf)
+      if (infoForm.designPdf) formData.append('designPdf', infoForm.designPdf)
+      if (infoForm.designGlb) formData.append('designGlb', infoForm.designGlb)
       await axios.post(`${API_BASE}/project/additional-info`, formData, { withCredentials: true })
       showPopcard('Information saved!', true, 1500)
       setInfoOpen(false)
-      setInfoForm({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null })
+      setInfoForm({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null, designGlb: null })
+      fetchData()
     } catch (error) {
       const msg = error.response?.data || 'Something went wrong.'
       showPopcard(typeof msg === 'string' ? msg : 'Something went wrong.', false, 2500)
+    } finally {
+      setInfoSubmitting(false)
     }
   }
 
@@ -499,18 +505,49 @@ const AdminProject = () => {
                       </label>
                     </motion.div>
 
-                    <motion.div className='flex gap-4 pt-2' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.63 }}>
+                    {/* GLB upload */}
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.63 }}>
+                      <label className='block text-black font-medium mb-2'>Upload 3D Model <span className='text-xs opacity-50 font-normal'>(optional · .glb only)</span></label>
+                      <label className='w-full flex items-center gap-3 bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-2xl px-4 py-4 cursor-pointer'>
+                        <i className='ri-box-3-line text-2xl text-[#883bbc] shrink-0'></i>
+                        <div className='flex-1 min-w-0'>
+                          {infoForm.designGlb
+                            ? <p className='font-semibold text-sm truncate'>{infoForm.designGlb.name}</p>
+                            : <p className='font-semibold text-sm opacity-50'>Tap to choose a .glb file</p>
+                          }
+                          {infoForm.designGlb && (
+                            <p className='text-xs opacity-40 mt-0.5'>{(infoForm.designGlb.size / 1024).toFixed(0)} KB</p>
+                          )}
+                        </div>
+                        {infoForm.designGlb
+                          ? <i className='ri-checkbox-circle-fill text-green-500 text-xl shrink-0'></i>
+                          : <i className='ri-upload-2-line text-[#883bbc] text-xl shrink-0'></i>
+                        }
+                        <input
+                          type='file'
+                          accept='.glb,model/gltf-binary,application/octet-stream'
+                          className='hidden'
+                          onChange={e => setInfoForm(p => ({ ...p, designGlb: e.target.files[0] || null }))}
+                        />
+                      </label>
+                    </motion.div>
+
+                    <motion.div className='flex gap-4 pt-2' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
                       <button
                         type='button'
-                        onClick={() => { setInfoOpen(false); setInfoForm({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null }) }}
+                        onClick={() => { setInfoOpen(false); setInfoForm({ projectId: '', squareFeet: '', totalRooms: '', designPdf: null, designGlb: null }) }}
                         className='flex-1 bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-md px-4 py-3 font-medium'
                       >Cancel</button>
                       <motion.button
                         type='submit'
-                        className='flex-1 rounded-md px-4 py-3 bg-[#883bbc] text-white font-medium flex items-center justify-center gap-2'
+                        disabled={infoSubmitting}
+                        className='flex-1 rounded-md px-4 py-3 bg-[#883bbc] text-white font-medium flex items-center justify-center gap-2 disabled:opacity-60'
                         whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       >
-                        <i className='ri-save-line'></i><span>Save</span>
+                        {infoSubmitting
+                          ? <i className='ri-loader-4-line animate-spin text-xl'></i>
+                          : <><i className='ri-save-line'></i><span>Save</span></>
+                        }
                       </motion.button>
                     </motion.div>
                   </motion.form>
@@ -577,6 +614,32 @@ const AdminProject = () => {
                           <span>Est. End: {formatDate(project.estimatedEndDate)}</span>
                         </div>
                       </div>
+                      {(project.designPdfUrl || project.modelGlbUrl) && (
+                        <div className='mt-2 pt-2 border-t border-[#883bbc]/20 flex items-center gap-4 flex-wrap'>
+                          {project.designPdfUrl && (
+                            <a
+                              href={project.designPdfUrl}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              className='inline-flex items-center gap-1.5 text-xs font-bold text-[#883bbc] hover:opacity-70 transition-opacity'
+                            >
+                              <i className='ri-file-pdf-2-line text-base'></i>
+                              Design PDF
+                            </a>
+                          )}
+                          {project.modelGlbUrl && (
+                            <a
+                              href={project.modelGlbUrl}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              className='inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:opacity-70 transition-opacity'
+                            >
+                              <i className='ri-box-3-line text-base'></i>
+                              3D Model (.glb)
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Inline Edit Form */}
