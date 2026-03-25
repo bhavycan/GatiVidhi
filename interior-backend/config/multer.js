@@ -5,9 +5,10 @@ const fileFilter = (req, file, cb) => {
   const allowed = [
     'image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'application/pdf',
     'video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo', 'video/avi',
+    'model/gltf-binary', 'application/octet-stream',
   ];
   if (allowed.includes(file.mimetype)) cb(null, true);
-  else cb(new Error('Only images, PDFs, and videos are allowed'), false);
+  else cb(new Error('Only images, PDFs, videos, and GLB files are allowed'), false);
 };
 
 const upload = multer({

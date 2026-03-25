@@ -17,5 +17,5 @@ route.get('/all', adminAuthentification, projectGetAllController)
 route.get('/notifications', userAuthentification, getNotificationsController);
 route.post('/notifications/clear', userAuthentification, clearNotificationsController);
 route.get('/notifications/delete/:index', userAuthentification, DeleteNotificationsController);
-route.post('/additional-info', adminAuthentification, upload.single('designPdf'), projectAdditionalInfoController);
+route.post('/additional-info', adminAuthentification, upload.fields([{ name: 'designPdf', maxCount: 1 }, { name: 'designGlb', maxCount: 1 }]), projectAdditionalInfoController);
 module.exports = route;

@@ -20,6 +20,7 @@ const projectSchema = new Schema({
   squareFeet: { type: Number },
   totalRooms: { type: Number },
   designPdfUrl: { type: String },
+  modelGlbUrl: { type: String },
 })
 
 

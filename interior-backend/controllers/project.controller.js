@@ -162,6 +162,16 @@ module.exports.clearNotificationsController = async (req, res) => {
 };
 
 
+// Stream a buffer directly to Cloudinary — avoids base64 size inflation
+const uploadBufferToCloudinary = (buffer, options) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (err, result) => {
+      if (err) reject(err);
+      else resolve(result);
+    });
+    stream.end(buffer);
+  });
+
 module.exports.projectAdditionalInfoController = async (req, res) => {
   const { projectId, squareFeet, totalRooms } = req.body;
   if (!projectId || !squareFeet || !totalRooms) return res.status(400).send('Incomplete entries');
@@ -170,19 +180,28 @@ module.exports.projectAdditionalInfoController = async (req, res) => {
     const project = await projectModel.findById(projectId);
     if (!project) return res.status(404).send('Project not found');
 
-    let designPdfUrl;
-    if (req.file) {
-      const b64 = Buffer.from(req.file.buffer).toString('base64');
-      const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
-      const result = await cloudinary.uploader.upload(dataURI, {
-        public_id: `design_${projectId}`,
+    const updateFields = { squareFeet: Number(squareFeet), totalRooms: Number(totalRooms) };
+
+    // Handle PDF upload
+    const pdfFile = req.files?.designPdf?.[0];
+    if (pdfFile) {
+      const result = await uploadBufferToCloudinary(pdfFile.buffer, {
+        public_id: `design_pdf_${projectId}`,
         resource_type: 'raw',
       });
-      designPdfUrl = result.secure_url;
+      updateFields.designPdfUrl = result.secure_url;
     }
 
-    const updateFields = { squareFeet: Number(squareFeet), totalRooms: Number(totalRooms) };
-    if (designPdfUrl) updateFields.designPdfUrl = designPdfUrl;
+    // Handle GLB upload
+    const glbFile = req.files?.designGlb?.[0];
+    if (glbFile) {
+      const result = await uploadBufferToCloudinary(glbFile.buffer, {
+        public_id: `design_glb_${projectId}`,
+        resource_type: 'raw',
+        format: 'glb',
+      });
+      updateFields.modelGlbUrl = result.secure_url;
+    }
 
     await projectModel.findByIdAndUpdate(projectId, updateFields);
     res.status(200).send('Additional info saved');
