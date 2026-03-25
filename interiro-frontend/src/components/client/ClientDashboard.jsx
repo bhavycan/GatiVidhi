@@ -18,6 +18,7 @@ import { usePopcard } from '../../context/PopCardContext';
 import axios from 'axios';
 import { API_BASE } from '../../config.js'
 import ModelViewer from './ModelViewer'
+import ARViewer from './ARViewer'
 
 
 const ClientDashboard = () => {
@@ -35,6 +36,7 @@ const { showPopcard, popcard } = usePopcard();
     const [isNotification,setNotification] = useState(false)
     const [notifCount, setNotifCount] = useState(0)
     const [show3D, setShow3D] = useState(false)
+    const [showAR, setShowAR] = useState(false)
     const startingDay = moment(projectinfo?.startDate).format("Do MMMM YYYY");
     const EndingDay = moment(projectinfo?.estimatedEndDate).format("Do MMMM YYYY");
 
@@ -69,6 +71,9 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
     <div className='w-screen h-screen relative overflow-hidden'>
       {show3D && projectinfo?.modelGlbUrl && (
         <ModelViewer url={projectinfo.modelGlbUrl} onClose={() => setShow3D(false)} />
+      )}
+      {showAR && projectinfo?.modelGlbUrl && (
+        <ARViewer url={projectinfo.modelGlbUrl} onClose={() => setShowAR(false)} />
       )}
       <Share update={lastupdate} isShareOpen={isShareOpen} setShareOpen={setShareOpen} />
 
@@ -160,17 +165,29 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
               </div>
 
               {projectinfo?.modelGlbUrl && (
-                <motion.button
+                <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.4 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => setShow3D(true)}
-                  className='mt-[3%] flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#883bbc] text-white font-bold text-sm shadow-lg'
+                  className='mt-[3%] flex items-center gap-2'
                 >
-                  <i className='ri-box-3-line text-lg'></i>
-                  View 3D Design
-                </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setShow3D(true)}
+                    className='flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#883bbc] text-white font-bold text-sm shadow-lg'
+                  >
+                    <i className='ri-box-3-line text-lg'></i>
+                    View 3D
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setShowAR(true)}
+                    className='flex items-center gap-2 px-5 py-2.5 rounded-full bg-black text-white font-bold text-sm shadow-lg border border-white/20'
+                  >
+                    <i className='ri-camera-lens-line text-lg'></i>
+                    View in AR
+                  </motion.button>
+                </motion.div>
               )}
 
               <div className="date-create w-full flex items-center mt-[3%] pb-4">

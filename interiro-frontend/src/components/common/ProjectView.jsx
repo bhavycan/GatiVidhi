@@ -6,7 +6,7 @@ import Navbar from "../../templates/Navbar";
 import { AnimatePresence, motion } from "motion/react";
 import axios from "axios";
 import { API_BASE } from '../../config.js'
-import ModelViewer from "../client/ModelViewer";
+import ARViewer from "../client/ARViewer";
 
 const ProjectView = () => {
   const [isopen, setOpen] = useState(false);
@@ -23,7 +23,7 @@ const ProjectView = () => {
   return (
     <div ref={parent} className="w-screen min-h-screen relative overflow-hidden">
       {show3D && project?.modelGlbUrl && (
-        <ModelViewer url={project.modelGlbUrl} onClose={() => setShow3D(false)} />
+        <ARViewer url={project.modelGlbUrl} onClose={() => setShow3D(false)} />
       )}
 
       <AnimatePresence mode="wait">
@@ -127,31 +127,39 @@ const ProjectView = () => {
                   transition={{ duration: 0.4 }}
                   className="w-full mt-[2%] rounded-xl bg-gradient-to-br from-[#F7D6F3] to-transparent border border-[#883bbc]/30 px-4 py-5 flex flex-col gap-3"
                 >
-                  {/* Preview thumbnail / call-to-action */}
-                  <div className="w-full rounded-lg bg-black/10 border border-[#883bbc]/20 flex flex-col items-center justify-center py-10 gap-3">
-                    <div className="w-14 h-14 rounded-full bg-[#883bbc]/10 border border-[#883bbc]/30 flex items-center justify-center">
-                      <i className="ri-box-3-line text-3xl text-[#883bbc]"></i>
+                  {/* Icon + status */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-[#883bbc]/10 border border-[#883bbc]/30 flex items-center justify-center shrink-0">
+                      <i className="ri-box-3-line text-2xl text-[#883bbc]"></i>
                     </div>
-                    <p className="text-sm font-semibold opacity-60">Interactive 3D design is ready</p>
+                    <div>
+                      <p className="font-bold text-sm">Interactive 3D model ready</p>
+                      <p className="text-xs opacity-50 font-semibold mt-0.5">Tap View to rotate &amp; explore · Tap AR to place in your room</p>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2">
+                    {/* View 3D + AR — opens ARViewer */}
                     <motion.button
                       whileTap={{ scale: 0.96 }}
                       onClick={() => setShow3D(true)}
-                      className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#883bbc] text-white font-bold text-sm shadow"
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#883bbc] text-white font-bold text-sm shadow"
                     >
-                      <i className="ri-eye-line text-base"></i>
-                      View 3D Design
+                      <i className="ri-box-3-line text-base"></i>
+                      View 3D / AR
                     </motion.button>
-                  </div>
 
-                  {/* Download */}
-                  <a
-                    href={project.modelGlbUrl}
-                    download
-                    className="w-full px-2 py-3 bg-white/60 border border-[#883bbc]/30 rounded-lg flex items-center justify-center gap-2 font-semibold text-[#883bbc] text-sm"
-                  >
-                    <i className="ri-download-2-line text-lg"></i>
-                    Download 3D Model (.glb)
-                  </a>
+                    {/* Download */}
+                    <a
+                      href={project.modelGlbUrl}
+                      download='design.glb'
+                      className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-white/60 border border-[#883bbc]/30 font-bold text-[#883bbc] text-sm"
+                    >
+                      <i className="ri-download-2-line text-base"></i>
+                      Download
+                    </a>
+                  </div>
                 </motion.div>
               ) : (
                 <div className="w-full min-h-[12vh] mt-[2%] rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent flex items-center justify-center">

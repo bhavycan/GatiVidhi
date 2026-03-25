@@ -31,6 +31,12 @@
     </application>
 
     <!-- Permissions -->
-
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- AR: optional so the app installs on non-ARCore devices too -->
+    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
+
+    <!-- Tells Google Play this app uses AR optionally (not required) -->
+    <meta-data android:name="com.google.ar.core" android:value="optional" />
 </manifest>
