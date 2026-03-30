@@ -29,6 +29,7 @@ import ClientProfile from './components/client/ClientProfile'
 import AdminProfile from './components/admin/AdminProfile'
 import WorkerProfile from './worker/WorkerProfile'
 import AdminPayment from './components/admin/AdminPayment'
+import AdminAR from './components/admin/AdminAR'
 
 const App = () => {
   return (
@@ -62,6 +63,7 @@ const App = () => {
             <Route path='/admin/account' element={<AdminProfile />} />
             <Route path='/worker/account' element={<WorkerProfile />} />
             <Route path='/admin/payments' element={<AdminPayment />} />
+            <Route path='/admin/ar' element={<AdminAR />} />
       </Routes>
      
 

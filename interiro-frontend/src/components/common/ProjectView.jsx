@@ -11,20 +11,25 @@ import ARViewer from "../client/ARViewer";
 const ProjectView = () => {
   const [isopen, setOpen] = useState(false);
   const [project, setProject] = useState(null);
-  const [show3D, setShow3D] = useState(false);
+  const [arDesigns, setArDesigns] = useState([]);
+  const [viewArUrl, setViewArUrl] = useState(null);
   const parent = useRef(null);
 
   useEffect(() => {
     axios.get(`${API_BASE}/user/profile`, { withCredentials: true })
-      .then(({ data }) => setProject(data?.project))
+      .then(({ data }) => {
+        setProject(data?.project);
+        if (data?.project?._id) {
+          return axios.get(`${API_BASE}/ar/project/${data.project._id}`, { withCredentials: true });
+        }
+      })
+      .then(res => { if (res) setArDesigns(res.data); })
       .catch(console.error);
   }, []);
 
   return (
     <div ref={parent} className="w-screen min-h-screen relative overflow-hidden">
-      {show3D && project?.modelGlbUrl && (
-        <ARViewer url={project.modelGlbUrl} onClose={() => setShow3D(false)} />
-      )}
+      {viewArUrl && <ARViewer url={viewArUrl} onClose={() => setViewArUrl(null)} />}
 
       <AnimatePresence mode="wait">
         {isopen && <Navbar value={{ isopen, setOpen }} />}
@@ -109,61 +114,47 @@ const ProjectView = () => {
               )}
             </section>
 
-            {/* 3D Model section */}
+            {/* AR Designs section */}
             <section className="w-full mt-[10%]">
-              <div className="w-full flex items-center">
+              <div className="w-full flex items-center mb-3">
                 <figure className="w-28 h-10 md:w-36 md:h-12 ml-auto shrink-0">
                   <img className="w-full h-full object-cover" src="/images/hearts.png" alt="" />
                 </figure>
                 <h2 className="flex items-center justify-end text-lg font-bold ml-2 whitespace-nowrap">
-                  3D Model
+                  AR Designs
                 </h2>
               </div>
 
-              {project?.modelGlbUrl ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="w-full mt-[2%] rounded-xl bg-gradient-to-br from-[#F7D6F3] to-transparent border border-[#883bbc]/30 px-4 py-5 flex flex-col gap-3"
-                >
-                  {/* Icon + status */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#883bbc]/10 border border-[#883bbc]/30 flex items-center justify-center shrink-0">
-                      <i className="ri-box-3-line text-2xl text-[#883bbc]"></i>
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">Interactive 3D model ready</p>
-                      <p className="text-xs opacity-50 font-semibold mt-0.5">Tap View to rotate &amp; explore · Tap AR to place in your room</p>
-                    </div>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex gap-2">
-                    {/* View 3D + AR — opens ARViewer */}
-                    <motion.button
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setShow3D(true)}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#883bbc] text-white font-bold text-sm shadow"
-                    >
-                      <i className="ri-box-3-line text-base"></i>
-                      View 3D / AR
-                    </motion.button>
-
-                    {/* Download */}
-                    <a
-                      href={project.modelGlbUrl}
-                      download='design.glb'
-                      className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-white/60 border border-[#883bbc]/30 font-bold text-[#883bbc] text-sm"
-                    >
-                      <i className="ri-download-2-line text-base"></i>
-                      Download
-                    </a>
-                  </div>
-                </motion.div>
+              {arDesigns.length === 0 ? (
+                <div className="w-full min-h-[12vh] rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent flex items-center justify-center">
+                  <p className="text-sm font-semibold opacity-50">No AR designs available yet.</p>
+                </div>
               ) : (
-                <div className="w-full min-h-[12vh] mt-[2%] rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent flex items-center justify-center">
-                  <p className="text-sm font-semibold opacity-50">No 3D model uploaded yet.</p>
+                <div className="flex flex-col gap-3">
+                  {arDesigns.map(design => (
+                    <motion.div
+                      key={design._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="w-full bg-gradient-to-br from-[#F7D6F3] to-transparent rounded-xl px-4 py-4 flex items-center gap-3 border border-[#883bbc]/20"
+                    >
+                      <div className="w-11 h-11 rounded-full bg-[#883bbc]/10 border border-[#883bbc]/30 flex items-center justify-center shrink-0">
+                        <i className="ri-box-3-line text-xl text-[#883bbc]"></i>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm truncate">{design.title}</p>
+                        <p className="text-xs opacity-40 font-semibold mt-0.5">Tap to explore in AR</p>
+                      </div>
+                      <motion.button
+                        whileTap={{ scale: 0.94 }}
+                        onClick={() => setViewArUrl(design.glbUrl)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#883bbc] text-white font-bold text-xs shadow shrink-0"
+                      >
+                        <i className="ri-camera-lens-line text-sm"></i>
+                        View AR
+                      </motion.button>
+                    </motion.div>
+                  ))}
                 </div>
               )}
             </section>
