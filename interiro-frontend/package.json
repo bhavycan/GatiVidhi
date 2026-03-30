@@ -41,7 +41,7 @@
     "recharts": "^3.1.2",
     "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.1.11",
-    "three": "^0.183.2",
+    "three": "^0.182.0",
     "yet-another-react-lightbox": "^3.25.0"
   },
   "devDependencies": {
