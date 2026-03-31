@@ -1,11 +1,12 @@
 const express = require('express');
-const { reportCreateController, reportGetAllController } = require('../controllers/report.controller');
+const { reportCreateController, reportGetAllController, reportGetAllAdminController } = require('../controllers/report.controller');
 const userAuthentification = require('../middlewares/userAuthentification');
 const adminAuthentification = require('../middlewares/adminAuthentification');
 
 const route = express.Router();
 
 route.get('/all', userAuthentification, reportGetAllController)
+route.get('/admin-all', adminAuthentification, reportGetAllAdminController)
 route.get('/create/:id', adminAuthentification, reportCreateController)
 
 module.exports = route

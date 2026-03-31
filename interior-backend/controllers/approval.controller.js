@@ -285,6 +285,17 @@ module.exports.rejectApprovalController = async (req, res) => {
   }
 };
 
+// GET /approval/all — admin gets all approvals across all projects
+module.exports.getAllApprovalsController = async (req, res) => {
+  try {
+    const approvals = await approvalModel.find({}).sort({ createdAt: -1 }).lean();
+    return res.status(200).json({ approvals });
+  } catch (error) {
+    console.error('[APPROVAL GET ALL ERROR]', error);
+    return res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
 // POST /approval/admin-clear — mark all responded approvals as seen by admin
 module.exports.markAdminSeenController = async (req, res) => {
   try {

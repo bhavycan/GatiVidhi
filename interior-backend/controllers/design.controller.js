@@ -40,6 +40,16 @@ module.exports.designCreateController = async (req, res) => {
 }
 
 
+module.exports.getAllDesignsController = async (req, res) => {
+  try {
+    const designs = await designModel.find({}).populate('projectId', 'projectName').lean();
+    return res.status(200).json({ designs });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Something went wrong');
+  }
+};
+
 module.exports.designDeleteController = async(req,res)=>{
  const {id} = req.body;
     try {

@@ -4,6 +4,19 @@ const { projectModel } = require('../models/projectModel');
 const VALID_STATUSES = ['not started', 'ongoing', 'completed'];
 
 
+module.exports.taskGetAllController = async (req, res) => {
+  try {
+    const taskLists = await taskListModel
+      .find({})
+      .populate('projectId', 'projectName')
+      .lean();
+    return res.status(200).json({ taskLists });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
 module.exports.taskGetController = async (req, res) => {
   const { projectId } = req.params;
   if (!projectId) return res.status(400).json({ message: 'projectId is required' });

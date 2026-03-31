@@ -4,6 +4,7 @@ const upload = require("../config/multer");
 
 const {
   designCreateController,
+  getAllDesignsController,
   designDeleteController,
 } = require("../controllers/design.controller");
 const route = express.Router();
@@ -12,6 +13,7 @@ route.get("/", (req, res) => {
   res.send("You are at design route");
 });
 
+route.get("/all", getAllDesignsController);
 route.post("/create", upload.array("images", 10), designCreateController);
 
 route.post("/delete", designDeleteController);

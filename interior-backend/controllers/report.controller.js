@@ -25,6 +25,20 @@ module.exports.reportGetAllController = async (req, res) => {
   }
 };
 
+module.exports.reportGetAllAdminController = async (req, res) => {
+  try {
+    const reports = await reportModel
+      .find({})
+      .populate('projectId', 'projectName')
+      .sort({ PublishedDate: -1 })
+      .lean();
+    res.status(200).json({ reports });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
 module.exports.reportCreateController = async (req, res) => {
   const id = req.params.id;
   try{

@@ -106,7 +106,7 @@ const { estimatedEndDate, projectName, description, status } = req.body;
 
 module.exports.projectGetAllController = async (req, res) => {
   try {
-    const projects = await projectModel.find({}).lean();
+    const projects = await projectModel.find({}).populate('clientId', 'name email phone').lean();
     res.status(200).json({ projects });
   } catch (error) {
     console.error(error);

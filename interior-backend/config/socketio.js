@@ -1,5 +1,6 @@
 const { projectModel } = require("../models/projectModel");
 const { userModel } = require("../models/userModel");
+const { chatMessageModel } = require("../models/chatMessageModel");
 const { generateReply } = require("./gemini");
 
 const connectSocket = (io) => {
@@ -39,6 +40,12 @@ const connectSocket = (io) => {
           if (chatHistory.length > 6) {
             chatHistory = chatHistory.slice(chatHistory.length - 6);
           }
+
+          // Persist messages to DB
+          await chatMessageModel.create([
+            { projectId: project._id, clientId: id, role: "user",  text: message },
+            { projectId: project._id, clientId: id, role: "model", text: reply   },
+          ]);
 
           socket.emit("answer", { reply: reply });
         } catch (error) {

@@ -5,6 +5,7 @@ const adminAuthentification = require('../middlewares/adminAuthentification');
 const userAuthentification = require('../middlewares/userAuthentification');
 const {
   createApprovalController,
+  getAllApprovalsController,
   getApprovalsByProjectController,
   getApprovalsForClientController,
   sendApprovalReminderController,
@@ -17,6 +18,9 @@ const {
 route.get('/', (req, res) => {
   res.send('Approval route is live');
 });
+
+// Admin: get all approvals across all projects
+route.get('/all', adminAuthentification, getAllApprovalsController);
 
 // Admin: create a new approval request
 route.post('/create', adminAuthentification, upload.array('images', 10), createApprovalController);
