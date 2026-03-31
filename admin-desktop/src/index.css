@@ -6,16 +6,18 @@
   --purple-light: #a855f7;
   --pink: #f3a9de;
   --pink-light: #fce7f3;
-  --sidebar-bg: #0d0d1a;
-  --sidebar-hover: #1a1a2e;
+  --sidebar-bg: linear-gradient(160deg, #F7D6F3 0%, #ede4fa 50%, #e8dff8 100%);
+  --sidebar-hover: rgba(255,255,255,0.55);
   --card-bg: #ffffff;
   --body-bg: #f4f5fa;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 body {
@@ -49,7 +51,7 @@ body {
   background: transparent;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #ffffff22;
+  background: #88388b33;
   border-radius: 10px;
 }
 
@@ -101,9 +103,15 @@ body {
   color: #6b7280;
 }
 
-/* Transition */
+/* Sidebar nav item motion */
 .sidebar-item {
-  transition: all 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+.sidebar-item:hover {
+  transform: translateX(3px);
+}
+.sidebar-item.active-item {
+  transform: translateX(3px);
 }
 
 /* Stat card gradient */

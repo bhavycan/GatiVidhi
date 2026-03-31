@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Search, Plus, Mail, HardHat, Edit2, Trash2 } from 'lucide-react'
+import { Search, Plus, Mail, HardHat, Edit2, Trash2, X, FolderKanban } from 'lucide-react'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 const avatarColors = ['#883bbc', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316']
@@ -12,14 +12,63 @@ function initials(name = '') {
 export default function Workers() {
   const [search, setSearch] = useState('')
   const [workers, setWorkers] = useState([])
+  const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [modal, setModal] = useState(null) // null | { mode: 'create' } | { mode: 'assign', worker }
+  const [form, setForm] = useState({ name: '', email: '', projectId: '' })
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     axios.get(`${BASE_URL}/worker/all`, { withCredentials: true })
       .then(res => { setWorkers(res.data.workers || []); setLoading(false) })
       .catch(err => { setError(err.response?.data || 'Failed to load'); setLoading(false) })
+    axios.get(`${BASE_URL}/project/all`, { withCredentials: true })
+      .then(res => setProjects(res.data.projects || []))
+      .catch(() => {})
   }, [])
+
+  const openCreate = () => {
+    setForm({ name: '', email: '', projectId: '' })
+    setFormError('')
+    setModal({ mode: 'create' })
+  }
+
+  const openAssign = (worker) => {
+    setForm({ name: '', email: '', projectId: worker.assignedProjectId?._id || '' })
+    setFormError('')
+    setModal({ mode: 'assign', worker })
+  }
+
+  const closeModal = () => { setModal(null); setFormError('') }
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setFormError('')
+    try {
+      if (modal.mode === 'create') {
+        const res = await axios.post(`${BASE_URL}/worker/create`,
+          { name: form.name, email: form.email },
+          { withCredentials: true }
+        )
+        setWorkers(prev => [res.data.worker ?? res.data, ...prev])
+      } else {
+        const res = await axios.post(`${BASE_URL}/worker/assign-project`,
+          { workerId: modal.worker._id, projectId: form.projectId },
+          { withCredentials: true }
+        )
+        const updated = res.data.worker ?? res.data
+        setWorkers(prev => prev.map(w => w._id === modal.worker._id ? { ...w, ...updated } : w))
+      }
+      closeModal()
+    } catch (err) {
+      setFormError(err.response?.data || 'Something went wrong')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this worker?')) return
@@ -43,7 +92,7 @@ export default function Workers() {
             {loading ? 'Loading…' : `${workers.length} team members`}
           </p>
         </div>
-        <button className="btn-primary text-xs"><Plus size={13}/> Add Worker</button>
+        <button onClick={openCreate} className="btn-primary text-xs"><Plus size={13}/> Add Worker</button>
       </div>
 
       <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 max-w-sm card-shadow">
@@ -63,7 +112,7 @@ export default function Workers() {
                 {initials(w.name)}
               </div>
               <div className="flex gap-1">
-                <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"><Edit2 size={13}/></button>
+                <button onClick={() => openAssign(w)} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"><Edit2 size={13}/></button>
                 <button onClick={() => handleDelete(w._id)} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"><Trash2 size={13}/></button>
               </div>
             </div>
@@ -73,9 +122,16 @@ export default function Workers() {
             </div>
             <div className="space-y-1.5 text-xs text-gray-500">
               <div className="flex items-center gap-1.5"><Mail size={11} className="text-gray-400"/>{w.email}</div>
-              {w.assignedProjectId && (
-                <div className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium inline-block mt-1">
-                  Assigned to project
+              {w.assignedProjectId ? (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <FolderKanban size={11} className="text-purple-400"/>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium">
+                    {w.assignedProjectId.projectName || 'Assigned'}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 font-medium inline-block mt-1">
+                  Unassigned
                 </div>
               )}
             </div>
@@ -85,6 +141,62 @@ export default function Workers() {
           <div className="col-span-4 text-center text-xs text-gray-400 py-8">No workers found</div>
         )}
       </div>
+
+      {/* Modal */}
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)' }}>
+          <div className="bg-white rounded-2xl card-shadow w-full max-w-sm mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">
+                {modal.mode === 'create' ? 'Add Worker' : `Assign Project — ${modal.worker.name}`}
+              </h3>
+              <button onClick={closeModal} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16}/></button>
+            </div>
+            <form onSubmit={handleSave} className="px-6 py-5 space-y-4">
+              {formError && <div className="text-xs text-red-500 bg-red-50 rounded-xl px-3 py-2">{formError}</div>}
+
+              {modal.mode === 'create' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Full Name</label>
+                    <input required className="admin-input" placeholder="e.g. Ramesh Kumar"
+                      value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Email Address</label>
+                    <input required type="email" className="admin-input" placeholder="worker@example.com"
+                      value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                  </div>
+                  <p className="text-[10px] text-gray-400">
+                    A password will be auto-generated and sent to the worker's email.
+                  </p>
+                </>
+              )}
+
+              {modal.mode === 'assign' && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Assign to Project</label>
+                  <select required className="admin-input"
+                    value={form.projectId} onChange={e => setForm(f => ({ ...f, projectId: e.target.value }))}>
+                    <option value="">Select a project…</option>
+                    {projects.map(p => (
+                      <option key={p._id} value={p._id}>{p.projectName}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={closeModal} className="btn-secondary flex-1 justify-center text-xs">Cancel</button>
+                <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center text-xs disabled:opacity-60">
+                  {saving ? 'Saving…' : modal.mode === 'create' ? 'Add Worker' : 'Assign Project'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
