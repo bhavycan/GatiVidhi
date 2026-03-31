@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { CreditCard, TrendingUp, AlertCircle, Search } from 'lucide-react'
 
-const BASE_URL = 'http://localhost:3000'
+const BASE_URL = import.meta.env.VITE_API_URL
 
 const fmt = (v) => v > 0 ? `₹${(v / 100000).toFixed(1)}L` : '—'
 const fmtShort = (v) => v > 0 ? `₹${Number(v).toLocaleString('en-IN')}` : '—'

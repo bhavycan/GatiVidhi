@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Search, Plus, Layers, Edit2, Trash2 } from 'lucide-react'
 
-const BASE_URL = 'http://localhost:3000'
+const BASE_URL = import.meta.env.VITE_API_URL
 
 const categories = ['All', 'Flooring', 'Walls', 'Ceiling', 'Furniture', 'Lighting', 'Kitchen']
 const stockStyles = { 'in-stock': 'badge-active', 'low-stock': 'badge-pending', 'out-of-stock': 'badge-overdue' }

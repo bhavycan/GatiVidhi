@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Bell, CheckCheck, FolderKanban, CreditCard, CheckSquare, MessageSquare, AlertTriangle } from 'lucide-react'
 
-const BASE_URL = 'http://localhost:3000'
+const BASE_URL = import.meta.env.VITE_API_URL
 
 const typeIcons = {
   task:     { icon: CheckSquare,   color: '#ef4444' },

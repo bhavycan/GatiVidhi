@@ -2,7 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import { Eye, EyeOff, Lock, Mail, ArrowRight, KeyRound } from 'lucide-react'
 
-const BASE_URL = 'http://localhost:3000'
+const BASE_URL = import.meta.env.VITE_API_URL
 
 export default function Login({ onLogin }) {
   const [view, setView] = useState('login') // 'login' | 'forgot' | 'reset'
