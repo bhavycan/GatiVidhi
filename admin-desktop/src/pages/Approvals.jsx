@@ -24,7 +24,7 @@ export default function Approvals() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/approval/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/approval/all`, { withCredentials: true })
       .then(res => { setApprovals(res.data.approvals || []); setLoading(false) })
       .catch(err => { setError(err.response?.data?.message || 'Failed to load'); setLoading(false) })
   }, [])

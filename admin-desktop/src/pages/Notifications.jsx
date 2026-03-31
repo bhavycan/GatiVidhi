@@ -19,7 +19,7 @@ export default function Notifications() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/admin/notifications`, { withCredentials: true })
+    axios.get(`${BASE_URL}/admin/notifications`, { withCredentials: true })
       .then(res => { setNotifications(res.data.notifications || []); setLoading(false) })
       .catch(err => { setError(err.response?.data || 'Failed to load'); setLoading(false) })
   }, [])

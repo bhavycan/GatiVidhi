@@ -17,7 +17,7 @@ export default function Templates() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/template/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/template/all`, { withCredentials: true })
       .then(res => { setTemplates(res.data.templates || []); setLoading(false) })
       .catch(err => { setError(err.response?.data?.message || 'Failed to load'); setLoading(false) })
   }, [])
@@ -26,7 +26,7 @@ export default function Templates() {
     if (!id) return alert('Cannot delete a default template')
     if (!window.confirm('Delete this template?')) return
     try {
-      await axios.post(`${BASE_URL}/api/template/delete`, { id }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/template/delete`, { id }, { withCredentials: true })
       setTemplates(prev => prev.filter(t => t._id !== id))
     } catch (err) { alert(err.response?.data?.message || 'Delete failed') }
   }

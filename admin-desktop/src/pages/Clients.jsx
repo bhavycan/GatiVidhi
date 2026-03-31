@@ -16,7 +16,7 @@ export default function Clients() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/user/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/user/all`, { withCredentials: true })
       .then(res => { setClients(res.data.users || []); setLoading(false) })
       .catch(err => { setError(err.response?.data?.message || 'Failed to load'); setLoading(false) })
   }, [])
@@ -24,7 +24,7 @@ export default function Clients() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this client?')) return
     try {
-      await axios.post(`${BASE_URL}/api/user/delete`, { id }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/user/delete`, { id }, { withCredentials: true })
       setClients(prev => prev.filter(c => c._id !== id))
     } catch (err) { alert(err.response?.data || 'Delete failed') }
   }

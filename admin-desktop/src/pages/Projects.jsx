@@ -17,7 +17,7 @@ export default function Projects() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/project/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/project/all`, { withCredentials: true })
       .then(res => { setProjects(res.data.projects || []); setLoading(false) })
       .catch(err => { setError(err.response?.data?.message || 'Failed to load'); setLoading(false) })
   }, [])
@@ -25,7 +25,7 @@ export default function Projects() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this project?')) return
     try {
-      await axios.post(`${BASE_URL}/api/project/delete`, { id }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/project/delete`, { id }, { withCredentials: true })
       setProjects(prev => prev.filter(p => p._id !== id))
     } catch (err) { alert(err.response?.data || 'Delete failed') }
   }

@@ -29,15 +29,15 @@ export default function Dashboard() {
   const [approvals, setApprovals] = useState([])
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/admin/dashboard-stats`, { withCredentials: true })
+    axios.get(`${BASE_URL}/admin/dashboard-stats`, { withCredentials: true })
       .then(res => setStats(res.data))
       .catch(() => {})
 
-    axios.get(`${BASE_URL}/api/project/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/project/all`, { withCredentials: true })
       .then(res => setProjects((res.data.projects || []).slice(0, 5)))
       .catch(() => {})
 
-    axios.get(`${BASE_URL}/api/approval/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/approval/all`, { withCredentials: true })
       .then(res => setApprovals((res.data.approvals || []).filter(a => a.status === 'pending').slice(0, 4)))
       .catch(() => {})
   }, [])

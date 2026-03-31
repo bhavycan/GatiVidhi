@@ -16,7 +16,7 @@ export default function Workers() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/worker/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/worker/all`, { withCredentials: true })
       .then(res => { setWorkers(res.data.workers || []); setLoading(false) })
       .catch(err => { setError(err.response?.data || 'Failed to load'); setLoading(false) })
   }, [])
@@ -24,7 +24,7 @@ export default function Workers() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this worker?')) return
     try {
-      await axios.post(`${BASE_URL}/api/worker/delete`, { id }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/worker/delete`, { id }, { withCredentials: true })
       setWorkers(prev => prev.filter(w => w._id !== id))
     } catch (err) { alert(err.response?.data || 'Delete failed') }
   }

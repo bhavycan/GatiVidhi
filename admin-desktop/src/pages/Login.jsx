@@ -20,7 +20,7 @@ export default function Login({ onLogin }) {
     setError('')
     setLoading(true)
     try {
-      await axios.post(`${BASE_URL}/api/admin/login`, { email, password }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/admin/login`, { email, password }, { withCredentials: true })
       onLogin()
     } catch (err) {
       setError(err.response?.data || 'Login failed')
@@ -35,7 +35,7 @@ export default function Login({ onLogin }) {
     setInfo('')
     setLoading(true)
     try {
-      await axios.post(`${BASE_URL}/api/admin/forgot-password`, { email }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/admin/forgot-password`, { email }, { withCredentials: true })
       setInfo('OTP sent to your email')
       setView('reset')
     } catch (err) {
@@ -50,7 +50,7 @@ export default function Login({ onLogin }) {
     setError('')
     setLoading(true)
     try {
-      await axios.post(`${BASE_URL}/api/admin/reset-password`, { email, otp, newPassword }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/admin/reset-password`, { email, otp, newPassword }, { withCredentials: true })
       setInfo('Password reset successful. Please log in.')
       setView('login')
       setOtp('')

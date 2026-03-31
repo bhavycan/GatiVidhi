@@ -22,7 +22,7 @@ export default function Materials() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/material/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/material/all`, { withCredentials: true })
       .then(res => {
         setMaterials(res.data.materials || [])
         setLoading(false)
@@ -36,7 +36,7 @@ export default function Materials() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this material?')) return
     try {
-      await axios.post(`${BASE_URL}/api/material/delete`, { id }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/material/delete`, { id }, { withCredentials: true })
       setMaterials(prev => prev.filter(m => m._id !== id))
     } catch (err) {
       alert(err.response?.data || 'Delete failed')

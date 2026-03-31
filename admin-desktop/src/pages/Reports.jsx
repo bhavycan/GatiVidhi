@@ -10,7 +10,7 @@ export default function Reports() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/report/admin-all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/report/admin-all`, { withCredentials: true })
       .then(res => { setReports(res.data.reports || []); setLoading(false) })
       .catch(err => { setError(err.response?.data?.message || 'Failed to load'); setLoading(false) })
   }, [])

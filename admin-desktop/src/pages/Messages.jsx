@@ -30,7 +30,7 @@ export default function Messages() {
   const bottomRef = useRef(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/chat/conversations`, { withCredentials: true })
+    axios.get(`${BASE_URL}/chat/conversations`, { withCredentials: true })
       .then(res => { setConversations(res.data.conversations || []); setLoadingConvs(false) })
       .catch(() => setLoadingConvs(false))
   }, [])
@@ -38,7 +38,7 @@ export default function Messages() {
   useEffect(() => {
     if (!active) return
     setLoadingMsgs(true)
-    axios.get(`${BASE_URL}/api/chat/history/${active.clientId}`, { withCredentials: true })
+    axios.get(`${BASE_URL}/chat/history/${active.clientId}`, { withCredentials: true })
       .then(res => { setMessages(res.data.messages || []); setLoadingMsgs(false) })
       .catch(() => setLoadingMsgs(false))
   }, [active])

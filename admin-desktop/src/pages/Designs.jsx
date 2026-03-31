@@ -11,7 +11,7 @@ export default function Designs() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/design/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/design/all`, { withCredentials: true })
       .then(res => { setDesigns(res.data.designs || []); setLoading(false) })
       .catch(err => { setError(err.response?.data || 'Failed to load'); setLoading(false) })
   }, [])
@@ -19,7 +19,7 @@ export default function Designs() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this design?')) return
     try {
-      await axios.post(`${BASE_URL}/api/design/delete`, { id }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/design/delete`, { id }, { withCredentials: true })
       setDesigns(prev => prev.filter(d => d._id !== id))
     } catch (err) { alert(err.response?.data || 'Delete failed') }
   }

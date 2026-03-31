@@ -34,7 +34,7 @@ export default function Payments() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/payment/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/payment/all`, { withCredentials: true })
       .then(res => { setPlans(res.data.plans || []); setLoading(false) })
       .catch(err => { setError(err.response?.data || 'Failed to load'); setLoading(false) })
   }, [])

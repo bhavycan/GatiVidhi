@@ -79,7 +79,7 @@ export default function App() {
   const [auth, setAuth] = useState(null) // null = checking, true = logged in, false = logged out
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/admin/profile-info`, { withCredentials: true })
+    axios.get(`${BASE_URL}/admin/profile-info`, { withCredentials: true })
       .then(() => setAuth(true))
       .catch(() => setAuth(false))
   }, [])

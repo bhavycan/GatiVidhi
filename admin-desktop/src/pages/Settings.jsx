@@ -18,14 +18,14 @@ export default function Settings() {
   const [name, setName] = useState('')
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/admin/profile-info`, { withCredentials: true })
+    axios.get(`${BASE_URL}/admin/profile-info`, { withCredentials: true })
       .then(res => { setAdmin(res.data.admin); setName(res.data.admin?.name || '') })
       .catch(() => {})
   }, [])
 
   const handleSaveProfile = async () => {
     try {
-      await axios.post(`${BASE_URL}/api/admin/update-self`, { name }, { withCredentials: true })
+      await axios.post(`${BASE_URL}/admin/update-self`, { name }, { withCredentials: true })
       setAdmin(prev => ({ ...prev, name }))
       alert('Profile updated')
     } catch (err) { alert(err.response?.data || 'Update failed') }

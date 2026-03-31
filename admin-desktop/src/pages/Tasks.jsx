@@ -18,7 +18,7 @@ export default function Tasks() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/task/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/task/all`, { withCredentials: true })
       .then(res => { setTaskLists(res.data.taskLists || []); setLoading(false) })
       .catch(err => { setError(err.response?.data?.message || 'Failed to load'); setLoading(false) })
   }, [])

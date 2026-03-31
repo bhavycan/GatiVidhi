@@ -19,14 +19,14 @@ export default function Tickets() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/comment/all`, { withCredentials: true })
+    axios.get(`${BASE_URL}/comment/all`, { withCredentials: true })
       .then(res => { setTickets(res.data.comments || []); setLoading(false) })
       .catch(err => { setError(err.response?.data?.message || 'Failed to load'); setLoading(false) })
   }, [])
 
   const handleResolve = async (id) => {
     try {
-      await axios.patch(`${BASE_URL}/api/comment/${id}/resolve`, {}, { withCredentials: true })
+      await axios.patch(`${BASE_URL}/comment/${id}/resolve`, {}, { withCredentials: true })
       setTickets(prev => prev.map(t => t._id === id ? { ...t, resolved: true } : t))
     } catch (err) { alert(err.response?.data || 'Failed to resolve') }
   }

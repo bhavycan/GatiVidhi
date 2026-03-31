@@ -10,7 +10,7 @@ export default function Header({ title, subtitle, onToggleSidebar, onLogout }) {
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${BASE_URL}/api/admin/logout`, {}, { withCredentials: true })
+      await axios.post(`${BASE_URL}/admin/logout`, {}, { withCredentials: true })
     } catch (_) {}
     onLogout?.()
   }
