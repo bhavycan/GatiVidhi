@@ -30,10 +30,11 @@ const ClientChat = () => {
   const [userId, setUserId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  // draft update reference — shown above input, attached to next sent message
+  const [draftUpdate, setDraftUpdate] = useState(taggedUpdate)
   const socketRef = useRef(null)
   const chatRef = useRef(null)
   const parent = useRef(null)
-  const tagSentRef = useRef(false)
 
   // Fetch userId and load history
   useEffect(() => {
@@ -89,25 +90,6 @@ const ClientChat = () => {
     return () => socket.disconnect()
   }, [userId])
 
-  // Auto-send tagged update reference once when chat opens from an update
-  useEffect(() => {
-    if (!taggedUpdate || !userId || !socketRef.current || tagSentRef.current) return
-    tagSentRef.current = true
-
-    const refMsg = {
-      id: `local-${Date.now()}`,
-      from: 'client',
-      text: `📎 Commenting on update: ${taggedUpdate.date}`,
-      updateRef: taggedUpdate,
-      createdAt: new Date().toISOString(),
-    }
-    setMessages((prev) => [...prev, refMsg])
-    socketRef.current.emit('dm:send', {
-      targetClientId: userId,
-      text: refMsg.text,
-      updateRef: taggedUpdate,
-    })
-  }, [taggedUpdate, userId])
 
   // Auto-scroll
   useEffect(() => {
@@ -123,11 +105,16 @@ const ClientChat = () => {
       id: `local-${Date.now()}`,
       from: 'client',
       text,
-      updateRef: null,
+      updateRef: draftUpdate,
       createdAt: new Date().toISOString(),
     }])
-    socketRef.current.emit('dm:send', { targetClientId: userId, text })
+    socketRef.current.emit('dm:send', {
+      targetClientId: userId,
+      text,
+      ...(draftUpdate ? { updateRef: draftUpdate } : {}),
+    })
     setInput('')
+    setDraftUpdate(null)   // clear draft after sending
   }
 
   return (
@@ -241,6 +228,32 @@ const ClientChat = () => {
               })}
             </AnimatePresence>
           </section>
+
+          {/* Draft update reference — shown above input, dismissed after send */}
+          {draftUpdate && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              className="shrink-0 flex items-center gap-2 bg-[#883bbc]/10 border border-[#883bbc]/30 rounded-xl px-3 py-2 mx-0 mb-1"
+            >
+              <i className="ri-link text-[#883bbc] text-sm shrink-0"></i>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-[#883bbc] uppercase tracking-wide">Referencing Update</p>
+                <p className="text-xs font-semibold truncate">{draftUpdate.date}</p>
+                {draftUpdate.workDone && (
+                  <p className="text-[11px] opacity-60 truncate">{draftUpdate.workDone}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setDraftUpdate(null)}
+                className="w-6 h-6 rounded-full bg-[#883bbc]/20 flex items-center justify-center shrink-0"
+              >
+                <i className="ri-close-line text-[#883bbc] text-xs"></i>
+              </button>
+            </motion.div>
+          )}
 
           <form onSubmit={sendMessage} className="shrink-0 flex items-center gap-3 py-4 border-t border-white/40">
             <input

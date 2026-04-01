@@ -47,6 +47,7 @@ const AdminChat = () => {
   const socketRef = useRef(null)
   const chatRef = useRef(null)
   const parent = useRef(null)
+  const activeRef = useRef(null)
 
   // Load conversations
   useEffect(() => {
@@ -54,6 +55,9 @@ const AdminChat = () => {
       .then(res => { setConversations(res.data.conversations || []); setLoadingConvs(false) })
       .catch(() => setLoadingConvs(false))
   }, [])
+
+  // Keep ref in sync so socket handlers can read active without stale closures
+  useEffect(() => { activeRef.current = active }, [active])
 
   // Connect admin socket — joins admin-broadcast automatically to receive all messages
   useEffect(() => {
@@ -66,18 +70,15 @@ const AdminChat = () => {
     socket.on('dm:message', (msg) => {
       if (msg.senderRole !== 'client') return
       const cid = String(msg.clientId)
-      setActive(prev => {
-        if (prev && String(prev.clientId) === cid) {
-          setMessages(m => [...m, {
-            id: msg._id,
-            from: 'client',
-            text: msg.text,
-            updateRef: msg.updateRef || null,
-            createdAt: msg.createdAt,
-          }])
-        }
-        return prev
-      })
+      if (activeRef.current && String(activeRef.current.clientId) === cid) {
+        setMessages(m => [...m, {
+          id: msg._id,
+          from: 'client',
+          text: msg.text,
+          updateRef: msg.updateRef || null,
+          createdAt: msg.createdAt,
+        }])
+      }
     })
 
     // dm:notify → lightweight event for conversations list (from admin-broadcast)
