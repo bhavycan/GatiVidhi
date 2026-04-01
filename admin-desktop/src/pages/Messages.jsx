@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
-import { Search, MoreHorizontal } from 'lucide-react'
+import { io } from 'socket.io-client'
+import { Search, MoreHorizontal, Send } from 'lucide-react'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 const avatarColors = ['#883bbc','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316']
@@ -20,32 +21,126 @@ function timeAgo(date) {
   return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
 }
 
+function UpdateRefCard({ updateRef, dark }) {
+  return (
+    <div className={`flex items-start gap-2 rounded-xl px-3 py-2 mb-1 border text-xs
+      ${dark ? 'bg-white/20 border-white/30' : 'bg-purple-50 border-purple-200'}`}>
+      <span className={`mt-0.5 shrink-0 ${dark ? 'text-white/70' : 'text-purple-500'}`}>📎</span>
+      <div className="min-w-0">
+        <p className={`text-[10px] font-bold uppercase tracking-wide ${dark ? 'text-white/70' : 'text-purple-500'}`}>
+          Referencing Update
+        </p>
+        <p className={`font-semibold truncate ${dark ? 'text-white' : 'text-gray-800'}`}>{updateRef.date}</p>
+        {updateRef.workDone && (
+          <p className={`text-[11px] line-clamp-2 ${dark ? 'text-white/60' : 'text-gray-500'}`}>{updateRef.workDone}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Messages() {
   const [search, setSearch] = useState('')
   const [conversations, setConversations] = useState([])
   const [active, setActive] = useState(null)
   const [messages, setMessages] = useState([])
+  const [input, setInput] = useState('')
   const [loadingConvs, setLoadingConvs] = useState(true)
   const [loadingMsgs, setLoadingMsgs] = useState(false)
+  const socketRef = useRef(null)
   const bottomRef = useRef(null)
 
+  // Load conversations
   useEffect(() => {
-    axios.get(`${BASE_URL}/chat/conversations`, { withCredentials: true })
+    axios.get(`${BASE_URL}/chat/dm/conversations`, { withCredentials: true })
       .then(res => { setConversations(res.data.conversations || []); setLoadingConvs(false) })
       .catch(() => setLoadingConvs(false))
   }, [])
 
+  // Connect admin socket — joins admin-broadcast to receive all client messages
+  useEffect(() => {
+    const socket = io(`${BASE_URL}/dm`, {
+      auth: { role: 'admin' },
+    })
+    socketRef.current = socket
+
+    // dm:message → full message for the open chat view (specific room)
+    socket.on('dm:message', (msg) => {
+      if (msg.senderRole !== 'client') return
+      const cid = String(msg.clientId)
+      setActive(prev => {
+        if (prev && String(prev.clientId) === cid) {
+          setMessages(m => [...m, {
+            id: msg._id,
+            from: 'client',
+            text: msg.text,
+            updateRef: msg.updateRef || null,
+            createdAt: msg.createdAt,
+          }])
+        }
+        return prev
+      })
+    })
+
+    // dm:notify → lightweight event for conversations list (admin-broadcast)
+    socket.on('dm:notify', ({ clientId: cid, lastText, lastRole, lastAt }) => {
+      const cidStr = String(cid)
+      setConversations(prev => {
+        const exists = prev.find(c => String(c.clientId) === cidStr)
+        if (exists) {
+          return prev.map(c =>
+            String(c.clientId) === cidStr
+              ? { ...c, lastText, lastRole, lastAt }
+              : c
+          )
+        }
+        return [{ clientId: cid, clientName: 'Client', projectName: '', lastText, lastRole, lastAt }, ...prev]
+      })
+    })
+
+    return () => socket.disconnect()
+  }, [])
+
+  // Load history when conversation selected
   useEffect(() => {
     if (!active) return
     setLoadingMsgs(true)
-    axios.get(`${BASE_URL}/chat/history/${active.clientId}`, { withCredentials: true })
-      .then(res => { setMessages(res.data.messages || []); setLoadingMsgs(false) })
+    socketRef.current?.emit('dm:join', String(active.clientId))
+
+    axios.get(`${BASE_URL}/chat/dm/history/${active.clientId}`, { withCredentials: true })
+      .then(res => {
+        setMessages((res.data.messages || []).map(m => ({
+          id: m._id,
+          from: m.senderRole,
+          text: m.text,
+          updateRef: m.updateRef || null,
+          createdAt: m.createdAt,
+        })))
+        setLoadingMsgs(false)
+      })
       .catch(() => setLoadingMsgs(false))
   }, [active])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const sendMessage = (e) => {
+    e.preventDefault()
+    const text = input.trim()
+    if (!text || !active || !socketRef.current) return
+
+    const clientId = String(active.clientId)
+    const now = new Date().toISOString()
+    setMessages(prev => [...prev, { id: `local-${Date.now()}`, from: 'admin', text, updateRef: null, createdAt: now }])
+    socketRef.current.emit('dm:send', { targetClientId: clientId, text })
+    setConversations(prev => prev.map(c =>
+      String(c.clientId) === clientId
+        ? { ...c, lastText: text, lastRole: 'admin', lastAt: now }
+        : c
+    ))
+    setInput('')
+  }
 
   const filtered = conversations.filter(c =>
     c.clientName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -96,6 +191,7 @@ export default function Messages() {
       {/* Chat area */}
       {active ? (
         <div className="flex-1 flex flex-col bg-gray-50">
+          {/* Header */}
           <div className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-5">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
@@ -110,17 +206,24 @@ export default function Messages() {
             <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><MoreHorizontal size={16}/></button>
           </div>
 
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-5 space-y-3">
             {loadingMsgs && <div className="text-xs text-gray-400 text-center">Loading messages…</div>}
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'model' ? 'justify-end' : 'justify-start'}`}>
+              <div key={m.id || i} className={`flex flex-col ${m.from === 'admin' ? 'items-end' : 'items-start'}`}>
+                {/* Update reference card */}
+                {m.updateRef?.updateId && (
+                  <div className={`max-w-sm w-full ${m.from === 'admin' ? 'mr-0' : 'ml-0'}`}>
+                    <UpdateRefCard updateRef={m.updateRef} dark={m.from === 'admin'} />
+                  </div>
+                )}
                 <div className={`max-w-sm px-4 py-2.5 rounded-2xl text-xs
-                  ${m.role === 'model'
+                  ${m.from === 'admin'
                     ? 'text-white rounded-br-sm'
                     : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'}`}
-                  style={m.role === 'model' ? { background: '#883bbc' } : {}}>
+                  style={m.from === 'admin' ? { background: '#883bbc' } : {}}>
                   <p>{m.text}</p>
-                  <p className={`text-[9px] mt-1 ${m.role === 'model' ? 'text-white/60' : 'text-gray-400'}`}>
+                  <p className={`text-[9px] mt-1 ${m.from === 'admin' ? 'text-white/60' : 'text-gray-400'}`}>
                     {m.createdAt ? new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}
                   </p>
                 </div>
@@ -132,11 +235,25 @@ export default function Messages() {
             <div ref={bottomRef} />
           </div>
 
-          <div className="bg-white border-t border-gray-100 p-4">
-            <div className="text-xs text-gray-400 text-center">
-              This is an AI-assisted chat. Messages are read-only in admin view.
-            </div>
-          </div>
+          {/* Reply input */}
+          <form onSubmit={sendMessage} className="bg-white border-t border-gray-100 p-4 flex items-center gap-3">
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="Reply to client…"
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-purple-300 transition-colors"
+              autoComplete="off"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className="w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-40 transition-opacity"
+              style={{ background: '#883bbc' }}
+            >
+              <Send size={14} className="text-white" />
+            </button>
+          </form>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center bg-gray-50">
