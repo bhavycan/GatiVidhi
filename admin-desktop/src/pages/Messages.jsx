@@ -49,6 +49,10 @@ export default function Messages() {
   const [loadingMsgs, setLoadingMsgs] = useState(false)
   const socketRef = useRef(null)
   const bottomRef = useRef(null)
+  const activeRef = useRef(null)
+
+  // Keep ref in sync so socket handlers can read active without stale closures
+  useEffect(() => { activeRef.current = active }, [active])
 
   // Load conversations
   useEffect(() => {
@@ -68,18 +72,15 @@ export default function Messages() {
     socket.on('dm:message', (msg) => {
       if (msg.senderRole !== 'client') return
       const cid = String(msg.clientId)
-      setActive(prev => {
-        if (prev && String(prev.clientId) === cid) {
-          setMessages(m => [...m, {
-            id: msg._id,
-            from: 'client',
-            text: msg.text,
-            updateRef: msg.updateRef || null,
-            createdAt: msg.createdAt,
-          }])
-        }
-        return prev
-      })
+      if (activeRef.current && String(activeRef.current.clientId) === cid) {
+        setMessages(m => [...m, {
+          id: msg._id,
+          from: 'client',
+          text: msg.text,
+          updateRef: msg.updateRef || null,
+          createdAt: msg.createdAt,
+        }])
+      }
     })
 
     // dm:notify → lightweight event for conversations list (admin-broadcast)
