@@ -4,6 +4,7 @@ const { projectModel } = require("../models/projectModel");
 const {reportModel} = require("../models/reportModel");
 const { updateModel } = require("../models/updateModel");
 const { userModel } = require("../models/userModel");
+const { directMessageModel } = require("../models/directMessageModel");
 const sendEmail = require("../utils/emailNotification");
 
 module.exports.projectCreateController = async (req, res) => {
@@ -94,6 +95,12 @@ const { estimatedEndDate, projectName, description, status } = req.body;
     updateFields,
     {new : true}
   );
+
+  // When project is marked completed, delete all direct chat messages for it
+  if (status === 'completed') {
+    await directMessageModel.deleteMany({ projectId: id });
+    console.log(`[PROJECT] Chat history cleared for completed project: ${id}`);
+  }
 
   res.status(200).json({ message: 'Updated successfully', project })
   } catch (error) {
