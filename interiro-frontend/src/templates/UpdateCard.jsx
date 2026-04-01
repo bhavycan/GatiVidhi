@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import CommentBox from './CommentBox';
 import { AnimatePresence, motion } from 'motion/react';
 import ImagePortal from '../Portals/ImagePortal';
@@ -51,7 +51,6 @@ const UpdateCard = ({ update, setShareOpen }) => {
 
   const [isclick, setclick] = useState(0)
   const [tapNumber, setTapNumber] = useState(0)
-  const [isComOpen, setComOpen] = useState(false)
 
   const handleClick = () => {
     setclick((prev) => (prev + 1) % images.length);
@@ -61,17 +60,10 @@ const UpdateCard = ({ update, setShareOpen }) => {
     setclick((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const [isType, setType] = useState(false)
   const [isTap, setTap] = useState(false)
-  const [commentText, setCommentText] = useState('')
   const [activeVideo, setActiveVideo] = useState(null)
 
   const videos = update?.videos?.length > 0 ? update.videos : []
-
-  const handleChange = (text) => {
-    setCommentText(text)
-    setType(text.length > 2)
-  }
 
   const handleTap = (isclick) => {
     setTap(true)
@@ -232,53 +224,8 @@ const UpdateCard = ({ update, setShareOpen }) => {
             <button onClick={() => setShareOpen(true)} className='w-[50%] px-2 py-2 bg-[#883bbc] text-white rounded-md h-full'>
               <i className="ri-share-fill text-2xl"></i>
             </button>
-            <CommentBox isType={isType} isComOpen={isComOpen} setComOpen={setComOpen} setType={setType} commentText={commentText} setCommentText={setCommentText} />
+            <CommentBox update={update} />
           </div>
-
-          <AnimatePresence mode='wait'>
-            {isComOpen && (
-              <motion.div
-                initial={{ maxHeight: 0, opacity: 0 }}
-                animate={{ maxHeight: 500, opacity: 1 }}
-                exit={{
-                  maxHeight: 0, opacity: 0,
-                  transition: {
-                    maxHeight: { duration: 0.25, ease: [0.4, 0, 1, 1] },
-                    opacity: { duration: 0.15 }
-                  }
-                }}
-                transition={{
-                  maxHeight: { duration: 0.25, ease: [0.215, 0.61, 0.355, 1] },
-                  opacity: { duration: 0.25 }
-                }}
-                style={{ overflow: 'hidden', transformOrigin: 'top' }}
-                className='w-full border border-[#883bbc]/40 mt-3 rounded-xl bg-white/50 backdrop-blur-sm px-3 py-2'>
-                <motion.div layout transition={{ duration: 0.25, delay: .1 }}>
-                  <form action="" method='post'>
-                    <textarea
-                      onChange={(e) => handleChange(e.target.value)}
-                      name="issue" id="issue"
-                      placeholder='Type Your Issue Here...'
-                      className='w-full h-[20vh] outline-none text-sm font-semibold bg-transparent resize-none'
-                    ></textarea>
-                  </form>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence mode='wait'>
-            {!isType && isComOpen && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: .7, x: 0 }}
-                exit={{ opacity: 0, x: -10, transition: { duration: 0.2 } }}
-                transition={{ duration: 0.2 }}
-                className='w-full mt-1 pl-1'>
-                <h2 className="text-xs font-medium text-gray-500">Please type at least 3 characters</h2>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
 
       </div>

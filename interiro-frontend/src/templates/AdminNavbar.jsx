@@ -16,7 +16,7 @@ const AdminNavbar = ({ value }) => {
   const actionItems = [
     { label: "Updates",  icon: "ri-refresh-line",         path: "/admin/updates" },
     { label: "Task",     icon: "ri-task-line",            path: "/admin/task" },
-    { label: "Tickets",  icon: "ri-ticket-line",          path: "/admin/tickets" },
+    { label: "Chat",     icon: "ri-chat-3-line",          path: "/admin/chat" },
     { label: "Client",   icon: "ri-user-add-line",        path: "/admin/client" },
     { label: "Project",  icon: "ri-folder-add-line",      path: "/admin/project" },
     { label: "Notes",    icon: "ri-sticky-note-line",     path: "/admin/notes" },

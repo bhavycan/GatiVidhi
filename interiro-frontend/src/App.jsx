@@ -30,6 +30,8 @@ import AdminProfile from './components/admin/AdminProfile'
 import WorkerProfile from './worker/WorkerProfile'
 import AdminPayment from './components/admin/AdminPayment'
 import AdminAR from './components/admin/AdminAR'
+import ClientChat from './components/client/ClientChat'
+import AdminChat from './components/admin/AdminChat'
 
 const App = () => {
   return (
@@ -64,6 +66,8 @@ const App = () => {
             <Route path='/worker/account' element={<WorkerProfile />} />
             <Route path='/admin/payments' element={<AdminPayment />} />
             <Route path='/admin/ar' element={<AdminAR />} />
+            <Route path='/user/support' element={<ClientChat />} />
+            <Route path='/admin/chat' element={<AdminChat />} />
       </Routes>
      
 
