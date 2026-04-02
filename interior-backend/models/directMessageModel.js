@@ -11,6 +11,16 @@ const directMessageSchema = new mongoose.Schema({
     date:     { type: String },
     workDone: { type: String },
   },
+  approvalRef: {
+    approvalId:  { type: mongoose.Schema.Types.ObjectId, ref: 'approval' },
+    title:       { type: String },
+    projectName: { type: String },
+  },
+  ticketRef: {
+    ticketId:    { type: mongoose.Schema.Types.ObjectId, ref: 'comment' },
+    note:        { type: String },
+    projectName: { type: String },
+  },
 }, { timestamps: true });
 
 const directMessageModel = mongoose.model('directmessage', directMessageSchema);

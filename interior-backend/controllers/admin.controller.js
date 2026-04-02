@@ -284,6 +284,19 @@ module.exports.adminNotificationsController = async (req, res) => {
   }
 };
 
+module.exports.markNotificationsSeenController = async (req, res) => {
+  try {
+    await approvalModel.updateMany(
+      { status: { $in: ['approved', 'rejected'] }, adminSeen: false },
+      { $set: { adminSeen: true } }
+    );
+    res.status(200).json({ message: 'Marked as seen' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
 module.exports.dashboardStatsController = async (req, res) => {
   try {
     const now = new Date();

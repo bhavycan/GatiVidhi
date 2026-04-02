@@ -80,7 +80,7 @@ const connectSocket = (io) => {
       socket.join(`room:${targetClientId}`);
     });
 
-    socket.on("dm:send", async ({ targetClientId, text, updateRef, images }) => {
+    socket.on("dm:send", async ({ targetClientId, text, updateRef, approvalRef, ticketRef, images }) => {
       const hasText = text && text.trim();
       const hasImages = Array.isArray(images) && images.length > 0;
       if (!hasText && !hasImages) return;
@@ -105,6 +105,8 @@ const connectSocket = (io) => {
 
         if (hasImages) msgData.images = images;
         if (updateRef && updateRef.updateId) msgData.updateRef = updateRef;
+        if (approvalRef && approvalRef.approvalId) msgData.approvalRef = approvalRef;
+        if (ticketRef && ticketRef.ticketId) msgData.ticketRef = ticketRef;
 
         const msg = await directMessageModel.create(msgData);
 
