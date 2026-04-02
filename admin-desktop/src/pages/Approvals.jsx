@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { CheckCircle2, XCircle, Clock, Search, Plus, X, Bell, Edit2, Image } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, Search, Plus, X, Bell, Edit2, Image, MessageSquare } from 'lucide-react'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 
@@ -18,6 +19,7 @@ const priorityColors = {
 const EMPTY_FORM = { projectId: '', projectName: '', title: '', date: '', priority: 'medium', note: '' }
 
 export default function Approvals() {
+  const navigate = useNavigate()
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [approvals, setApprovals] = useState([])
@@ -256,6 +258,17 @@ export default function Approvals() {
                     <Edit2 size={10}/> Edit & Resubmit
                   </button>
                 )}
+                <button
+                  onClick={() => navigate('/messages', {
+                    state: {
+                      approvalRef: { approvalId: a._id, title: a.title, projectName: a.projectName },
+                      targetProjectName: a.projectName,
+                    }
+                  })}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
+                >
+                  <MessageSquare size={10}/> Chat
+                </button>
               </div>
             </div>
           </div>

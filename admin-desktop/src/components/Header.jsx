@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { Menu, Bell, Search, Sun, Moon, ChevronDown, LogOut } from 'lucide-react'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 
-export default function Header({ title, subtitle, onToggleSidebar, onLogout }) {
+export default function Header({ title, subtitle, onToggleSidebar, onLogout, notifCount = 0 }) {
+  const navigate = useNavigate()
   const [dark, setDark] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
 
@@ -52,9 +54,16 @@ export default function Header({ title, subtitle, onToggleSidebar, onLogout }) {
         </button>
 
         {/* Notification */}
-        <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+        <button
+          onClick={() => navigate('/notifications')}
+          className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+        >
           <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />
+          {notifCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+              {notifCount > 99 ? '99+' : notifCount}
+            </span>
+          )}
         </button>
 
         {/* Divider */}

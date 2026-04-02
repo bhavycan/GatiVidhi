@@ -30,7 +30,7 @@ const supportNav = [
   { label: 'Settings',      icon: Settings,      to: '/settings' },
 ]
 
-export default function Sidebar({ collapsed }) {
+export default function Sidebar({ collapsed, notifCount = 0 }) {
   return (
     <aside
       style={{
@@ -84,7 +84,13 @@ export default function Sidebar({ collapsed }) {
         <div className="pt-3">
           <SectionLabel label="Support" collapsed={collapsed} />
           {supportNav.map((item, i) => (
-            <SidebarItem key={item.to} item={item} collapsed={collapsed} delay={i * 0.04} />
+            <SidebarItem
+              key={item.to}
+              item={item}
+              collapsed={collapsed}
+              delay={i * 0.04}
+              badge={item.to === '/notifications' && notifCount > 0 ? notifCount : 0}
+            />
           ))}
         </div>
       </nav>
@@ -127,7 +133,7 @@ function SectionLabel({ label, collapsed }) {
   )
 }
 
-function SidebarItem({ item: { label, icon: Icon, to }, collapsed, delay }) {
+function SidebarItem({ item: { label, icon: Icon, to }, collapsed, delay, badge = 0 }) {
   return (
     <NavLink
       to={to}
@@ -151,15 +157,26 @@ function SidebarItem({ item: { label, icon: Icon, to }, collapsed, delay }) {
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full"
               style={{ background: 'linear-gradient(180deg, #883bbc, #f3a9de)' }} />
           )}
-          <Icon
-            size={16}
-            className="flex-shrink-0"
-            style={{ color: isActive ? '#883bbc' : '#a070c0' }}
-          />
+          <div className="relative flex-shrink-0">
+            <Icon
+              size={16}
+              style={{ color: isActive ? '#883bbc' : '#a070c0' }}
+            />
+            {collapsed && badge > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
+                {badge > 9 ? '9+' : badge}
+              </span>
+            )}
+          </div>
           {!collapsed && (
-            <span className="text-sm font-bold truncate"
+            <span className="text-sm font-bold truncate flex-1"
               style={{ color: isActive ? '#883bbc' : '#3d1f5c' }}>
               {label}
+            </span>
+          )}
+          {!collapsed && badge > 0 && (
+            <span className="ml-auto shrink-0 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+              {badge > 99 ? '99+' : badge}
             </span>
           )}
           {collapsed && (

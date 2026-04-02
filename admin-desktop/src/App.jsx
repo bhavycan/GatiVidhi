@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import Login from './pages/Login'
@@ -44,12 +44,19 @@ function Layout({ collapsed, onToggle, onLogout }) {
   const { pathname } = useLocation()
   const meta = pageMeta[pathname] || { title: 'Admin', subtitle: '' }
   const isMessages = pathname === '/messages'
+  const [notifCount, setNotifCount] = useState(0)
+
+  useEffect(() => {
+    axios.get(`${BASE_URL}/admin/notifications`, { withCredentials: true })
+      .then(res => setNotifCount(res.data.count ?? (res.data.notifications?.length ?? 0)))
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--body-bg)' }}>
-      <Sidebar collapsed={collapsed} />
+      <Sidebar collapsed={collapsed} notifCount={notifCount} />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header title={meta.title} subtitle={meta.subtitle} onToggleSidebar={onToggle} onLogout={onLogout} />
+        <Header title={meta.title} subtitle={meta.subtitle} onToggleSidebar={onToggle} onLogout={onLogout} notifCount={notifCount} />
         <main className={`flex-1 overflow-hidden ${isMessages ? '' : ''}`}>
           <Routes>
             <Route path="/"              element={<Dashboard />} />
@@ -65,7 +72,7 @@ function Layout({ collapsed, onToggle, onLogout }) {
             <Route path="/reports"       element={<Reports />} />
             <Route path="/messages"      element={<Messages />} />
             <Route path="/tickets"       element={<Tickets />} />
-            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/notifications" element={<Notifications onCountChange={setNotifCount} />} />
             <Route path="/settings"      element={<Settings />} />
           </Routes>
         </main>

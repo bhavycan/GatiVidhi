@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { Plus, Search, CheckCircle2, MessageSquare } from 'lucide-react'
 
@@ -12,6 +13,7 @@ const priorityColors = {
 }
 
 export default function Tickets() {
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [tickets, setTickets] = useState([])
@@ -93,12 +95,25 @@ export default function Tickets() {
                 {t.receivedDate ? new Date(t.receivedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
               </div>
             </div>
-            {!t.resolved && (
-              <button onClick={() => handleResolve(t._id)}
-                className="flex items-center gap-1 text-xs font-semibold text-green-600 hover:text-green-700 flex-shrink-0">
-                <CheckCircle2 size={13}/> Resolve
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {!t.resolved && (
+                <button onClick={() => handleResolve(t._id)}
+                  className="flex items-center gap-1 text-xs font-semibold text-green-600 hover:text-green-700">
+                  <CheckCircle2 size={13}/> Resolve
+                </button>
+              )}
+              <button
+                onClick={() => navigate('/messages', {
+                  state: {
+                    ticketRef: { ticketId: t._id, note: t.note, projectName: t.projectId?.projectName || '' },
+                    targetProjectName: t.projectId?.projectName || '',
+                  }
+                })}
+                className="flex items-center gap-1 text-xs font-semibold text-purple-600 hover:text-purple-700"
+              >
+                <MessageSquare size={13}/> Chat
               </button>
-            )}
+            </div>
           </div>
         ))}
         {!loading && filtered.length === 0 && (
