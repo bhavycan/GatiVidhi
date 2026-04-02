@@ -9,6 +9,9 @@ const {
   editInstallmentController,
   getDueInstallmentsController,
   sendPaymentReminderController,
+  addSpendingController,
+  getSpendingsController,
+  deleteSpendingController,
 } = require('../controllers/payment.controller');
 const adminAuthentification = require('../middlewares/adminAuthentification');
 const route = express.Router();
@@ -22,5 +25,10 @@ route.post('/update', adminAuthentification, updatePaymentPlanController);
 route.post('/delete', adminAuthentification, deletePaymentPlanController);
 route.post('/edit-installment', adminAuthentification, editInstallmentController);
 route.post('/send-reminder', adminAuthentification, sendPaymentReminderController);
+
+// Spending
+route.get('/spendings', adminAuthentification, getSpendingsController);
+route.post('/spending', adminAuthentification, addSpendingController);
+route.delete('/spending/:id', adminAuthentification, deleteSpendingController);
 
 module.exports = route;

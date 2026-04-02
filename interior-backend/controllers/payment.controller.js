@@ -1,4 +1,5 @@
 const { paymentModel } = require('../models/paymentModel');
+const { spendingModel } = require('../models/spendingModel');
 const { projectModel } = require('../models/projectModel');
 const { userModel } = require('../models/userModel');
 const sendEmail = require('../utils/emailNotification');
@@ -208,5 +209,46 @@ module.exports.deletePaymentPlanController = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
+  }
+};
+
+// POST /payment/spending — add a spending entry
+module.exports.addSpendingController = async (req, res) => {
+  const { name, amount, date, projectId, projectName } = req.body;
+  if (!name || !amount) return res.status(400).json({ message: 'name and amount are required' });
+  try {
+    const spending = await spendingModel.create({
+      name: name.trim(),
+      amount: Number(amount),
+      date: date ? new Date(date) : new Date(),
+      projectId: projectId || null,
+      projectName: projectName || 'General',
+    });
+    return res.status(201).json({ spending });
+  } catch (err) {
+    console.error('[SPENDING ADD ERROR]', err);
+    return res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
+// GET /payment/spendings — get all spending entries (newest first)
+module.exports.getSpendingsController = async (req, res) => {
+  try {
+    const spendings = await spendingModel.find().sort({ date: -1 }).lean();
+    return res.status(200).json({ spendings });
+  } catch (err) {
+    console.error('[SPENDING GET ERROR]', err);
+    return res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
+// DELETE /payment/spending/:id — remove a spending entry
+module.exports.deleteSpendingController = async (req, res) => {
+  try {
+    await spendingModel.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('[SPENDING DELETE ERROR]', err);
+    return res.status(500).json({ message: 'Something went wrong' });
   }
 };

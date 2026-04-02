@@ -80,8 +80,11 @@ const connectSocket = (io) => {
       socket.join(`room:${targetClientId}`);
     });
 
-    socket.on("dm:send", async ({ targetClientId, text, updateRef }) => {
-      if (!text || !text.trim()) return;
+    socket.on("dm:send", async ({ targetClientId, text, updateRef, images }) => {
+      const hasText = text && text.trim();
+      const hasImages = Array.isArray(images) && images.length > 0;
+      if (!hasText && !hasImages) return;
+
       try {
         const cid = role === "client" ? clientId : targetClientId;
         if (!cid) return;
@@ -97,12 +100,11 @@ const connectSocket = (io) => {
           clientId: cid,
           projectId: project._id,
           senderRole: role,
-          text: text.trim(),
+          text: hasText ? text.trim() : '',
         };
 
-        if (updateRef && updateRef.updateId) {
-          msgData.updateRef = updateRef;
-        }
+        if (hasImages) msgData.images = images;
+        if (updateRef && updateRef.updateId) msgData.updateRef = updateRef;
 
         const msg = await directMessageModel.create(msgData);
 

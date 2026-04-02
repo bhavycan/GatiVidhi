@@ -1,3 +1,4 @@
+const cloudinary = require('cloudinary').v2;
 const { chatMessageModel } = require('../models/chatMessageModel');
 const { directMessageModel } = require('../models/directMessageModel');
 
@@ -149,5 +150,34 @@ module.exports.getMyDMHistoryController = async (req, res) => {
   } catch (error) {
     console.error('[DM MY HISTORY ERROR]', error);
     return res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
+// POST /chat/dm/upload — upload images to Cloudinary, return URLs
+module.exports.uploadDMImagesController = async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ message: 'No files uploaded' });
+  }
+  try {
+    const uploadBuffer = (buffer, publicId) =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { public_id: publicId, resource_type: 'image', folder: 'chat_images' },
+          (err, result) => { if (err) reject(err); else resolve(result); }
+        );
+        stream.end(buffer);
+      });
+
+    const urls = await Promise.all(
+      req.files.map((file, i) =>
+        uploadBuffer(file.buffer, `chat_${Date.now()}_${i}`)
+          .then(r => r.secure_url)
+      )
+    );
+
+    return res.status(200).json({ urls });
+  } catch (error) {
+    console.error('[DM UPLOAD ERROR]', error);
+    return res.status(500).json({ message: 'Upload failed' });
   }
 };
