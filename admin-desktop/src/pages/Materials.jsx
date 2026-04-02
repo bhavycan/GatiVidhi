@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Search, Plus, Layers, Edit2, Trash2 } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, X } from 'lucide-react'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 
-const categories = ['All', 'Flooring', 'Walls', 'Ceiling', 'Furniture', 'Lighting', 'Kitchen']
+const CATEGORIES = ['Flooring', 'Walls', 'Ceiling', 'Furniture', 'Lighting', 'Kitchen', 'Other']
+const CAT_TABS   = ['All', ...CATEGORIES]
 const stockStyles = { 'in-stock': 'badge-active', 'low-stock': 'badge-pending', 'out-of-stock': 'badge-overdue' }
 const fmt = (v) => `₹${Number(v).toLocaleString('en-IN')}`
+
+const EMPTY_FORM = { label: '', materialName: '', category: '', brand: '', unit: '', price: '', stock: '' }
 
 function deriveStatus(stock) {
   if (stock === 0) return 'out-of-stock'
@@ -15,23 +18,74 @@ function deriveStatus(stock) {
 }
 
 export default function Materials() {
-  const [cat, setCat] = useState('All')
+  const [cat, setCat]       = useState('All')
   const [search, setSearch] = useState('')
   const [materials, setMaterials] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState(null)
+
+  // Modal state — null = closed, 'create' = new, object = edit
+  const [modal, setModal]       = useState(null)
+  const [form, setForm]         = useState(EMPTY_FORM)
+  const [saving, setSaving]     = useState(false)
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     axios.get(`${BASE_URL}/material/all`, { withCredentials: true })
-      .then(res => {
-        setMaterials(res.data.materials || [])
-        setLoading(false)
-      })
-      .catch(err => {
-        setError(err.response?.data || 'Failed to load materials')
-        setLoading(false)
-      })
+      .then(res => { setMaterials(res.data.materials || []); setLoading(false) })
+      .catch(err => { setError(err.response?.data || 'Failed to load materials'); setLoading(false) })
   }, [])
+
+  const openCreate = () => {
+    setForm(EMPTY_FORM)
+    setFormError('')
+    setModal('create')
+  }
+
+  const openEdit = (m) => {
+    setForm({
+      label:        m.label        || '',
+      materialName: m.materialName || '',
+      category:     m.category     || '',
+      brand:        m.brand        || '',
+      unit:         m.unit         || '',
+      price:        String(m.price ?? ''),
+      stock:        String(m.stock ?? ''),
+    })
+    setFormError('')
+    setModal(m)
+  }
+
+  const closeModal = () => { setModal(null); setFormError('') }
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setFormError('')
+    const payload = {
+      label:        form.label,
+      materialName: form.materialName,
+      category:     form.category,
+      brand:        form.brand,
+      unit:         form.unit,
+      price:        Number(form.price) || 0,
+      stock:        Number(form.stock) || 0,
+    }
+    try {
+      if (modal === 'create') {
+        const res = await axios.post(`${BASE_URL}/material/create`, payload, { withCredentials: true })
+        setMaterials(prev => [...prev, res.data.material])
+      } else {
+        const res = await axios.post(`${BASE_URL}/material/update`, { id: modal._id, ...payload }, { withCredentials: true })
+        setMaterials(prev => prev.map(m => m._id === modal._id ? res.data.material : m))
+      }
+      closeModal()
+    } catch (err) {
+      setFormError(err.response?.data || 'Something went wrong')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this material?')) return
@@ -55,12 +109,12 @@ export default function Materials() {
           <h2 className="text-xl font-bold text-gray-900">Materials</h2>
           <p className="text-xs text-gray-400 mt-0.5">Interior material catalog and inventory</p>
         </div>
-        <button className="btn-primary text-xs"><Plus size={13}/> Add Material</button>
+        <button onClick={openCreate} className="btn-primary text-xs"><Plus size={13}/> Add Material</button>
       </div>
 
       {/* Category tabs */}
       <div className="flex gap-2 flex-wrap">
-        {categories.map(c => (
+        {CAT_TABS.map(c => (
           <button key={c} onClick={() => setCat(c)}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors border
               ${cat === c ? 'text-white border-transparent' : 'text-gray-600 border-gray-200 bg-white hover:border-purple-300 hover:text-purple-700'}`}
@@ -82,14 +136,12 @@ export default function Materials() {
           </span>
         </div>
 
-        {error && (
-          <div className="px-5 py-4 text-xs text-red-500">{error}</div>
-        )}
+        {error && <div className="px-5 py-4 text-xs text-red-500">{error}</div>}
 
         {!loading && !error && (
           <table className="w-full data-table">
             <thead>
-              <tr><th>ID</th><th>Material</th><th>Category</th><th>Brand</th>
+              <tr><th>ID</th><th>Label</th><th>Material</th><th>Category</th><th>Brand</th>
                 <th>Price / Unit</th><th>Unit</th><th>Stock</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
@@ -98,6 +150,7 @@ export default function Materials() {
                 return (
                   <tr key={m._id} className="cursor-pointer">
                     <td className="text-[10px] text-gray-400 font-mono">{m._id?.slice(-6).toUpperCase()}</td>
+                    <td className="text-xs text-gray-500">{m.label || '—'}</td>
                     <td className="font-semibold text-gray-800 text-xs">{m.materialName}</td>
                     <td>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium">
@@ -115,20 +168,104 @@ export default function Materials() {
                     </td>
                     <td>
                       <div className="flex gap-1">
-                        <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"><Edit2 size={13}/></button>
-                        <button onClick={() => handleDelete(m._id)} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"><Trash2 size={13}/></button>
+                        <button onClick={() => openEdit(m)}
+                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700">
+                          <Edit2 size={13}/>
+                        </button>
+                        <button onClick={() => handleDelete(m._id)}
+                          className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500">
+                          <Trash2 size={13}/>
+                        </button>
                       </div>
                     </td>
                   </tr>
                 )
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={9} className="text-center text-xs text-gray-400 py-8">No materials found</td></tr>
+                <tr><td colSpan={10} className="text-center text-xs text-gray-400 py-8">No materials found</td></tr>
               )}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* Add / Edit Modal */}
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)' }}>
+          <div className="bg-white rounded-2xl card-shadow w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+              <h3 className="text-sm font-bold text-gray-900">
+                {modal === 'create' ? 'Add Material' : 'Edit Material'}
+              </h3>
+              <button onClick={closeModal} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
+                <X size={16}/>
+              </button>
+            </div>
+            <form onSubmit={handleSave} className="px-6 py-5 space-y-3 overflow-y-auto">
+              {formError && (
+                <div className="text-xs text-red-500 bg-red-50 rounded-xl px-3 py-2">{formError}</div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Label <span className="text-red-400">*</span></label>
+                  <input required className="admin-input" placeholder="e.g. MAT-001"
+                    value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Material Name <span className="text-red-400">*</span></label>
+                  <input required className="admin-input" placeholder="e.g. Marble Tile"
+                    value={form.materialName} onChange={e => setForm(f => ({ ...f, materialName: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Category</label>
+                  <select className="admin-input" value={form.category}
+                    onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+                    <option value="">Select…</option>
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Brand</label>
+                  <input className="admin-input" placeholder="e.g. Asian Paints"
+                    value={form.brand} onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Unit</label>
+                  <input className="admin-input" placeholder="e.g. sqft"
+                    value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Price (₹)</label>
+                  <input type="number" min="0" className="admin-input" placeholder="0"
+                    value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Stock</label>
+                  <input type="number" min="0" className="admin-input" placeholder="0"
+                    value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={closeModal} className="btn-secondary flex-1 justify-center text-xs">
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center text-xs disabled:opacity-60">
+                  {saving ? 'Saving…' : modal === 'create' ? 'Add Material' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

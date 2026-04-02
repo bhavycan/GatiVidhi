@@ -28,7 +28,8 @@ export default function Approvals() {
   // Create modal
   const [modal, setModal] = useState(null) // null | 'create' | { mode:'edit', approval }
   const [form, setForm] = useState(EMPTY_FORM)
-  const [images, setImages] = useState([])
+  const [images, setImages] = useState([])          // File objects (new uploads)
+  const [previews, setPreviews] = useState([])      // local object URLs for preview
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -47,6 +48,7 @@ export default function Approvals() {
   const openCreate = () => {
     setForm(EMPTY_FORM)
     setImages([])
+    setPreviews([])
     setFormError('')
     setModal('create')
   }
@@ -61,11 +63,41 @@ export default function Approvals() {
       note: approval.note || '',
     })
     setImages([])
+    setPreviews(approval.images || [])   // show existing Cloudinary URLs as previews
     setFormError('')
     setModal({ mode: 'edit', approval })
   }
 
-  const closeModal = () => { setModal(null); setFormError('') }
+  const closeModal = () => {
+    // revoke any local object URLs we created
+    previews.forEach(p => { if (p.startsWith('blob:')) URL.revokeObjectURL(p) })
+    setModal(null)
+    setFormError('')
+  }
+
+  const handleImageFiles = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    const newPreviews = files.map(f => URL.createObjectURL(f))
+    setImages(prev => [...prev, ...files].slice(0, 10))
+    setPreviews(prev => [...prev, ...newPreviews].slice(0, 10))
+    e.target.value = ''
+  }
+
+  const removePreview = (index) => {
+    setPreviews(prev => {
+      const p = prev[index]
+      if (p.startsWith('blob:')) URL.revokeObjectURL(p)
+      return prev.filter((_, i) => i !== index)
+    })
+    // Also remove from images array if it's a new file (blob previews map to images)
+    // existing Cloudinary previews have no matching file — count blob: entries before this index
+    const blobCount = previews.slice(0, index).filter(p => p.startsWith('blob:')).length
+    const isBlob = previews[index]?.startsWith('blob:')
+    if (isBlob) {
+      setImages(prev => prev.filter((_, i) => i !== blobCount))
+    }
+  }
 
   const handleProjectChange = (e) => {
     const proj = projects.find(p => p._id === e.target.value)
@@ -189,16 +221,25 @@ export default function Approvals() {
               <div className="text-xs text-gray-400 mb-1">{a.projectName}</div>
               {a.note && <div className="text-xs text-gray-500 italic">"{a.note}"</div>}
               {a.clientNote && <div className="text-xs text-blue-500 mt-1">Client: "{a.clientNote}"</div>}
+              {a.images?.length > 0 && (
+                <div className="flex gap-1.5 mt-2 flex-wrap">
+                  {a.images.slice(0, 4).map((url, i) => (
+                    <a key={i} href={url} target="_blank" rel="noreferrer">
+                      <img src={url} alt="" className="w-12 h-12 rounded-lg object-cover border border-purple-100 cursor-pointer hover:opacity-80 transition-opacity" />
+                    </a>
+                  ))}
+                  {a.images.length > 4 && (
+                    <div className="w-12 h-12 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-[10px] font-bold text-purple-500">
+                      +{a.images.length - 4}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${statusStyles[a.status]}`}>
                 {a.status}
               </span>
-              {a.images?.length > 0 && (
-                <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                  <Image size={10}/> {a.images.length}
-                </span>
-              )}
               <span className="text-[10px] text-gray-400">
                 {a.date ? new Date(a.date).toLocaleDateString('en-IN') : '—'}
               </span>
@@ -280,11 +321,28 @@ export default function Approvals() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                   Images <span className="text-gray-300 font-normal">(optional, up to 10)</span>
                 </label>
-                <input type="file" accept="image/*" multiple
-                  className="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
-                  onChange={e => setImages(Array.from(e.target.files))} />
-                {images.length > 0 && (
-                  <p className="text-[10px] text-gray-400 mt-1">{images.length} file(s) selected</p>
+                {previews.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {previews.map((src, i) => (
+                      <div key={i} className="relative">
+                        <img src={src} alt="" className="w-16 h-16 rounded-lg object-cover border border-purple-200" />
+                        <button
+                          type="button"
+                          onClick={() => removePreview(i)}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px]"
+                          style={{ background: '#883bbc' }}
+                        >
+                          <X size={8} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {previews.length < 10 && (
+                  <label className="inline-flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 text-xs font-semibold hover:bg-purple-100 transition-colors">
+                    <Image size={12} /> Add images
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageFiles} />
+                  </label>
                 )}
               </div>
 

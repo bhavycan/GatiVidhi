@@ -21,6 +21,18 @@ function timeAgo(date) {
   return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
 }
 
+function MessageImages({ images }) {
+  return (
+    <div className={`grid gap-1 mt-1 ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+      {images.map((url, i) => (
+        <a key={i} href={url} target="_blank" rel="noreferrer">
+          <img src={url} alt="" className="rounded-lg object-cover w-full max-h-40 cursor-pointer hover:opacity-90 transition-opacity" />
+        </a>
+      ))}
+    </div>
+  )
+}
+
 function UpdateRefCard({ updateRef, dark }) {
   return (
     <div className={`flex items-start gap-2 rounded-xl px-3 py-2 mb-1 border text-xs
@@ -77,6 +89,7 @@ export default function Messages() {
           id: msg._id,
           from: 'client',
           text: msg.text,
+          images: msg.images || [],
           updateRef: msg.updateRef || null,
           createdAt: msg.createdAt,
         }])
@@ -114,6 +127,7 @@ export default function Messages() {
           id: m._id,
           from: m.senderRole,
           text: m.text,
+          images: m.images || [],
           updateRef: m.updateRef || null,
           createdAt: m.createdAt,
         })))
@@ -223,7 +237,8 @@ export default function Messages() {
                     ? 'text-white rounded-br-sm'
                     : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'}`}
                   style={m.from === 'admin' ? { background: '#883bbc' } : {}}>
-                  <p>{m.text}</p>
+                  {m.images?.length > 0 && <MessageImages images={m.images} />}
+                  {m.text && <p className={m.images?.length > 0 ? 'mt-1' : ''}>{m.text}</p>}
                   <p className={`text-[9px] mt-1 ${m.from === 'admin' ? 'text-white/60' : 'text-gray-400'}`}>
                     {m.createdAt ? new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}
                   </p>

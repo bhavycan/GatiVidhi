@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { CreditCard, TrendingUp, AlertCircle, Search, Plus, X, ChevronDown, CheckCircle2, Clock } from 'lucide-react'
+import { CreditCard, TrendingUp, AlertCircle, Search, Plus, X, ChevronDown, CheckCircle2, Clock, Wallet, Trash2 } from 'lucide-react'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 
@@ -55,12 +55,25 @@ export default function Payments() {
   // Mark paid
   const [markingPaid, setMarkingPaid] = useState(null)
 
+  // Spendings
+  const [spendings, setSpendings]           = useState([])
+  const [spendName, setSpendName]           = useState('')
+  const [spendAmount, setSpendAmount]       = useState('')
+  const [spendDate, setSpendDate]           = useState(() => new Date().toISOString().slice(0, 10))
+  const [spendProjectId, setSpendProjectId] = useState('general')
+  const [addingSpend, setAddingSpend]       = useState(false)
+  const [spendError, setSpendError]         = useState('')
+  const [deletingSpend, setDeletingSpend]   = useState(null)
+
   useEffect(() => {
     axios.get(`${BASE_URL}/payment/all`, { withCredentials: true })
       .then(res => { setPlans(res.data.plans || []); setLoading(false) })
       .catch(err => { setError(err.response?.data || 'Failed to load'); setLoading(false) })
     axios.get(`${BASE_URL}/project/all`, { withCredentials: true })
       .then(res => setProjects(res.data.projects || []))
+      .catch(() => {})
+    axios.get(`${BASE_URL}/payment/spendings`, { withCredentials: true })
+      .then(res => setSpendings(res.data.spendings || []))
       .catch(() => {})
   }, [])
 
@@ -145,6 +158,49 @@ export default function Payments() {
       alert(err.response?.data || 'Failed to mark paid')
     } finally {
       setMarkingPaid(null)
+    }
+  }
+
+  // ── Spendings ─────────────────────────────────────────────────────────────
+  const handleAddSpend = async (e) => {
+    e.preventDefault()
+    setSpendError('')
+    if (!spendName.trim() || !spendAmount) {
+      setSpendError('Bill name and amount are required.')
+      return
+    }
+    setAddingSpend(true)
+    const proj = spendProjectId === 'general' ? null : projects.find(p => p._id === spendProjectId)
+    try {
+      const res = await axios.post(`${BASE_URL}/payment/spending`, {
+        name: spendName.trim(),
+        amount: Number(spendAmount),
+        date: spendDate,
+        projectId:   proj?._id   || null,
+        projectName: proj?.projectName || 'General',
+      }, { withCredentials: true })
+      setSpendings(prev => [res.data.spending, ...prev])
+      setSpendName('')
+      setSpendAmount('')
+      setSpendDate(new Date().toISOString().slice(0, 10))
+      setSpendProjectId('general')
+    } catch (err) {
+      setSpendError(err.response?.data?.message || err.response?.data || 'Failed to add spending — check console.')
+      console.error('[SPEND ADD]', err)
+    } finally {
+      setAddingSpend(false)
+    }
+  }
+
+  const handleDeleteSpend = async (id) => {
+    setDeletingSpend(id)
+    try {
+      await axios.delete(`${BASE_URL}/payment/spending/${id}`, { withCredentials: true })
+      setSpendings(prev => prev.filter(s => s._id !== id))
+    } catch {
+      alert('Failed to delete')
+    } finally {
+      setDeletingSpend(null)
     }
   }
 
@@ -289,7 +345,7 @@ export default function Payments() {
         <div className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)' }}>
           <div className="bg-white rounded-2xl card-shadow w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
               <h3 className="text-sm font-bold text-gray-900">New Payment Plan</h3>
               <button onClick={() => setCreateModal(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16}/></button>
             </div>
@@ -386,6 +442,115 @@ export default function Payments() {
           </div>
         </div>
       )}
+
+      {/* ── Spendings Section ─────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl card-shadow p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: '#883bbc18' }}>
+            <Wallet size={14} style={{ color: '#883bbc' }} />
+          </div>
+          <h3 className="text-sm font-bold text-gray-900">Spendings</h3>
+          <span className="text-[10px] text-gray-400 ml-auto">{spendings.length} entr{spendings.length === 1 ? 'y' : 'ies'}</span>
+        </div>
+
+        {/* Add spending form */}
+        {spendError && (
+          <div className="text-xs text-red-500 bg-red-50 rounded-xl px-3 py-2">{spendError}</div>
+        )}
+        <form onSubmit={handleAddSpend} className="flex items-end gap-2 flex-wrap">
+          <div className="flex-1 min-w-36">
+            <label className="block text-[10px] font-semibold text-gray-500 mb-1">Bill name</label>
+            <input
+              required
+              className="admin-input text-xs"
+              placeholder="e.g. Material purchase"
+              value={spendName}
+              onChange={e => setSpendName(e.target.value)}
+            />
+          </div>
+          <div className="w-44">
+            <label className="block text-[10px] font-semibold text-gray-500 mb-1">Project</label>
+            <select
+              className="admin-input text-xs"
+              value={spendProjectId}
+              onChange={e => setSpendProjectId(e.target.value)}
+            >
+              <option value="general">General (no project)</option>
+              {projects.map(p => (
+                <option key={p._id} value={p._id}>{p.projectName}</option>
+              ))}
+            </select>
+          </div>
+          <div className="w-32">
+            <label className="block text-[10px] font-semibold text-gray-500 mb-1">Amount (₹)</label>
+            <input
+              required
+              type="number"
+              min="1"
+              className="admin-input text-xs"
+              placeholder="e.g. 25000"
+              value={spendAmount}
+              onChange={e => setSpendAmount(e.target.value)}
+            />
+          </div>
+          <div className="w-36">
+            <label className="block text-[10px] font-semibold text-gray-500 mb-1">Date</label>
+            <input
+              type="date"
+              className="admin-input text-xs"
+              value={spendDate}
+              onChange={e => setSpendDate(e.target.value)}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={addingSpend}
+            className="btn-primary text-xs h-9 px-4 flex items-center gap-1 disabled:opacity-60 shrink-0"
+          >
+            <Plus size={12} /> {addingSpend ? 'Adding…' : 'Add'}
+          </button>
+        </form>
+
+        {/* Spendings list */}
+        {spendings.length === 0 ? (
+          <div className="text-xs text-gray-400 text-center py-4">No spendings recorded yet</div>
+        ) : (
+          <div className="space-y-2">
+            {spendings.map(s => (
+              <div key={s._id} className="flex items-center justify-between px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                <div>
+                  <div className="text-xs font-semibold text-gray-800">{s.name}</div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-gray-400">
+                      {s.date ? new Date(s.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                    </span>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                      style={{ background: s.projectId ? '#883bbc18' : '#f3f4f6', color: s.projectId ? '#883bbc' : '#9ca3af' }}>
+                      {s.projectName || 'General'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-gray-900">{fmtShort(s.amount)}</span>
+                  <button
+                    onClick={() => handleDeleteSpend(s._id)}
+                    disabled={deletingSpend === s._id}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors disabled:opacity-40"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-1 border-t border-gray-100 px-1">
+              <span className="text-[10px] font-semibold text-gray-400">Total spent</span>
+              <span className="text-xs font-bold text-gray-700">
+                {fmtShort(spendings.reduce((s, e) => s + e.amount, 0))}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

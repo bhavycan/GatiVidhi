@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
 import {
-  FolderKanban, Users, HardHat, CreditCard, TrendingUp,
+  FolderKanban, HardHat, TrendingUp,
   CheckSquare, Clock, AlertTriangle, ArrowUpRight
 } from 'lucide-react'
 
@@ -21,12 +21,59 @@ const priorityColors = {
   medium: 'bg-amber-100 text-amber-600',
   low: 'bg-green-100 text-green-600',
 }
-const fmt = (v) => `₹${(v / 100000).toFixed(1)}L`
+const fmtL = (v) => v >= 100000 ? `₹${(v / 100000).toFixed(1)}L` : `₹${(v / 1000).toFixed(0)}k`
+
+// Build a 6-month time-series from payment plans and spendings
+function buildFinanceChart(plans, spendings) {
+  const months = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - i)
+    months.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }),
+      expected: 0,
+      received: 0,
+      spending: 0,
+    })
+  }
+  const byKey = Object.fromEntries(months.map(m => [m.key, m]))
+
+  // Installments → expected by dueDate month, received by paidAt month
+  for (const plan of plans) {
+    for (const inst of plan.installments || []) {
+      if (inst.dueDate) {
+        const k = inst.dueDate.slice(0, 7)
+        if (byKey[k]) byKey[k].expected += inst.amount
+      }
+      if (inst.status === 'paid' && inst.paidAt) {
+        const k = inst.paidAt.slice(0, 7)
+        if (byKey[k]) byKey[k].received += inst.amount
+      }
+    }
+  }
+
+  // Spendings by date month
+  for (const s of spendings) {
+    if (s.date) {
+      const k = s.date.slice(0, 7)
+      if (byKey[k]) byKey[k].spending += s.amount
+    }
+  }
+
+  return months
+}
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [projects, setProjects] = useState([])
   const [approvals, setApprovals] = useState([])
+  // initialise with empty-month skeleton so the chart always has axes to render
+  const [plans, setPlans]         = useState([])
+  const [spendings, setSpendings] = useState([])
+
+  const financeChart = buildFinanceChart(plans, spendings)
 
   useEffect(() => {
     axios.get(`${BASE_URL}/admin/dashboard-stats`, { withCredentials: true })
@@ -39,6 +86,15 @@ export default function Dashboard() {
 
     axios.get(`${BASE_URL}/approval/all`, { withCredentials: true })
       .then(res => setApprovals((res.data.approvals || []).filter(a => a.status === 'pending').slice(0, 4)))
+      .catch(() => {})
+
+    // fetch independently — one failing must not zero-out the other
+    axios.get(`${BASE_URL}/payment/all`, { withCredentials: true })
+      .then(r => setPlans(r.data.plans || []))
+      .catch(() => {})
+
+    axios.get(`${BASE_URL}/payment/spendings`, { withCredentials: true })
+      .then(r => setSpendings(r.data.spendings || []))
       .catch(() => {})
   }, [])
 
@@ -95,20 +151,32 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-8 bg-white rounded-2xl p-6 card-shadow">
-          <div className="text-sm font-bold text-gray-900 mb-1">Approval Status</div>
-          <div className="text-xs text-gray-400 mb-4">Pending vs Approved vs Rejected</div>
+          <div className="text-sm font-bold text-gray-900 mb-1">Finance Overview</div>
+          <div className="flex items-center gap-4 mb-4">
+            {[
+              { label: 'Expected', color: '#883bbc' },
+              { label: 'Received', color: '#10b981' },
+              { label: 'Spending', color: '#f59e0b' },
+            ].map(({ label, color }) => (
+              <div key={label} className="flex items-center gap-1.5">
+                <span className="w-3 h-0.5 rounded-full inline-block" style={{ background: color }} />
+                <span className="text-[10px] text-gray-400 font-medium">{label}</span>
+              </div>
+            ))}
+          </div>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={[
-              { name: 'Pending', value: stats?.pendingApprovals ?? 0 },
-              { name: 'Approved', value: stats?.approvedApprovals ?? 0 },
-              { name: 'Rejected', value: stats?.rejectedApprovals ?? 0 },
-            ]} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+            <LineChart data={financeChart} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0eef8" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ border: '1px solid #ece9f5', borderRadius: 10, fontSize: 12 }} />
-              <Bar dataKey="value" fill="#883bbc" radius={[6, 6, 0, 0]} />
-            </BarChart>
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={fmtL} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                formatter={(value, name) => [fmtL(value), name.charAt(0).toUpperCase() + name.slice(1)]}
+                contentStyle={{ border: '1px solid #ece9f5', borderRadius: 10, fontSize: 12 }}
+              />
+              <Line type="monotone" dataKey="expected" stroke="#883bbc" strokeWidth={2} dot={{ r: 3, fill: '#883bbc' }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="received" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="spending" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3, fill: '#f59e0b' }} activeDot={{ r: 5 }} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
 
@@ -131,7 +199,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {projectStatusData.map(({ name, value, color }) => (
                   <div key={name} className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
                     <span className="text-xs text-gray-500">{name}</span>
                     <span className="text-xs font-bold text-gray-800 ml-auto">{value}</span>
                   </div>
@@ -196,7 +264,7 @@ export default function Dashboard() {
                   <div className="text-xs font-semibold text-gray-800 truncate">{a.title}</div>
                   <div className="text-[10px] text-gray-400 truncate">{a.projectName}</div>
                 </div>
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                <div className="flex flex-col items-end gap-1 shrink-0">
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${priorityColors[a.priority] || 'bg-gray-100 text-gray-600'}`}>
                     {a.priority}
                   </span>
