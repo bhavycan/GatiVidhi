@@ -8,6 +8,23 @@ import AdminNavbar from '../../templates/AdminNavbar'
 import axios from 'axios'
 import { API_BASE } from '../../config.js'
 
+const CATEGORIES = ['Flooring', 'Walls', 'Ceiling', 'Furniture', 'Lighting', 'Kitchen', 'Other']
+
+const EMPTY_FORM = { label: '', materialName: '', category: '', brand: '', unit: '', price: '', stock: '' }
+
+// ── Reusable field input ───────────────────────────────────────────────────────
+const Field = ({ icon, label, children }) => (
+  <div>
+    <label className='block text-black font-medium mb-1.5 text-sm'>{label}</label>
+    <div className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
+      <i className={`${icon} text-[#883bbc] shrink-0`}></i>
+      {children}
+    </div>
+  </div>
+)
+
+const inputCls = 'flex-1 bg-transparent outline-none font-semibold text-sm placeholder:opacity-50 w-full'
+
 const AdminMaterial = () => {
   const parent = useRef(null)
   const navigate = useNavigate()
@@ -15,16 +32,19 @@ const AdminMaterial = () => {
   const { showPopcard, popcard } = usePopcard()
 
   const [materials, setMaterials] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [isFormOpen, setFormOpen] = useState(false)
-  const [formLabel, setFormLabel] = useState('')
-  const [formMaterial, setFormMaterial] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading]     = useState(true)
 
-  // inline edit state
+  // create form
+  const [isFormOpen, setFormOpen] = useState(false)
+  const [form, setForm]           = useState(EMPTY_FORM)
+  const [saving, setSaving]       = useState(false)
+
+  // inline edit
   const [editingId, setEditingId] = useState(null)
-  const [editLabel, setEditLabel] = useState('')
-  const [editMaterial, setEditMaterial] = useState('')
+  const [editForm, setEditForm]   = useState(EMPTY_FORM)
+
+  const setField  = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const setEField = (k, v) => setEditForm(f => ({ ...f, [k]: v }))
 
   const fetchMaterials = async () => {
     try {
@@ -41,13 +61,20 @@ const AdminMaterial = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault()
-    if (!formLabel.trim() || !formMaterial.trim()) return showPopcard('Both fields are required.', false, 2000)
+    if (!form.label.trim() || !form.materialName.trim()) return showPopcard('Label and material name are required.', false, 2000)
     setSaving(true)
     try {
-      await axios.post(`${API_BASE}/material/create`, { label: formLabel.trim(), materialName: formMaterial.trim() }, { withCredentials: true })
+      await axios.post(`${API_BASE}/material/create`, {
+        label:        form.label.trim(),
+        materialName: form.materialName.trim(),
+        category:     form.category,
+        brand:        form.brand.trim(),
+        unit:         form.unit.trim(),
+        price:        Number(form.price) || 0,
+        stock:        Number(form.stock) || 0,
+      }, { withCredentials: true })
       showPopcard('Material added!', true, 1500)
-      setFormLabel('')
-      setFormMaterial('')
+      setForm(EMPTY_FORM)
       setFormOpen(false)
       fetchMaterials()
     } catch {
@@ -59,20 +86,32 @@ const AdminMaterial = () => {
 
   const openEdit = (mat) => {
     setEditingId(mat._id)
-    setEditLabel(mat.label)
-    setEditMaterial(mat.materialName)
+    setEditForm({
+      label:        mat.label        || '',
+      materialName: mat.materialName || '',
+      category:     mat.category     || '',
+      brand:        mat.brand        || '',
+      unit:         mat.unit         || '',
+      price:        String(mat.price ?? ''),
+      stock:        String(mat.stock ?? ''),
+    })
   }
 
-  const cancelEdit = () => {
-    setEditingId(null)
-    setEditLabel('')
-    setEditMaterial('')
-  }
+  const cancelEdit = () => { setEditingId(null); setEditForm(EMPTY_FORM) }
 
   const handleUpdate = async (id) => {
-    if (!editLabel.trim() || !editMaterial.trim()) return showPopcard('Both fields are required.', false, 2000)
+    if (!editForm.label.trim() || !editForm.materialName.trim()) return showPopcard('Label and material name are required.', false, 2000)
     try {
-      await axios.post(`${API_BASE}/material/update`, { id, label: editLabel.trim(), materialName: editMaterial.trim() }, { withCredentials: true })
+      await axios.post(`${API_BASE}/material/update`, {
+        id,
+        label:        editForm.label.trim(),
+        materialName: editForm.materialName.trim(),
+        category:     editForm.category,
+        brand:        editForm.brand.trim(),
+        unit:         editForm.unit.trim(),
+        price:        Number(editForm.price) || 0,
+        stock:        Number(editForm.stock) || 0,
+      }, { withCredentials: true })
       showPopcard('Updated!', true, 1500)
       cancelEdit()
       fetchMaterials()
@@ -99,6 +138,63 @@ const AdminMaterial = () => {
       showPopcard('Something went wrong.', false, 2000)
     }
   }
+
+  // ── Shared form fields JSX (used by both create and edit) ──────────────────
+  const renderFields = (values, setter) => (
+    <div className='space-y-3'>
+      {/* Label + Material Name */}
+      <div className='grid grid-cols-2 gap-3'>
+        <Field icon='ri-price-tag-3-line' label='Label *'>
+          <input type='text' value={values.label} onChange={e => setter('label', e.target.value)}
+            placeholder='e.g. MAT-001' className={inputCls} />
+        </Field>
+        <Field icon='ri-stack-line' label='Material Name *'>
+          <input type='text' value={values.materialName} onChange={e => setter('materialName', e.target.value)}
+            placeholder='e.g. Marble Tile' className={inputCls} />
+        </Field>
+      </div>
+
+      {/* Category dropdown */}
+      <div>
+        <label className='block text-black font-medium mb-1.5 text-sm'>Category</label>
+        <div className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
+          <i className='ri-layout-grid-line text-[#883bbc] shrink-0'></i>
+          <select
+            value={values.category}
+            onChange={e => setter('category', e.target.value)}
+            className='flex-1 bg-transparent outline-none font-semibold text-sm appearance-none'
+          >
+            <option value=''>Select category…</option>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Brand + Unit */}
+      <div className='grid grid-cols-2 gap-3'>
+        <Field icon='ri-building-2-line' label='Brand'>
+          <input type='text' value={values.brand} onChange={e => setter('brand', e.target.value)}
+            placeholder='e.g. Asian Paints' className={inputCls} />
+        </Field>
+        <Field icon='ri-ruler-line' label='Unit'>
+          <input type='text' value={values.unit} onChange={e => setter('unit', e.target.value)}
+            placeholder='e.g. sqft' className={inputCls} />
+        </Field>
+      </div>
+
+      {/* Price + Stock */}
+      <div className='grid grid-cols-2 gap-3'>
+        <Field icon='ri-money-rupee-circle-line' label='Price (₹)'>
+          <input type='number' min='0' value={values.price} onChange={e => setter('price', e.target.value)}
+            placeholder='0' className={inputCls} />
+        </Field>
+        <Field icon='ri-archive-line' label='Stock'>
+          <input type='number' min='0' value={values.stock} onChange={e => setter('stock', e.target.value)}
+            placeholder='0' className={inputCls} />
+        </Field>
+      </div>
+    </div>
+  )
 
   return (
     <div className='w-screen h-screen relative overflow-hidden'>
@@ -155,7 +251,7 @@ const AdminMaterial = () => {
             </div>
           </header>
 
-          {/* Materials list */}
+          {/* ── Materials list ───────────────────────────────────────────── */}
           <section className='w-full relative z-10 mt-[5%] space-y-3'>
             {loading ? (
               <div className='flex justify-center py-8'>
@@ -177,78 +273,100 @@ const AdminMaterial = () => {
                     transition={{ delay: i * 0.05, duration: 0.3 }}
                     className='rounded-lg bg-gradient-to-br from-[#F7D6F3]/60 to-transparent border border-[#883bbc]/40 overflow-hidden'
                   >
-                    {/* View row */}
                     {editingId !== mat._id ? (
-                      <div className='px-4 py-3 flex items-center justify-between gap-3'>
-                        <div className='flex-1 min-w-0'>
-                          <div className='flex items-center gap-2'>
-                            <p className='font-bold text-base truncate'>{mat.label}</p>
-                            {mat.isDefault && (
-                              <span className='text-xs font-semibold px-2 py-[1px] rounded-full border text-[#883bbc] bg-[#F7D6F3] border-[#883bbc]/40 shrink-0'>
-                                default
-                              </span>
-                            )}
+                      /* ── View row ── */
+                      <div className='px-4 py-3'>
+                        <div className='flex items-start justify-between gap-3'>
+                          <div className='flex-1 min-w-0'>
+                            <div className='flex items-center gap-2 flex-wrap'>
+                              <p className='font-bold text-base truncate'>{mat.label}</p>
+                              {mat.category && (
+                                <span className='text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#883bbc]/10 text-[#883bbc] shrink-0'>
+                                  {mat.category}
+                                </span>
+                              )}
+                              {mat.isDefault && (
+                                <span className='text-[10px] font-semibold px-2 py-0.5 rounded-full border text-[#883bbc] bg-[#F7D6F3] border-[#883bbc]/40 shrink-0'>
+                                  default
+                                </span>
+                              )}
+                            </div>
+                            <p className='text-sm opacity-60 font-semibold truncate mt-0.5'>{mat.materialName}</p>
+                            <div className='flex items-center gap-3 mt-1.5 flex-wrap'>
+                              {mat.brand && (
+                                <span className='text-xs opacity-50 font-semibold flex items-center gap-1'>
+                                  <i className='ri-building-2-line text-[10px]'></i>{mat.brand}
+                                </span>
+                              )}
+                              {mat.unit && (
+                                <span className='text-xs opacity-50 font-semibold flex items-center gap-1'>
+                                  <i className='ri-ruler-line text-[10px]'></i>{mat.unit}
+                                </span>
+                              )}
+                              {mat.price > 0 && (
+                                <span className='text-xs font-bold text-[#883bbc] flex items-center gap-0.5'>
+                                  <i className='ri-money-rupee-circle-line text-[10px]'></i>
+                                  {Number(mat.price).toLocaleString('en-IN')}
+                                </span>
+                              )}
+                              {mat.stock !== undefined && (
+                                <span className={`text-xs font-bold flex items-center gap-1
+                                  ${mat.stock === 0 ? 'text-red-500' : mat.stock < 20 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                                  <i className='ri-archive-line text-[10px]'></i>
+                                  {mat.stock === 0 ? 'Out of stock' : mat.stock < 20 ? `Low (${mat.stock})` : mat.stock}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <p className='text-sm opacity-60 font-semibold truncate mt-0.5'>{mat.materialName}</p>
-                        </div>
-                        <div className='flex items-center gap-2 shrink-0'>
-                          <motion.button
-                            onClick={() => handleToggleDefault(mat._id)}
-                            whileTap={{ scale: 0.9 }}
-                            title={mat.isDefault ? 'Remove default' : 'Set as default'}
-                            className={`w-8 h-8 rounded-full border flex items-center justify-center text-sm ${mat.isDefault ? 'bg-[#F7D6F3] border-[#883bbc] text-[#883bbc]' : 'bg-white/60 border-[#883bbc]/30 text-[#883bbc]/50'}`}
-                          >
-                            <i className='ri-star-fill'></i>
-                          </motion.button>
-                          <motion.button
-                            onClick={() => openEdit(mat)}
-                            whileTap={{ scale: 0.9 }}
-                            className='w-8 h-8 rounded-full bg-white/60 border border-[#883bbc]/30 flex items-center justify-center text-[#883bbc]'
-                          >
-                            <i className='ri-edit-2-line text-sm'></i>
-                          </motion.button>
-                          <motion.button
-                            onClick={() => handleDelete(mat._id)}
-                            whileTap={{ scale: 0.9 }}
-                            className='w-8 h-8 rounded-full bg-red-50 border border-red-300 flex items-center justify-center text-red-400'
-                          >
-                            <i className='ri-delete-bin-line text-sm'></i>
-                          </motion.button>
+                          <div className='flex items-center gap-2 shrink-0'>
+                            <motion.button
+                              onClick={() => handleToggleDefault(mat._id)}
+                              whileTap={{ scale: 0.9 }}
+                              title={mat.isDefault ? 'Remove default' : 'Set as default'}
+                              className={`w-8 h-8 rounded-full border flex items-center justify-center text-sm
+                                ${mat.isDefault ? 'bg-[#F7D6F3] border-[#883bbc] text-[#883bbc]' : 'bg-white/60 border-[#883bbc]/30 text-[#883bbc]/50'}`}
+                            >
+                              <i className='ri-star-fill'></i>
+                            </motion.button>
+                            <motion.button
+                              onClick={() => openEdit(mat)}
+                              whileTap={{ scale: 0.9 }}
+                              className='w-8 h-8 rounded-full bg-white/60 border border-[#883bbc]/30 flex items-center justify-center text-[#883bbc]'
+                            >
+                              <i className='ri-edit-2-line text-sm'></i>
+                            </motion.button>
+                            <motion.button
+                              onClick={() => handleDelete(mat._id)}
+                              whileTap={{ scale: 0.9 }}
+                              className='w-8 h-8 rounded-full bg-red-50 border border-red-300 flex items-center justify-center text-red-400'
+                            >
+                              <i className='ri-delete-bin-line text-sm'></i>
+                            </motion.button>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      /* Inline edit row */
+                      /* ── Inline edit row ── */
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className='px-4 py-3 space-y-2'
+                        className='px-4 py-4 space-y-3'
                       >
-                        <div className='w-full bg-white/40 border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
-                          <i className='ri-price-tag-3-line text-[#883bbc]'></i>
-                          <input
-                            autoFocus
-                            value={editLabel}
-                            onChange={e => setEditLabel(e.target.value)}
-                            placeholder='Label (e.g. Paint)'
-                            className='flex-1 bg-transparent outline-none font-semibold text-base placeholder:opacity-50'
-                          />
-                        </div>
-                        <div className='w-full bg-white/40 border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
-                          <i className='ri-building-2-line text-[#883bbc]'></i>
-                          <input
-                            value={editMaterial}
-                            onChange={e => setEditMaterial(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') handleUpdate(mat._id); if (e.key === 'Escape') cancelEdit() }}
-                            placeholder='Material / Vendor name'
-                            className='flex-1 bg-transparent outline-none font-semibold text-base placeholder:opacity-50'
-                          />
-                        </div>
+                        <p className='text-sm font-bold text-[#883bbc] mb-1'>Edit Material</p>
+                        {renderFields(editForm, setEField)}
                         <div className='flex gap-2 pt-1'>
-                          <button onClick={cancelEdit} className='flex-1 border border-[#883bbc] rounded-md py-2 text-sm font-medium bg-gradient-to-tl from-[#F7D6F3] to-transparent'>Cancel</button>
+                          <button
+                            type='button'
+                            onClick={cancelEdit}
+                            className='flex-1 border border-[#883bbc] rounded-full py-2.5 text-sm font-semibold bg-gradient-to-tl from-[#F7D6F3] to-transparent'
+                          >
+                            Cancel
+                          </button>
                           <motion.button
+                            type='button'
                             onClick={() => handleUpdate(mat._id)}
                             whileTap={{ scale: 0.97 }}
-                            className='flex-1 bg-[#883bbc] text-white rounded-md py-2 text-sm font-medium flex items-center justify-center gap-1'
+                            className='flex-1 bg-[#883bbc] text-white rounded-full py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5'
                           >
                             <i className='ri-save-line'></i> Save
                           </motion.button>
@@ -261,8 +379,8 @@ const AdminMaterial = () => {
             )}
           </section>
 
-          {/* Add material */}
-          <section className='w-full relative z-10 pb-16 mt-[5%]'>
+          {/* ── Add material form ────────────────────────────────────────── */}
+          <section className='w-full relative z-10 pb-20 mt-[5%]'>
             <h1 className='text-xl font-bold'>Add Material :</h1>
 
             <AnimatePresence mode='wait'>
@@ -273,7 +391,7 @@ const AdminMaterial = () => {
                   exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}
                 >
                   <div className='px-2 py-2 rounded-lg bg-gradient-to-br mt-[2%] from-[#F7D6F3] to-transparent'>
-                    <p>Add a new material label and vendor/product name.</p>
+                    <p className='text-sm font-semibold opacity-70'>Add a new material with full details.</p>
                     <motion.div
                       layoutId='material-open-btn'
                       onClick={() => setFormOpen(true)}
@@ -293,59 +411,38 @@ const AdminMaterial = () => {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.4, ease: 'easeInOut' }}
-                  className='border border-[#883bbc] w-full mt-[5%] backdrop-blur-sm rounded-lg'
+                  className='border border-[#883bbc] w-full mt-[4%] backdrop-blur-sm rounded-lg'
                 >
                   <motion.form
                     onSubmit={handleCreate}
                     className='px-3 py-4 space-y-4'
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
+                    transition={{ delay: 0.25 }}
                   >
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }}>
-                      <label className='block text-black font-medium mb-2'>Label</label>
-                      <div className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
-                        <i className='ri-price-tag-3-line text-[#883bbc]'></i>
-                        <input
-                          type='text'
-                          value={formLabel}
-                          onChange={e => setFormLabel(e.target.value)}
-                          placeholder='e.g. Paint, Ceiling, Lights'
-                          className='flex-1 bg-transparent outline-none font-semibold text-base placeholder:opacity-50'
-                        />
-                      </div>
-                    </motion.div>
+                    {renderFields(form, setField)}
 
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.42 }}>
-                      <label className='block text-black font-medium mb-2'>Material / Vendor Name</label>
-                      <div className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 flex items-center gap-2'>
-                        <i className='ri-building-2-line text-[#883bbc]'></i>
-                        <input
-                          type='text'
-                          value={formMaterial}
-                          onChange={e => setFormMaterial(e.target.value)}
-                          placeholder='e.g. ColorWave Paintworks'
-                          className='flex-1 bg-transparent outline-none font-semibold text-base placeholder:opacity-50'
-                        />
-                      </div>
-                    </motion.div>
-
-                    <motion.div className='flex gap-4 pt-2' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.49 }}>
+                    <div className='flex gap-3 pt-1'>
                       <button
                         type='button'
-                        onClick={() => { setFormOpen(false); setFormLabel(''); setFormMaterial('') }}
-                        className='flex-1 bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-md px-4 py-3 font-medium'
-                      >Cancel</button>
+                        onClick={() => { setFormOpen(false); setForm(EMPTY_FORM) }}
+                        className='flex-1 bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-3 font-semibold text-sm'
+                      >
+                        Cancel
+                      </button>
                       <motion.button
                         layoutId='material-open-btn'
                         type='submit'
                         disabled={saving}
-                        className='flex-1 rounded-md px-4 py-3 bg-[#883bbc] text-white font-medium flex items-center justify-center gap-2 disabled:opacity-60'
-                        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        whileTap={{ scale: 0.98 }}
+                        className='flex-1 rounded-full px-4 py-3 bg-[#883bbc] text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60'
                       >
-                        {saving ? <i className='ri-loader-4-line animate-spin text-xl'></i> : <><i className='ri-add-line'></i><span>Add Material</span></>}
+                        {saving
+                          ? <i className='ri-loader-4-line animate-spin text-lg'></i>
+                          : <><i className='ri-add-line'></i><span>Add Material</span></>
+                        }
                       </motion.button>
-                    </motion.div>
+                    </div>
                   </motion.form>
                 </motion.div>
               )}

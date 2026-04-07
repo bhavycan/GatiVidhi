@@ -30,7 +30,7 @@ const supportNav = [
   { label: 'Settings',      icon: Settings,      to: '/settings' },
 ]
 
-export default function Sidebar({ collapsed, notifCount = 0 }) {
+export default function Sidebar({ collapsed, notifCount = 0, msgCount = 0 }) {
   return (
     <aside
       style={{
@@ -52,14 +52,14 @@ export default function Sidebar({ collapsed, notifCount = 0 }) {
       <div className="relative px-4 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(136,59,188,0.12)' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #883bbc, #f3a9de)', boxShadow: '0 4px 14px rgba(136,59,188,0.35)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--purple), #f3a9de)', boxShadow: '0 4px 14px rgba(136,59,188,0.35)' }}>
             <span className="text-white font-black text-sm">G</span>
           </div>
           {!collapsed && (
             <div>
               <div className="text-xl font-semibold leading-none" style={{ color: '#1e1e2e' }}>GatiVidhi</div>
               <span className="text-xs font-bold px-1.5 py-0.5 rounded"
-                style={{ background: 'rgba(255,255,255,0.6)', color: '#883bbc' }}>
+                style={{ background: 'rgba(255,255,255,0.6)', color: 'var(--purple)' }}>
                 Admin!
               </span>
             </div>
@@ -89,7 +89,10 @@ export default function Sidebar({ collapsed, notifCount = 0 }) {
               item={item}
               collapsed={collapsed}
               delay={i * 0.04}
-              badge={item.to === '/notifications' && notifCount > 0 ? notifCount : 0}
+              badge={
+                item.to === '/notifications' && notifCount > 0 ? notifCount :
+                item.to === '/messages' && msgCount > 0 ? msgCount : 0
+              }
             />
           ))}
         </div>
@@ -99,19 +102,19 @@ export default function Sidebar({ collapsed, notifCount = 0 }) {
       <div className="relative px-3 py-3" style={{ borderTop: '1px solid rgba(136,59,188,0.12)' }}>
         {collapsed ? (
           <div className="w-9 h-9 rounded-full mx-auto flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #883bbc, #f3a9de)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--purple), #f3a9de)' }}>
             <span className="text-white font-bold text-xs">A</span>
           </div>
         ) : (
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(8px)' }}>
             <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #883bbc, #f3a9de)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--purple), #f3a9de)' }}>
               <span className="text-white font-bold text-xs">A</span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold truncate" style={{ color: '#1e1e2e' }}>Admin</div>
-              <div className="text-[10px] truncate" style={{ color: '#883bbc' }}>Super Admin</div>
+              <div className="text-[10px] truncate" style={{ color: 'var(--purple)' }}>Super Admin</div>
             </div>
             <button className="p-1 rounded-lg hover:bg-red-100 transition-colors"
               style={{ color: '#bb7bca' }}>
@@ -127,7 +130,7 @@ export default function Sidebar({ collapsed, notifCount = 0 }) {
 function SectionLabel({ label, collapsed }) {
   if (collapsed) return <div className="my-2 mx-1 h-px" style={{ background: 'rgba(136,59,188,0.15)' }} />
   return (
-    <div className="text-[11px] font-bold px-2 pb-1.5 pt-1" style={{ color: '#883bbc', opacity: 0.6 }}>
+    <div className="text-[11px] font-bold px-2 pb-1.5 pt-1" style={{ color: 'var(--purple)', opacity: 0.6 }}>
       {label}:
     </div>
   )
@@ -155,12 +158,12 @@ function SidebarItem({ item: { label, icon: Icon, to }, collapsed, delay, badge 
         >
           {isActive && (
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full"
-              style={{ background: 'linear-gradient(180deg, #883bbc, #f3a9de)' }} />
+              style={{ background: 'linear-gradient(180deg, var(--purple), #f3a9de)' }} />
           )}
           <div className="relative flex-shrink-0">
             <Icon
               size={16}
-              style={{ color: isActive ? '#883bbc' : '#a070c0' }}
+              style={{ color: isActive ? 'var(--purple)' : '#a070c0' }}
             />
             {collapsed && badge > 0 && (
               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
@@ -170,7 +173,7 @@ function SidebarItem({ item: { label, icon: Icon, to }, collapsed, delay, badge 
           </div>
           {!collapsed && (
             <span className="text-sm font-bold truncate flex-1"
-              style={{ color: isActive ? '#883bbc' : '#3d1f5c' }}>
+              style={{ color: isActive ? 'var(--purple)' : '#3d1f5c' }}>
               {label}
             </span>
           )}
@@ -185,7 +188,7 @@ function SidebarItem({ item: { label, icon: Icon, to }, collapsed, delay, badge 
               whileHover={{ opacity: 1, x: 0 }}
               className="absolute left-full ml-3 px-2.5 py-1.5 text-white text-xs font-bold rounded-xl
                 pointer-events-none whitespace-nowrap z-50"
-              style={{ background: 'linear-gradient(135deg, #883bbc, #b96ddc)', boxShadow: '0 4px 12px rgba(136,59,188,0.3)' }}
+              style={{ background: 'linear-gradient(135deg, var(--purple), var(--purple-light))', boxShadow: '0 4px 12px rgba(136,59,188,0.3)' }}
             >
               {label}
             </motion.div>

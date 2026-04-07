@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { io } from 'socket.io-client'
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
@@ -21,6 +22,16 @@ import Notifications from './pages/Notifications'
 import Settings from './pages/Settings'
 
 const BASE_URL = import.meta.env.VITE_API_URL
+
+// Restore saved theme on startup
+try {
+  const saved = JSON.parse(localStorage.getItem('adminTheme'))
+  if (saved?.primary) {
+    document.documentElement.style.setProperty('--purple', saved.primary)
+    document.documentElement.style.setProperty('--purple-dark', saved.dark)
+    document.documentElement.style.setProperty('--purple-light', saved.light)
+  }
+} catch (_) {}
 
 const pageMeta = {
   '/':              { title: 'Dashboard',     subtitle: 'Welcome back, Admin' },
@@ -45,6 +56,7 @@ function Layout({ collapsed, onToggle, onLogout }) {
   const meta = pageMeta[pathname] || { title: 'Admin', subtitle: '' }
   const isMessages = pathname === '/messages'
   const [notifCount, setNotifCount] = useState(0)
+  const [msgCount, setMsgCount] = useState(0)
 
   useEffect(() => {
     axios.get(`${BASE_URL}/admin/notifications`, { withCredentials: true })
@@ -52,11 +64,27 @@ function Layout({ collapsed, onToggle, onLogout }) {
       .catch(() => {})
   }, [])
 
+  // Persistent socket to track unread DMs from clients
+  useEffect(() => {
+    const socket = io(`${BASE_URL}/dm`, { auth: { role: 'admin' } })
+    socket.on('dm:notify', ({ lastRole }) => {
+      if (lastRole === 'client' && window.location.pathname !== '/messages') {
+        setMsgCount(c => c + 1)
+      }
+    })
+    return () => socket.disconnect()
+  }, [])
+
+  // Clear msg count when navigating to /messages
+  useEffect(() => {
+    if (pathname === '/messages') setMsgCount(0)
+  }, [pathname])
+
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--body-bg)' }}>
-      <Sidebar collapsed={collapsed} notifCount={notifCount} />
+      <Sidebar collapsed={collapsed} notifCount={notifCount} msgCount={msgCount} />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header title={meta.title} subtitle={meta.subtitle} onToggleSidebar={onToggle} onLogout={onLogout} notifCount={notifCount} />
+        <Header title={meta.title} subtitle={meta.subtitle} onToggleSidebar={onToggle} onLogout={onLogout} notifCount={notifCount} msgCount={msgCount} />
         <main className={`flex-1 overflow-hidden ${isMessages ? '' : ''}`}>
           <Routes>
             <Route path="/"              element={<Dashboard />} />

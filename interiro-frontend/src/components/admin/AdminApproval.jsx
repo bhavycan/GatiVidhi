@@ -199,7 +199,7 @@ const StatusBadge = ({ status }) => {
 }
 
 // ─── Approval History Card (expandable) ──────────────────────────────────────
-const ApprovalHistoryCard = ({ item, index, clientPhone, reminderLoading, onRemind, onEdit }) => {
+const ApprovalHistoryCard = ({ item, index, clientPhone, reminderLoading, onRemind, onEdit, onChat }) => {
   const [expanded, setExpanded] = useState(false)
 
   const priorityColor = { high: 'text-red-600', medium: 'text-amber-600', low: 'text-green-600' }
@@ -263,6 +263,24 @@ const ApprovalHistoryCard = ({ item, index, clientPhone, reminderLoading, onRemi
                 </div>
               )}
 
+              {/* Attached images */}
+              {item.images && item.images.length > 0 && (
+                <div>
+                  <p className='text-xs font-bold opacity-60 mb-2'>Attachments ({item.images.length})</p>
+                  <div className='flex gap-2 overflow-x-auto pb-1'>
+                    {item.images.map((url, i) => (
+                      <a key={i} href={url} target='_blank' rel='noreferrer'>
+                        <img
+                          src={url}
+                          alt={`img-${i}`}
+                          className='w-20 h-20 rounded-lg object-cover border border-[#883bbc]/30 shrink-0 cursor-pointer hover:opacity-90 transition-opacity'
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Client's response note */}
               {item.clientNote && item.status !== 'pending' && (
                 <div className='bg-white/50 rounded-lg px-3 py-2'>
@@ -281,7 +299,7 @@ const ApprovalHistoryCard = ({ item, index, clientPhone, reminderLoading, onRemi
               )}
 
               {/* Actions */}
-              <div className='flex items-center gap-2 pt-1'>
+              <div className='flex items-center gap-2 pt-1 flex-wrap'>
                 {/* Pending — Remind */}
                 {item.status === 'pending' && (
                   <motion.button
@@ -321,6 +339,16 @@ const ApprovalHistoryCard = ({ item, index, clientPhone, reminderLoading, onRemi
                     </motion.button>
                   </>
                 )}
+
+                {/* Chat — always visible */}
+                <motion.button
+                  type='button'
+                  whileTap={{ scale: 0.92 }}
+                  onClick={(e) => { e.stopPropagation(); onChat(item) }}
+                  className='text-xs font-bold px-3 py-1.5 rounded-full border border-[#883bbc] text-[#883bbc] flex items-center gap-1'
+                >
+                  <i className='ri-chat-3-line'></i> Chat
+                </motion.button>
               </div>
 
             </div>
@@ -437,6 +465,16 @@ const AdminApproval = () => {
     setNote('')
     setFormOpen(false)
     setEditingApproval(null)
+  }
+
+  // ── Navigate to chat with approval reference draft ───────────────────────
+  const handleChat = (item) => {
+    navigate('/admin/chat', {
+      state: {
+        approvalRef: { approvalId: item._id, title: item.title, projectName: selectedProject?.projectName || item.projectName || '' },
+        targetProjectName: selectedProject?.projectName || item.projectName || '',
+      }
+    })
   }
 
   // ── Open form pre-filled with a rejected approval ─────────────────────────
@@ -816,6 +854,7 @@ const AdminApproval = () => {
                   reminderLoading={reminderLoading}
                   onRemind={handleReminder}
                   onEdit={handleEditStart}
+                  onChat={handleChat}
                 />
               ))}
             </div>

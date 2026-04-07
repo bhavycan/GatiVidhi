@@ -6,7 +6,9 @@ import {
 } from 'recharts'
 import {
   FolderKanban, HardHat, TrendingUp,
-  CheckSquare, Clock, AlertTriangle, ArrowUpRight
+  CheckSquare, Clock, AlertTriangle, ArrowUpRight,
+  Flame, CreditCard, Ticket, RefreshCcw, CheckCircle2,
+  ChevronLeft, ChevronRight, X
 } from 'lucide-react'
 
 const BASE_URL = import.meta.env.VITE_API_URL
@@ -65,13 +67,37 @@ function buildFinanceChart(plans, spendings) {
   return months
 }
 
+const alertMeta = {
+  task:     { label: 'Overdue Task',    color: '#ef4444', bg: '#fef2f2', border: '#fecaca', Icon: CheckSquare },
+  payment:  { label: 'Payment Due',     color: '#f97316', bg: '#fff7ed', border: '#fed7aa', Icon: CreditCard },
+  ticket:   { label: 'Open Ticket',     color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe', Icon: Ticket },
+  update:   { label: 'No Update',       color: '#0ea5e9', bg: '#f0f9ff', border: '#bae6fd', Icon: RefreshCcw },
+  approval: { label: 'Approval',        color: '#10b981', bg: '#f0fdf4', border: '#bbf7d0', Icon: CheckCircle2 },
+}
+
+function timeAgo(date) {
+  if (!date) return ''
+  const diff = Date.now() - new Date(date).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [projects, setProjects] = useState([])
   const [approvals, setApprovals] = useState([])
+  const [alerts, setAlerts] = useState([])
   // initialise with empty-month skeleton so the chart always has axes to render
   const [plans, setPlans]         = useState([])
   const [spendings, setSpendings] = useState([])
+  const [workerUpdates, setWorkerUpdates] = useState([])
+  const [lightbox, setLightbox] = useState(null) // { images: [], index: number }
 
   const financeChart = buildFinanceChart(plans, spendings)
 
@@ -88,6 +114,10 @@ export default function Dashboard() {
       .then(res => setApprovals((res.data.approvals || []).filter(a => a.status === 'pending').slice(0, 4)))
       .catch(() => {})
 
+    axios.get(`${BASE_URL}/admin/notifications`, { withCredentials: true })
+      .then(res => setAlerts(res.data.notifications || []))
+      .catch(() => {})
+
     // fetch independently — one failing must not zero-out the other
     axios.get(`${BASE_URL}/payment/all`, { withCredentials: true })
       .then(r => setPlans(r.data.plans || []))
@@ -95,6 +125,10 @@ export default function Dashboard() {
 
     axios.get(`${BASE_URL}/payment/spendings`, { withCredentials: true })
       .then(r => setSpendings(r.data.spendings || []))
+      .catch(() => {})
+
+    axios.get(`${BASE_URL}/worker/recent-images`, { withCredentials: true })
+      .then(r => setWorkerUpdates(r.data.updates || []))
       .catch(() => {})
   }, [])
 
@@ -148,6 +182,62 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* Urgent Alerts */}
+      {alerts.length > 0 && (
+        <div className="bg-white rounded-2xl card-shadow overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-50">
+            <Flame size={15} className="text-red-500" />
+            <span className="text-sm font-bold text-gray-900">Urgent Alerts</span>
+            <span className="ml-1 text-[10px] font-bold text-white px-2 py-0.5 rounded-full bg-red-500">{alerts.length}</span>
+            <div className="ml-auto flex items-center gap-3 text-[10px] text-gray-400 font-medium">
+              {['task','payment','ticket','update','approval'].map(type => {
+                const count = alerts.filter(a => a.type === type).length
+                if (!count) return null
+                const { label, color } = alertMeta[type]
+                return (
+                  <span key={type} className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+                    {count} {label}{count > 1 ? 's' : ''}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+          <div className="divide-y divide-gray-50 max-h-52 overflow-y-auto">
+            {alerts.map((alert, i) => {
+              const meta = alertMeta[alert.type] || alertMeta.task
+              const { Icon, color, bg, border } = meta
+              return (
+                <div key={i} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: bg, border: `1px solid ${border}` }}>
+                    <Icon size={13} style={{ color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-gray-800 truncate">{alert.message}</div>
+                    <div className="text-[10px] text-gray-400 truncate">{alert.projectName}</div>
+                  </div>
+                  {alert.dueDate && (
+                    <div className="text-[10px] font-medium text-red-500 shrink-0">
+                      Due {new Date(alert.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    </div>
+                  )}
+                  {alert.amount && !alert.dueDate && (
+                    <div className="text-[10px] font-bold text-orange-500 shrink-0">
+                      ₹{alert.amount.toLocaleString('en-IN')}
+                    </div>
+                  )}
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0"
+                    style={{ background: bg, color, border: `1px solid ${border}` }}>
+                    {meta.label}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-8 bg-white rounded-2xl p-6 card-shadow">
@@ -277,6 +367,89 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Recent Worker Photos ──────────────────────────────────────────── */}
+      {workerUpdates.length > 0 && (
+        <div className="bg-white rounded-2xl card-shadow overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-50">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: '#883bbc18' }}>
+              <HardHat size={14} style={{ color: '#883bbc' }} />
+            </div>
+            <span className="text-sm font-bold text-gray-900">Recent Worker Photos</span>
+            <span className="text-[10px] text-gray-400">last 7 days</span>
+          </div>
+          <div className="flex gap-4 p-4 overflow-x-auto pb-4">
+            {workerUpdates.map((u) => (
+              <div key={u._id} className="shrink-0 w-52 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+                    style={{ background: '#883bbc' }}>
+                    {(u.workerId?.name || 'W').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-gray-800 truncate">{u.workerId?.name || 'Worker'}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{u.projectId?.projectName || ''}</p>
+                  </div>
+                  <span className="text-[9px] text-gray-300 ml-auto shrink-0">{timeAgo(u.date)}</span>
+                </div>
+                <div className={`grid gap-1 ${u.updateImages.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {u.updateImages.slice(0, 4).map((img, ii) => (
+                    <div key={ii} className="relative">
+                      <img
+                        src={img}
+                        alt=""
+                        onClick={() => setLightbox({ images: u.updateImages, index: ii })}
+                        className="w-full h-16 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      />
+                      {ii === 3 && u.updateImages.length > 4 && (
+                        <div onClick={() => setLightbox({ images: u.updateImages, index: 3 })}
+                          className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center cursor-pointer">
+                          <span className="text-white text-xs font-bold">+{u.updateImages.length - 4}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {u.notes && (
+                  <p className="text-[10px] text-gray-400 mt-1.5 line-clamp-1 italic">"{u.notes}"</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox(l => ({ ...l, index: (l.index - 1 + l.images.length) % l.images.length })) }}
+            className="absolute left-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ChevronLeft size={20} className="text-white" />
+          </button>
+          <img
+            src={lightbox.images[lightbox.index]}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-[80vw] max-h-[80vh] rounded-2xl object-contain shadow-2xl"
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox(l => ({ ...l, index: (l.index + 1) % l.images.length })) }}
+            className="absolute right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ChevronRight size={20} className="text-white" />
+          </button>
+          <div className="absolute bottom-4 text-white/60 text-xs">{lightbox.index + 1} / {lightbox.images.length}</div>
+          <button onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
+            <X size={14} className="text-white" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

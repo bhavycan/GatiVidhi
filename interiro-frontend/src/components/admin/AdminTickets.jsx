@@ -51,7 +51,7 @@ const Toast = ({ message, onClose }) => {
   )
 }
 
-const TicketDetail = ({ ticket, onClose, onResolve }) => {
+const TicketDetail = ({ ticket, onClose, onResolve, onChat }) => {
   const style = PRIORITY_STYLES[ticket.priorityLevel] || PRIORITY_STYLES.medium
   const client = ticket.projectId?.clientId
   const [resolving, setResolving] = useState(false)
@@ -134,6 +134,15 @@ const TicketDetail = ({ ticket, onClose, onResolve }) => {
             </motion.a>
           </div>
         )}
+
+        {/* Chat button */}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onChat}
+          className="w-full rounded-lg border border-[#883bbc] text-[#883bbc] px-4 py-3 flex items-center justify-center gap-2 text-lg font-semibold bg-white/50"
+        >
+          <i className="ri-chat-3-line"></i> Chat with Client
+        </motion.button>
 
         {/* Resolve button */}
         {resolved ? (
@@ -235,6 +244,12 @@ const AdminTickets = () => {
             ticket={selected}
             onClose={() => setSelected(null)}
             onResolve={(id) => setTickets(prev => prev.map(t => t._id === id ? { ...t, resolved: true } : t))}
+            onChat={() => navigate('/admin/chat', {
+              state: {
+                ticketRef: { ticketId: selected._id, note: selected.note, projectName: selected.projectId?.projectName || '' },
+                targetProjectName: selected.projectId?.projectName || '',
+              }
+            })}
           />
         )}
       </AnimatePresence>

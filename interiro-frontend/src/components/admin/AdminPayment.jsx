@@ -152,7 +152,15 @@ const AdminPayment = () => {
   const [toast, setToast] = useState(null)
   const showToast = msg => setToast(msg)
 
-  // fetch projects + due installments on mount
+  // spendings state
+  const [spendings, setSpendings]         = useState([])
+  const [spendName, setSpendName]         = useState('')
+  const [spendAmount, setSpendAmount]     = useState('')
+  const [spendDate, setSpendDate]         = useState(() => new Date().toISOString().slice(0, 10))
+  const [addingSpend, setAddingSpend]     = useState(false)
+  const [deletingSpend, setDeletingSpend] = useState(null)
+
+  // fetch projects + due installments + spendings on mount
   useEffect(() => {
     const load = async () => {
       try {
@@ -164,6 +172,9 @@ const AdminPayment = () => {
     }
     load()
     loadDueInstallments()
+    axios.get(`${API_BASE}/payment/spendings`, { withCredentials: true })
+      .then(res => setSpendings(res.data.spendings || []))
+      .catch(() => {})
   }, [])
 
   const loadDueInstallments = async () => {
@@ -313,6 +324,39 @@ const AdminPayment = () => {
   }
 
   const formatDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+
+  const handleAddSpend = async (e) => {
+    e.preventDefault()
+    if (!spendName.trim() || !spendAmount) return
+    setAddingSpend(true)
+    try {
+      const { data } = await axios.post(`${API_BASE}/payment/spending`,
+        { name: spendName.trim(), amount: Number(spendAmount), date: spendDate },
+        { withCredentials: true }
+      )
+      setSpendings(prev => [data.spending, ...prev])
+      setSpendName('')
+      setSpendAmount('')
+      setSpendDate(new Date().toISOString().slice(0, 10))
+      showToast('Spending added!')
+    } catch {
+      showToast('Failed to add spending')
+    } finally {
+      setAddingSpend(false)
+    }
+  }
+
+  const handleDeleteSpend = async (id) => {
+    setDeletingSpend(id)
+    try {
+      await axios.delete(`${API_BASE}/payment/spending/${id}`, { withCredentials: true })
+      setSpendings(prev => prev.filter(s => s._id !== id))
+    } catch {
+      showToast('Failed to delete')
+    } finally {
+      setDeletingSpend(null)
+    }
+  }
 
   return (
     <div className='w-screen h-screen relative overflow-hidden'>
@@ -832,6 +876,109 @@ const AdminPayment = () => {
                     </div>
                   </motion.div>
                 ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── Spendings Section ───────────────────────────────────────── */}
+          <section className='w-full mt-[6%] pb-24'>
+            <div className='flex items-center gap-2 border-b-2 border-zinc-400 pb-3 mb-4'>
+              <i className='ri-wallet-3-line text-[#883bbc] text-xl'></i>
+              <h1 className='text-xl font-bold'>Spendings</h1>
+            </div>
+
+            {/* Add form */}
+            <form onSubmit={handleAddSpend} className='w-full space-y-3 mb-5'>
+              <div>
+                <label className='block text-sm font-semibold mb-1.5 opacity-70'>Bill name</label>
+                <input
+                  type='text'
+                  required
+                  value={spendName}
+                  onChange={e => setSpendName(e.target.value)}
+                  placeholder='e.g. Material purchase'
+                  className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 text-sm font-semibold placeholder:opacity-50 focus:outline-none focus:ring-1 focus:ring-[#883bbc]'
+                />
+              </div>
+              <div className='flex gap-3'>
+                <div className='flex-1'>
+                  <label className='block text-sm font-semibold mb-1.5 opacity-70'>Amount (₹)</label>
+                  <input
+                    type='number'
+                    required
+                    min='1'
+                    value={spendAmount}
+                    onChange={e => setSpendAmount(e.target.value)}
+                    placeholder='e.g. 25000'
+                    className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 text-sm font-semibold placeholder:opacity-50 focus:outline-none focus:ring-1 focus:ring-[#883bbc]'
+                  />
+                </div>
+                <div className='flex-1'>
+                  <label className='block text-sm font-semibold mb-1.5 opacity-70'>Date</label>
+                  <input
+                    type='date'
+                    value={spendDate}
+                    onChange={e => setSpendDate(e.target.value)}
+                    className='w-full bg-gradient-to-tl from-[#F7D6F3] to-transparent border border-[#883bbc] rounded-full px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-[#883bbc]'
+                  />
+                </div>
+              </div>
+              <motion.button
+                type='submit'
+                whileTap={{ scale: 0.97 }}
+                disabled={addingSpend}
+                className='w-full py-2.5 rounded-full bg-[#883bbc] text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60'
+              >
+                {addingSpend
+                  ? <><i className='ri-loader-4-line animate-spin'></i> Adding…</>
+                  : <><i className='ri-add-circle-line'></i> Add Spending</>
+                }
+              </motion.button>
+            </form>
+
+            {/* List */}
+            {spendings.length === 0 ? (
+              <div className='px-4 py-4 rounded-lg bg-gradient-to-br from-[#F7D6F3] to-transparent'>
+                <p className='text-sm font-semibold opacity-70'>No spendings recorded yet.</p>
+              </div>
+            ) : (
+              <div className='space-y-2'>
+                {spendings.map((s, i) => (
+                  <motion.div
+                    key={s._id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    className='flex items-center justify-between bg-gradient-to-r from-white/70 to-transparent backdrop-blur-sm border border-[#883bbc]/20 rounded-lg px-4 py-3'
+                  >
+                    <div>
+                      <p className='text-sm font-bold leading-5'>{s.name}</p>
+                      <p className='text-xs opacity-50 font-semibold mt-0.5'>{formatDate(s.date)}</p>
+                    </div>
+                    <div className='flex items-center gap-3'>
+                      <span className='text-sm font-black text-[#883bbc]'>
+                        ₹{Number(s.amount).toLocaleString('en-IN')}
+                      </span>
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleDeleteSpend(s._id)}
+                        disabled={deletingSpend === s._id}
+                        className='w-7 h-7 rounded-full bg-red-100 text-red-400 flex items-center justify-center disabled:opacity-40'
+                      >
+                        {deletingSpend === s._id
+                          ? <i className='ri-loader-4-line animate-spin text-xs'></i>
+                          : <i className='ri-delete-bin-line text-sm'></i>
+                        }
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ))}
+                <div className='flex items-center justify-between px-4 py-2 border-t-2 border-zinc-300 mt-2'>
+                  <span className='text-sm font-bold opacity-60'>Total spent</span>
+                  <span className='text-sm font-black text-[#883bbc]'>
+                    ₹{spendings.reduce((s, e) => s + e.amount, 0).toLocaleString('en-IN')}
+                  </span>
+                </div>
               </div>
             )}
           </section>

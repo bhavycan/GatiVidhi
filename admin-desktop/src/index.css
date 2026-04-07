@@ -12,6 +12,7 @@
   --body-bg: #f4f5fa;
 }
 
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -65,7 +66,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #883bbc, #f3a9de);
+  background: linear-gradient(135deg, var(--purple), #f3a9de);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -73,7 +74,7 @@ body {
 
 /* Purple gradient bg */
 .purple-gradient {
-  background: linear-gradient(135deg, #883bbc 0%, #6a2d96 50%, #4a1a6e 100%);
+  background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 50%, #4a1a6e 100%);
 }
 
 /* Card shadow */
@@ -115,7 +116,7 @@ body {
 }
 
 /* Stat card gradient */
-.stat-purple { background: linear-gradient(135deg, #883bbc, #a855f7); }
+.stat-purple { background: linear-gradient(135deg, var(--purple), var(--purple-light)); }
 .stat-pink   { background: linear-gradient(135deg, #ec4899, #f472b6); }
 .stat-blue   { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
 .stat-green  { background: linear-gradient(135deg, #10b981, #34d399); }
@@ -165,13 +166,13 @@ body {
   width: 100%;
 }
 .admin-input:focus {
-  border-color: #883bbc;
+  border-color: var(--purple);
   box-shadow: 0 0 0 3px rgba(136,59,188,0.08);
 }
 
 /* Button */
 .btn-primary {
-  background: linear-gradient(135deg, #883bbc, #6a2d96);
+  background: linear-gradient(135deg, var(--purple), var(--purple-dark));
   color: white;
   padding: 9px 20px;
   border-radius: 8px;
@@ -190,7 +191,7 @@ body {
 }
 .btn-secondary {
   background: #f4f0fb;
-  color: #883bbc;
+  color: var(--purple);
   padding: 9px 20px;
   border-radius: 8px;
   font-weight: 600;
@@ -204,5 +205,5 @@ body {
 }
 .btn-secondary:hover {
   background: #ede7f9;
-  border-color: #883bbc;
+  border-color: var(--purple);
 }

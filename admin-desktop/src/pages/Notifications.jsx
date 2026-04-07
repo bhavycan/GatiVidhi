@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Bell, CheckCheck, FolderKanban, CreditCard, CheckSquare, MessageSquare, AlertTriangle, X } from 'lucide-react'
+import { Bell, CheckCheck, FolderKanban, CreditCard, CheckSquare, MessageSquare, AlertTriangle, X, HardHat, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 
@@ -33,6 +33,10 @@ export default function Notifications({ onCountChange }) {
   const [marking, setMarking] = useState(false)
   const [dismissing, setDismissing] = useState(null) // index being dismissed
 
+  // Worker recent images
+  const [workerUpdates, setWorkerUpdates] = useState([])
+  const [lightbox, setLightbox] = useState(null) // { images: [], index: number }
+
   useEffect(() => {
     axios.get(`${BASE_URL}/admin/notifications`, { withCredentials: true })
       .then(res => {
@@ -42,6 +46,10 @@ export default function Notifications({ onCountChange }) {
         setLoading(false)
       })
       .catch(err => { setError(err.response?.data || 'Failed to load'); setLoading(false) })
+
+    axios.get(`${BASE_URL}/worker/recent-images`, { withCredentials: true })
+      .then(res => setWorkerUpdates(res.data.updates || []))
+      .catch(() => {})
   }, [])
 
   const dismiss = async (index) => {
@@ -98,6 +106,89 @@ export default function Notifications({ onCountChange }) {
       {loading && (
         <div className="flex items-center justify-center py-12">
           <div className="w-6 h-6 rounded-full border-2 border-purple-200 border-t-purple-600 animate-spin" />
+        </div>
+      )}
+
+      {/* ── Worker Recent Photos ───────────────────────────────────────── */}
+      {workerUpdates.length > 0 && (
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: '#883bbc18' }}>
+              <HardHat size={14} style={{ color: '#883bbc' }} />
+            </div>
+            <h3 className="text-sm font-bold text-gray-800">Recent Worker Photos</h3>
+            <span className="text-[10px] text-gray-400">last 7 days</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {workerUpdates.map((u) => (
+              <div key={u._id} className="bg-white rounded-2xl card-shadow p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+                    style={{ background: '#883bbc' }}>
+                    {(u.workerId?.name || 'W').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-gray-800 truncate">{u.workerId?.name || 'Worker'}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{u.projectId?.projectName || ''}</p>
+                  </div>
+                  <span className="text-[9px] text-gray-300 ml-auto shrink-0">{timeAgo(u.date)}</span>
+                </div>
+                <div className={`grid gap-1 ${u.updateImages.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {u.updateImages.slice(0, 4).map((img, ii) => (
+                    <div key={ii} className="relative">
+                      <img
+                        src={img}
+                        alt=""
+                        onClick={() => setLightbox({ images: u.updateImages, index: ii })}
+                        className="w-full h-20 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      />
+                      {ii === 3 && u.updateImages.length > 4 && (
+                        <div onClick={() => setLightbox({ images: u.updateImages, index: 3 })}
+                          className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center cursor-pointer">
+                          <span className="text-white text-xs font-bold">+{u.updateImages.length - 4}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {u.notes && <p className="text-[10px] text-gray-400 mt-1.5 line-clamp-1 italic">"{u.notes}"</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox(l => ({ ...l, index: (l.index - 1 + l.images.length) % l.images.length })) }}
+            className="absolute left-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ChevronLeft size={20} className="text-white" />
+          </button>
+          <img
+            src={lightbox.images[lightbox.index]}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-[80vw] max-h-[80vh] rounded-2xl object-contain shadow-2xl"
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox(l => ({ ...l, index: (l.index + 1) % l.images.length })) }}
+            className="absolute right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ChevronRight size={20} className="text-white" />
+          </button>
+          <div className="absolute bottom-4 text-white/60 text-xs">
+            {lightbox.index + 1} / {lightbox.images.length}
+          </div>
+          <button onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
+            <X size={14} className="text-white" />
+          </button>
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import { AnimatePresence, motion } from 'motion/react'
 import axios from 'axios'
@@ -23,6 +24,16 @@ function timeAgo(date) {
   return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
 }
 
+const MessageImages = ({ images }) => (
+  <div className={`grid gap-1 mt-1 ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+    {images.map((url, i) => (
+      <a key={i} href={url} target="_blank" rel="noreferrer">
+        <img src={url} alt="" className="rounded-lg object-cover w-full max-h-48 cursor-pointer hover:opacity-90 transition-opacity" />
+      </a>
+    ))}
+  </div>
+)
+
 const UpdateRefCard = ({ updateRef, dark }) => (
   <div className={`flex items-start gap-2 rounded-xl px-3 py-2 mb-1 border ${dark ? 'bg-white/20 border-white/30' : 'bg-[#883bbc]/10 border-[#883bbc]/30'}`}>
     <i className={`ri-link text-sm mt-0.5 shrink-0 ${dark ? 'text-white/80' : 'text-[#883bbc]'}`}></i>
@@ -36,7 +47,44 @@ const UpdateRefCard = ({ updateRef, dark }) => (
   </div>
 )
 
+const TicketRefCard = ({ ticketRef, dark, onRemove }) => (
+  <div className={`flex items-start gap-2 rounded-xl px-3 py-2 mb-1 border ${dark ? 'bg-white/20 border-white/30' : 'bg-[#883bbc]/10 border-[#883bbc]/30'}`}>
+    <i className={`ri-ticket-2-line text-sm mt-0.5 shrink-0 ${dark ? 'text-white/80' : 'text-[#883bbc]'}`}></i>
+    <div className='min-w-0 flex-1'>
+      <p className={`text-[10px] font-bold uppercase tracking-wide ${dark ? 'text-white/70' : 'text-[#883bbc]'}`}>Referencing Ticket</p>
+      <p className={`text-xs font-semibold line-clamp-2 ${dark ? 'text-white' : ''}`}>{ticketRef.note}</p>
+      {ticketRef.projectName && (
+        <p className={`text-[11px] line-clamp-1 ${dark ? 'text-white/60' : 'opacity-60'}`}>{ticketRef.projectName}</p>
+      )}
+    </div>
+    {onRemove && (
+      <button onClick={onRemove} className={`shrink-0 text-lg leading-none ${dark ? 'text-white/60' : 'text-[#883bbc]/60'}`}>
+        <i className='ri-close-line'></i>
+      </button>
+    )}
+  </div>
+)
+
+const ApprovalRefCard = ({ approvalRef, dark, onRemove }) => (
+  <div className={`flex items-start gap-2 rounded-xl px-3 py-2 mb-1 border ${dark ? 'bg-white/20 border-white/30' : 'bg-[#883bbc]/10 border-[#883bbc]/30'}`}>
+    <i className={`ri-ticket-2-line text-sm mt-0.5 shrink-0 ${dark ? 'text-white/80' : 'text-[#883bbc]'}`}></i>
+    <div className='min-w-0 flex-1'>
+      <p className={`text-[10px] font-bold uppercase tracking-wide ${dark ? 'text-white/70' : 'text-[#883bbc]'}`}>Referencing Ticket</p>
+      <p className={`text-xs font-semibold truncate ${dark ? 'text-white' : ''}`}>{approvalRef.title}</p>
+      {approvalRef.projectName && (
+        <p className={`text-[11px] line-clamp-1 ${dark ? 'text-white/60' : 'opacity-60'}`}>{approvalRef.projectName}</p>
+      )}
+    </div>
+    {onRemove && (
+      <button onClick={onRemove} className={`shrink-0 text-lg leading-none ${dark ? 'text-white/60' : 'text-[#883bbc]/60'}`}>
+        <i className='ri-close-line'></i>
+      </button>
+    )}
+  </div>
+)
+
 const AdminChat = () => {
+  const location = useLocation()
   const [isopen, setOpen] = useState(false)
   const [conversations, setConversations] = useState([])
   const [active, setActive] = useState(null)
@@ -44,6 +92,14 @@ const AdminChat = () => {
   const [input, setInput] = useState('')
   const [loadingConvs, setLoadingConvs] = useState(true)
   const [loadingMsgs, setLoadingMsgs] = useState(false)
+  const [approvalRef, setApprovalRef] = useState(null)
+  const [pendingApprovalNav, setPendingApprovalNav] = useState(
+    () => location.state?.approvalRef ? location.state : null
+  )
+  const [ticketRef, setTicketRef] = useState(null)
+  const [pendingTicketNav, setPendingTicketNav] = useState(
+    () => location.state?.ticketRef ? location.state : null
+  )
   const socketRef = useRef(null)
   const chatRef = useRef(null)
   const parent = useRef(null)
@@ -55,6 +111,32 @@ const AdminChat = () => {
       .then(res => { setConversations(res.data.conversations || []); setLoadingConvs(false) })
       .catch(() => setLoadingConvs(false))
   }, [])
+
+  // Auto-select conversation when navigating from Approvals page
+  useEffect(() => {
+    if (!pendingApprovalNav || loadingConvs || conversations.length === 0) return
+    const match = conversations.find(c =>
+      c.projectName?.toLowerCase() === pendingApprovalNav.targetProjectName?.toLowerCase()
+    )
+    if (match) {
+      setActive(match)
+      setApprovalRef(pendingApprovalNav.approvalRef)
+      setPendingApprovalNav(null)
+    }
+  }, [conversations, loadingConvs, pendingApprovalNav])
+
+  // Auto-select conversation when navigating from Tickets page
+  useEffect(() => {
+    if (!pendingTicketNav || loadingConvs || conversations.length === 0) return
+    const match = conversations.find(c =>
+      c.projectName?.toLowerCase() === pendingTicketNav.targetProjectName?.toLowerCase()
+    )
+    if (match) {
+      setActive(match)
+      setTicketRef(pendingTicketNav.ticketRef)
+      setPendingTicketNav(null)
+    }
+  }, [conversations, loadingConvs, pendingTicketNav])
 
   // Keep ref in sync so socket handlers can read active without stale closures
   useEffect(() => { activeRef.current = active }, [active])
@@ -75,7 +157,10 @@ const AdminChat = () => {
           id: msg._id,
           from: 'client',
           text: msg.text,
+          images: msg.images || [],
           updateRef: msg.updateRef || null,
+          approvalRef: msg.approvalRef || null,
+          ticketRef: msg.ticketRef || null,
           createdAt: msg.createdAt,
         }])
       }
@@ -112,7 +197,10 @@ const AdminChat = () => {
           id: m._id,
           from: m.senderRole,
           text: m.text,
+          images: m.images || [],
           updateRef: m.updateRef || null,
+          approvalRef: m.approvalRef || null,
+          ticketRef: m.ticketRef || null,
           createdAt: m.createdAt,
         })))
         setLoadingMsgs(false)
@@ -132,14 +220,19 @@ const AdminChat = () => {
 
     const clientId = String(active.clientId)
     const now = new Date().toISOString()
-    setMessages(prev => [...prev, { id: `local-${Date.now()}`, from: 'admin', text, updateRef: null, createdAt: now }])
-    socketRef.current.emit('dm:send', { targetClientId: clientId, text })
+    setMessages(prev => [...prev, { id: `local-${Date.now()}`, from: 'admin', text, updateRef: null, approvalRef: approvalRef || null, ticketRef: ticketRef || null, createdAt: now }])
+    const payload = { targetClientId: clientId, text }
+    if (approvalRef) payload.approvalRef = approvalRef
+    if (ticketRef) payload.ticketRef = ticketRef
+    socketRef.current.emit('dm:send', payload)
     setConversations(prev => prev.map(c =>
       String(c.clientId) === clientId
         ? { ...c, lastText: text, lastRole: 'admin', lastAt: now }
         : c
     ))
     setInput('')
+    setApprovalRef(null)
+    setTicketRef(null)
   }
 
   return (
@@ -222,6 +315,18 @@ const AdminChat = () => {
                             <UpdateRefCard updateRef={msg.updateRef} dark={isAdmin} />
                           </div>
                         )}
+                        {/* Approval reference card */}
+                        {msg.approvalRef?.approvalId && (
+                          <div className={`w-[75%] ${isAdmin ? 'mr-0' : 'ml-9'}`}>
+                            <ApprovalRefCard approvalRef={msg.approvalRef} dark={isAdmin} />
+                          </div>
+                        )}
+                        {/* Ticket reference card */}
+                        {msg.ticketRef?.ticketId && (
+                          <div className={`w-[75%] ${isAdmin ? 'mr-0' : 'ml-9'}`}>
+                            <TicketRefCard ticketRef={msg.ticketRef} dark={isAdmin} />
+                          </div>
+                        )}
 
                         <div className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} w-full`}>
                           {!isAdmin && (
@@ -235,7 +340,8 @@ const AdminChat = () => {
                               : 'bg-white/70 backdrop-blur-md text-black rounded-bl-none shadow-md border border-white'
                             }`}
                           >
-                            <p>{msg.text}</p>
+                            {msg.images?.length > 0 && <MessageImages images={msg.images} />}
+                            {msg.text && <p className={msg.images?.length > 0 ? 'mt-1' : ''}>{msg.text}</p>}
                             {msg.createdAt && (
                               <p className={`text-[9px] mt-1 ${isAdmin ? 'text-white/60' : 'text-gray-400'}`}>
                                 {new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
@@ -250,23 +356,31 @@ const AdminChat = () => {
               </section>
 
               {/* Input */}
-              <form onSubmit={sendMessage} className="shrink-0 flex items-center gap-3 py-3 border-t border-white/40">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Reply to client..."
-                  className="flex-1 bg-white/50 backdrop-blur-md border border-white rounded-full px-5 py-3 text-sm font-medium outline-none placeholder:opacity-60 focus:bg-white/70 transition-colors"
-                  autoComplete="off"
-                />
-                <motion.button
-                  type="submit"
-                  whileTap={{ scale: 0.9 }}
-                  disabled={!input.trim()}
-                  className="w-11 h-11 rounded-full bg-[#883bbc] flex items-center justify-center shrink-0 disabled:opacity-40 cursor-pointer"
-                >
-                  <i className="ri-send-plane-fill text-white text-lg"></i>
-                </motion.button>
+              <form onSubmit={sendMessage} className="shrink-0 flex flex-col gap-2 py-3 border-t border-white/40">
+                {approvalRef && (
+                  <ApprovalRefCard approvalRef={approvalRef} onRemove={() => setApprovalRef(null)} />
+                )}
+                {ticketRef && (
+                  <TicketRefCard ticketRef={ticketRef} onRemove={() => setTicketRef(null)} />
+                )}
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Reply to client..."
+                    className="flex-1 bg-white/50 backdrop-blur-md border border-white rounded-full px-5 py-3 text-sm font-medium outline-none placeholder:opacity-60 focus:bg-white/70 transition-colors"
+                    autoComplete="off"
+                  />
+                  <motion.button
+                    type="submit"
+                    whileTap={{ scale: 0.9 }}
+                    disabled={!input.trim()}
+                    className="w-11 h-11 rounded-full bg-[#883bbc] flex items-center justify-center shrink-0 disabled:opacity-40 cursor-pointer"
+                  >
+                    <i className="ri-send-plane-fill text-white text-lg"></i>
+                  </motion.button>
+                </div>
               </form>
             </div>
           ) : (

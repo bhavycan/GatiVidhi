@@ -5,7 +5,7 @@ import { Menu, Bell, Search, Sun, Moon, ChevronDown, LogOut } from 'lucide-react
 
 const BASE_URL = import.meta.env.VITE_API_URL
 
-export default function Header({ title, subtitle, onToggleSidebar, onLogout, notifCount = 0 }) {
+export default function Header({ title, subtitle, onToggleSidebar, onLogout, notifCount = 0, msgCount = 0 }) {
   const navigate = useNavigate()
   const [dark, setDark] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -51,6 +51,21 @@ export default function Header({ title, subtitle, onToggleSidebar, onLogout, not
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
         >
           {dark ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+
+        {/* Messages */}
+        <button
+          onClick={() => navigate('/messages')}
+          className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          {msgCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+              {msgCount > 99 ? '99+' : msgCount}
+            </span>
+          )}
         </button>
 
         {/* Notification */}
