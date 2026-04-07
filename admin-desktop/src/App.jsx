@@ -20,6 +20,7 @@ import Messages from './pages/Messages'
 import Tickets from './pages/Tickets'
 import Notifications from './pages/Notifications'
 import Settings from './pages/Settings'
+import Updates from './pages/Updates'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 
@@ -49,6 +50,7 @@ const pageMeta = {
   '/tickets':       { title: 'Tickets',       subtitle: 'Support requests' },
   '/notifications': { title: 'Notifications', subtitle: 'Recent activity & alerts' },
   '/settings':      { title: 'Settings',      subtitle: 'Account & system configuration' },
+  '/updates':       { title: 'Updates',       subtitle: 'Daily progress updates with photos' },
 }
 
 function Layout({ collapsed, onToggle, onLogout }) {
@@ -102,6 +104,7 @@ function Layout({ collapsed, onToggle, onLogout }) {
             <Route path="/tickets"       element={<Tickets />} />
             <Route path="/notifications" element={<Notifications onCountChange={setNotifCount} />} />
             <Route path="/settings"      element={<Settings />} />
+            <Route path="/updates"       element={<Updates />} />
           </Routes>
         </main>
       </div>

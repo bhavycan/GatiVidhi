@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, FolderKanban, Users, HardHat, CreditCard,
   CheckSquare, Palette, PackageSearch, FileBarChart2, MessageSquare,
-  Ticket, Bell, Settings, Layers, LogOut, Star
+  Ticket, Bell, Settings, Layers, LogOut, Star, RefreshCcw
 } from 'lucide-react'
 
 const mainNav = [
@@ -15,6 +15,7 @@ const mainNav = [
 ]
 
 const mgmtNav = [
+  { label: 'Updates',    icon: RefreshCcw,      to: '/updates' },
   { label: 'Approvals',  icon: Star,            to: '/approvals' },
   { label: 'Payments',   icon: CreditCard,      to: '/payments' },
   { label: 'Designs',    icon: Palette,         to: '/designs' },
