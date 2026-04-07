@@ -393,6 +393,23 @@ module.exports.verifyWorkerOtpChangePasswordController = async (req, res) => {
   }
 };
 
+// Admin fetches recent worker updates with images across all projects (last 7 days, max 30)
+module.exports.getRecentWorkerImagesController = async (req, res) => {
+  try {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const updates = await workerUpdateModel
+      .find({ updateImages: { $exists: true, $not: { $size: 0 } }, date: { $gte: since } })
+      .populate('workerId', 'name')
+      .populate('projectId', 'projectName')
+      .sort({ date: -1 })
+      .limit(30);
+    res.status(200).json({ updates });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
 module.exports.workerLogoutController = async (req, res) => {
   try {
     const token = req.cookies.workertoken;

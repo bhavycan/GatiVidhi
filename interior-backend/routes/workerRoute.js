@@ -12,6 +12,7 @@ const {
   workerSubmitUpdateController,
   workerTodayUpdateController,
   getWorkerUpdatesForProjectController,
+  getRecentWorkerImagesController,
   useWorkerUpdateController,
   retakeWorkerUpdateController,
   workerNotificationsController,
@@ -46,6 +47,7 @@ route.get('/all', adminAuthentification, getAllWorkersController);
 route.post('/assign-project', adminAuthentification, assignProjectController);
 route.post('/delete', adminAuthentification, deleteWorkerController);
 route.get('/updates/:projectId', adminAuthentification, getWorkerUpdatesForProjectController);
+route.get('/recent-images', adminAuthentification, getRecentWorkerImagesController);
 route.post('/use/:updateId', adminAuthentification, useWorkerUpdateController);
 route.post('/retake/:updateId', adminAuthentification, retakeWorkerUpdateController);
 
