@@ -3,10 +3,12 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE } from '../config.js'
+import { useClientMsg } from '../context/ClientMsgContext.jsx'
 
 const Navbar = ({ value }) => {
   const { setOpen } = value;
   const navigate = useNavigate();
+  const { count: msgCount } = useClientMsg()
 
   const menuItems = [
     { label: "Home",        path: "/user/profile",     icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" /></svg> },
@@ -88,7 +90,12 @@ const Navbar = ({ value }) => {
                   ${item.path ? "cursor-pointer hover:bg-white/70" : "cursor-not-allowed opacity-50"}`}
               >
                 {item.icon}
-                <h1 className="text-base font-bold">{item.label}</h1>
+                <h1 className="text-base font-bold flex-1">{item.label}</h1>
+                {item.label === 'Chat Support' && msgCount > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-5 text-center leading-4">
+                    {msgCount > 99 ? '99+' : msgCount}
+                  </span>
+                )}
               </div>
             ))}
           </div>

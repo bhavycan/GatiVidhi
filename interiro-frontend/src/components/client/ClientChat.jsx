@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { io } from 'socket.io-client'
+import { useClientMsg } from '../../context/ClientMsgContext.jsx'
 import { AnimatePresence, motion } from 'motion/react'
 import axios from 'axios'
 import Navbar from '../../templates/Navbar'
@@ -37,6 +38,10 @@ const MessageImages = ({ images }) => (
 
 const ClientChat = () => {
   const { state } = useLocation()
+  const { clearCount } = useClientMsg()
+
+  // Clear unread badge when this page mounts
+  useEffect(() => { clearCount() }, [])
   const taggedUpdate = state?.update || null
 
   const [messages, setMessages] = useState([])

@@ -3,10 +3,12 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE } from '../config.js'
+import { useAdminMsg } from '../context/AdminMsgContext.jsx'
 
 const AdminNavbar = ({ value }) => {
   const { setOpen } = value;
   const navigate = useNavigate();
+  const { count: msgCount } = useAdminMsg()
 
   const menuItems = [
     { label: "Dashboard",  icon: "ri-dashboard-line",       path: "/admin/profile" },
@@ -110,7 +112,12 @@ const AdminNavbar = ({ value }) => {
                   ${item.path ? "cursor-pointer hover:bg-white/70" : "cursor-not-allowed opacity-50"}`}
               >
                 <i className={`${item.icon} text-lg text-[#883bbc]`}></i>
-                <h1 className="text-base font-bold">{item.label}</h1>
+                <h1 className="text-base font-bold flex-1">{item.label}</h1>
+                {item.label === 'Chat' && msgCount > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-5 text-center leading-4">
+                    {msgCount > 99 ? '99+' : msgCount}
+                  </span>
+                )}
               </div>
             ))}
           </div>

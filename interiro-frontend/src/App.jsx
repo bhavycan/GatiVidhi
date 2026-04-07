@@ -32,9 +32,13 @@ import AdminPayment from './components/admin/AdminPayment'
 import AdminAR from './components/admin/AdminAR'
 import ClientChat from './components/client/ClientChat'
 import AdminChat from './components/admin/AdminChat'
+import { AdminMsgProvider } from './context/AdminMsgContext.jsx'
+import { ClientMsgProvider } from './context/ClientMsgContext.jsx'
 
 const App = () => {
   return (
+    <AdminMsgProvider>
+    <ClientMsgProvider>
     <div className=' w-screen max-h-[100vh] '>
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -69,9 +73,9 @@ const App = () => {
             <Route path='/user/support' element={<ClientChat />} />
             <Route path='/admin/chat' element={<AdminChat />} />
       </Routes>
-     
-
     </div>
+    </ClientMsgProvider>
+    </AdminMsgProvider>
   )
 }
 

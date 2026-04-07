@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { io } from 'socket.io-client'
+import { useAdminMsg } from '../../context/AdminMsgContext.jsx'
 import { AnimatePresence, motion } from 'motion/react'
 import axios from 'axios'
 import AdminNavbar from '../../templates/AdminNavbar'
@@ -85,6 +86,10 @@ const ApprovalRefCard = ({ approvalRef, dark, onRemove }) => (
 
 const AdminChat = () => {
   const location = useLocation()
+  const { clearCount } = useAdminMsg()
+
+  // Clear unread badge when this page mounts
+  useEffect(() => { clearCount() }, [])
   const [isopen, setOpen] = useState(false)
   const [conversations, setConversations] = useState([])
   const [active, setActive] = useState(null)
